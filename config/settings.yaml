@@ -1,0 +1,35 @@
+# =================================================
+# Project Phoenix Configuration
+# =================================================
+
+project:
+  name: "Project Phoenix"
+  version: "1.0.0"
+  author: "Dhruv Chavda"
+  environment: "development"
+
+application:
+  debug: true
+  timezone: "Asia/Kolkata"
+  log_level: "INFO"
+
+market:
+  symbol: "XAUUSD"
+  timeframe: "M15"
+
+trading:
+  magic_number: 2026001
+  slippage: 10
+  max_open_positions: 1
+
+risk:
+  risk_per_trade: 1.0
+  max_daily_loss: 3.0
+  max_drawdown: 10.0
+  reward_risk_ratio: 2.0
+
+mt5:
+  timeout: 60000
+  portable: false
+  reconnect_attempts: 3
+  reconnect_delay: 5
