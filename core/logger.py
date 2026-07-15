@@ -28,6 +28,7 @@ class LoggerManager:
 
     def __init__(self):
         """Initialize the logger manager."""
+
         self.logger = None
 
     def setup_console_logger(self):
@@ -62,7 +63,6 @@ class LoggerManager:
 
         log_file = log_dir / "project_phoenix.log"
 
-        # Prevent duplicate file handlers
         file_exists = any(
             isinstance(handler, logging.FileHandler)
             for handler in self.logger.handlers
@@ -87,8 +87,11 @@ class LoggerManager:
 
     def initialize(self):
         """
-        Initialize the complete logging system.
+        Initialize logging only once.
         """
+
+        if self.logger is not None:
+            return self.logger
 
         self.setup_console_logger()
         self.setup_file_logger()
@@ -101,7 +104,7 @@ class LoggerManager:
 
 
 # -------------------------------------------------
-# Global Logger Instance
+# Global Logger Manager
 # -------------------------------------------------
 
 logger = LoggerManager()
