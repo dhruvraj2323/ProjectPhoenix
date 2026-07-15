@@ -10,6 +10,7 @@ import os
 from core.config import config
 from core.logger import logger
 from market.mt5_connector import MT5Connection
+from market.market_data import MarketData
 
 
 def main():
@@ -82,6 +83,82 @@ def main():
                 app_logger.info(
                     f"Equity  : {account.equity}"
                 )
+
+                # -----------------------------------------
+                # Market Data Test
+                # -----------------------------------------
+
+                market_data = MarketData()
+
+                dataframe = market_data.get_dataframe(
+                    candle_count=10
+                )
+
+                if dataframe is not None:
+
+                    app_logger.info(
+                        "Historical Market Data:"
+                    )
+
+                    print(dataframe)
+
+                    # -----------------------------------------
+                    # Live Tick Test
+                    # -----------------------------------------
+
+                    tick = market_data.get_tick()
+
+                    if tick is not None:
+
+                        app_logger.info(
+                            f"Bid Price : {tick.bid}"
+                        )
+
+                        app_logger.info(
+                            f"Ask Price : {tick.ask}"
+                        )
+
+                        app_logger.info(
+                            f"Last Price: {tick.last}"
+                        )
+                                            # -----------------------------------------
+                    # Symbol Information Test
+                    # -----------------------------------------
+
+                    symbol_info = market_data.get_symbol_info()
+
+                    if symbol_info is not None:
+
+                        app_logger.info(
+                            f"Symbol      : {symbol_info.name}"
+                        )
+
+                        app_logger.info(
+                            f"Digits      : {symbol_info.digits}"
+                        )
+
+                        app_logger.info(
+                            f"Point Value : {symbol_info.point}"
+                        )
+
+                        app_logger.info(
+                            f"Spread      : {symbol_info.spread}"
+                        )
+                                            # -----------------------------------------
+                    # Current Price Test
+                    # -----------------------------------------
+
+                    price = market_data.get_current_price()
+
+                    if price is not None:
+
+                        app_logger.info(
+                            f"Current Bid : {price['bid']}"
+                        )
+
+                        app_logger.info(
+                            f"Current Ask : {price['ask']}"
+                        )
 
         mt5_connection.shutdown()
 
