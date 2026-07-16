@@ -11,6 +11,8 @@ from core.config import config
 from core.logger import logger
 from market.mt5_connector import MT5Connection
 from market.market_data import MarketData
+from indicators.indicator_engine import IndicatorEngine
+from indicators.candlestick_engine import CandlestickEngine
 
 
 def main():
@@ -101,7 +103,788 @@ def main():
                     )
 
                     print(dataframe)
+                                        # -----------------------------------------
+                    # EMA Test
+                    # -----------------------------------------
 
+                    indicator_engine = IndicatorEngine()
+                    import indicators.indicator_engine
+
+                    print(indicators.indicator_engine.__file__)
+                    print(type(indicator_engine))
+                    print(dir(indicator_engine))
+
+                    dataframe = indicator_engine.calculate_ema(
+                        dataframe,
+                        period=20
+                    )
+
+                    app_logger.info(
+                        "EMA 20 Calculation:"
+                    )
+
+                    print(
+                        dataframe[
+                            ["time", "close", "EMA_20"]
+                        ].tail(10)
+                    )
+                                        # -----------------------------------------
+                    # SMA Test
+                    # -----------------------------------------
+
+                    dataframe = indicator_engine.calculate_sma(
+                        dataframe,
+                        period=20
+                    )
+
+                    app_logger.info(
+                        "SMA 20 Calculation:"
+                    )
+
+                    print(
+                        dataframe[
+                            ["time", "close", "SMA_20"]
+                        ].tail(10)
+                    )
+                    dataframe = indicator_engine.calculate_rsi(
+                        dataframe,
+                        period=14
+                    )
+
+                    app_logger.info(
+                        "RSI 14 Calculation:"
+                    )
+
+                    print(
+                        dataframe[
+                            ["time", "close", "RSI_14"]
+                        ]
+                    )
+                   
+                    # -----------------------------------------
+                    # MACD Test
+                    # -----------------------------------------
+
+                    dataframe = indicator_engine.calculate_macd(
+                        dataframe
+                    )
+
+                    app_logger.info(
+                        "MACD Calculation:"
+                    )
+
+                    print(
+                        dataframe[
+                            [
+                                "time",
+                                "close",
+                                "MACD",
+                                "MACD_SIGNAL",
+                                "MACD_HISTOGRAM"
+                            ]
+                        ].tail(10)
+                    )
+                                    # -----------------------------------------
+                    # Bollinger Bands Test
+                    # -----------------------------------------
+
+                    dataframe = indicator_engine.calculate_bollinger_bands(
+                        dataframe,
+                        period=20,
+                        std_dev=2
+                    )
+
+                    app_logger.info(
+                        "Bollinger Bands Calculation:"
+                    )
+
+                    print(
+                        dataframe[
+                            [
+                                "time",
+                                "close",
+                                "BB_MIDDLE",
+                                "BB_UPPER",
+                                "BB_LOWER"
+                            ]
+                        ].tail(10)
+                    )
+                    # -----------------------------------------
+                    # ATR Test
+                    # -----------------------------------------
+
+                    dataframe = indicator_engine.calculate_atr(
+                        dataframe,
+                        period=14
+                    )
+
+                    app_logger.info(
+                        "ATR 14 Calculation:"
+                    )
+
+                    print(
+                        dataframe[
+                            ["time", "high", "low", "close", "ATR_14"]
+                        ]
+                    )
+                    # -----------------------------------------
+                    # Candlestick Engine Test
+                    # -----------------------------------------
+
+                    candlestick_engine = CandlestickEngine()
+
+                    dataframe = candlestick_engine.prepare_candles(
+                        dataframe
+                    )
+                    
+                    dataframe = candlestick_engine.detect_doji(
+                        dataframe
+                    )
+
+                    app_logger.info(
+                        "Doji Detection:"
+                    )
+                    dataframe = candlestick_engine.detect_hammer(
+                        dataframe
+                    )
+
+                    app_logger.info(
+                        "Hammer Detection:"
+                    )
+
+                    print(
+                        dataframe[
+                            [
+                                "time",
+                                "BODY",
+                                "UPPER_WICK",
+                                "LOWER_WICK",
+                                "HAMMER"
+                            ]
+                        ]
+                    )
+                    
+                    # -----------------------------------------
+                    # Inverted Hammer Test
+                    # -----------------------------------------
+
+                    dataframe = candlestick_engine.detect_inverted_hammer(
+                        dataframe
+                    )
+
+                    app_logger.info(
+                        "Inverted Hammer Detection:"
+                    )
+
+                    print(
+                        dataframe[
+                            [
+                                "time",
+                                "BODY",
+                                "UPPER_WICK",
+                                "LOWER_WICK",
+                                "INVERTED_HAMMER"
+                            ]
+                        ]
+                    )
+                    print(
+                        dataframe[
+                            [
+                                "time",
+                                "open",
+                                "close",
+                                "BODY",
+                                "RANGE",
+                                "DOJI"
+                            ]
+                        ]
+                    )
+
+                    app_logger.info(
+                        "Candlestick Preparation:"
+                    )
+                    # -----------------------------------------
+                    # Shooting Star Test
+                    # -----------------------------------------
+
+                    dataframe = candlestick_engine.detect_shooting_star(
+                        dataframe
+                    )
+
+                    app_logger.info(
+                        "Shooting Star Detection:"
+                    )
+                    # -----------------------------------------
+                    # Hanging Man Test
+                    # -----------------------------------------
+
+                    dataframe = candlestick_engine.detect_hanging_man(
+                        dataframe
+                    )
+
+                    app_logger.info(
+                        "Hanging Man Detection:"
+                    )
+                    # -----------------------------------------
+                    # Spinning Top Test
+                    # -----------------------------------------
+
+                    dataframe = candlestick_engine.detect_spinning_top(
+                        dataframe
+                    )
+
+                    app_logger.info(
+                        "Spinning Top Detection:"
+                    )
+
+                    print(
+                        dataframe[
+                            [
+                                "time",
+                                "BODY",
+                                "RANGE",
+                                "UPPER_WICK",
+                                "LOWER_WICK",
+                                "SPINNING_TOP"
+                            ]
+                        ]
+                    )
+                    # -----------------------------------------
+                    # Marubozu Test
+                    # -----------------------------------------
+
+                    dataframe = candlestick_engine.detect_marubozu(
+                        dataframe
+                    )
+
+                    app_logger.info(
+                        "Marubozu Detection:"
+                    )
+                    # -----------------------------------------
+                    # Bullish Engulfing Test
+                    # -----------------------------------------
+
+                    dataframe = candlestick_engine.detect_bullish_engulfing(
+                        dataframe
+                    )
+
+                    app_logger.info(
+                        "Bullish Engulfing Detection:"
+                    )
+
+                    print(
+                        dataframe[
+                            [
+                                "time",
+                                "open",
+                                "close",
+                                "BULLISH",
+                                "BEARISH",
+                                "BULLISH_ENGULFING"
+                            ]
+                        ].tail(10)
+                    )
+                    # -----------------------------------------
+                    # Bearish Engulfing Test
+                    # -----------------------------------------
+
+                    dataframe = candlestick_engine.detect_bearish_engulfing(
+                        dataframe
+                    )
+
+                    app_logger.info(
+                        "Bearish Engulfing Detection:"
+                    )
+
+                    print(
+                        dataframe[
+                            [
+                                "time",
+                                "open",
+                                "close",
+                                "BULLISH",
+                                "BEARISH",
+                                "BEARISH_ENGULFING"
+                            ]
+                        ].tail(10)
+                    )
+                    # -----------------------------------------
+                    # Piercing Pattern Test
+                    # -----------------------------------------
+
+                    dataframe = candlestick_engine.detect_piercing_pattern(
+                        dataframe
+                    )
+
+                    app_logger.info(
+                        "Piercing Pattern Detection:"
+                    )
+                    dataframe = candlestick_engine.detect_dark_cloud_cover(
+                        dataframe
+                    )
+
+                    app_logger.info(
+                        "Dark Cloud Cover Detection:"
+                    )
+
+                    print(
+                        dataframe[
+                            [
+                                "time",
+                                "open",
+                                "close",
+                                "BULLISH",
+                                "BEARISH",
+                                "DARK_CLOUD_COVER"
+                            ]
+                        ].tail(10)
+                    )
+                    dataframe = candlestick_engine.detect_harami(
+                        dataframe=dataframe
+                    )
+
+                    app_logger.info("Harami Detection:")
+
+                    print(
+                        dataframe[
+                            [
+                                "time",
+                                "open",
+                                "close",
+                                "BULLISH",
+                                "BEARISH",
+                                "BULLISH_HARAMI",
+                                "BEARISH_HARAMI",
+                            ]
+                        ].tail(10)
+                    )
+                    print(
+                        dataframe[
+                            [
+                                "time",
+                                "open",
+                                "close",
+                                "BULLISH",
+                                "BEARISH",
+                                "PIERCING_PATTERN"
+                            ]
+                        ].tail(10)
+                    )
+                    print(
+                        dataframe[
+                            [
+                                "time",
+                                "BODY",
+                                "UPPER_WICK",
+                                "LOWER_WICK",
+                                "MARUBOZU"
+                            ]
+                        ]
+                    )
+                    print(
+                        dataframe[
+                            [
+                                "time",
+                                "BODY",
+                                "UPPER_WICK",
+                                "LOWER_WICK",
+                                "BEARISH",
+                                "HANGING_MAN"
+                            ]
+                        ]
+                    )
+                    print(
+                        dataframe[
+                            [
+                                "time",
+                                "BODY",
+                                "UPPER_WICK",
+                                "LOWER_WICK",
+                                "BEARISH",
+                                "SHOOTING_STAR"
+                            ]
+                        ]
+                    )
+
+                    print(
+                        dataframe[
+                            [
+                                "time",
+                                "open",
+                                "high",
+                                "low",
+                                "close",
+                                "BODY",
+                                "UPPER_WICK",
+                                "LOWER_WICK",
+                                "RANGE",
+                                "BULLISH",
+                                "BEARISH"
+                            ]
+                        ].tail(10)
+                    )
+                    # -----------------------------------------
+                    # Morning Star Detection
+                    # -----------------------------------------
+
+                    dataframe = candlestick_engine.detect_morning_star(
+                        dataframe=dataframe
+                    )
+
+                    app_logger.info(
+                        "Morning Star Detection:"
+                    )
+
+                    print(
+                        dataframe[
+                            [
+                                "time",
+                                "open",
+                                "close",
+                                "BODY",
+                                "BULLISH",
+                                "BEARISH",
+                                "MORNING_STAR"
+                            ]
+                        ].tail(10)
+                    )
+                    # -----------------------------------------
+                    # Evening Star
+                    # -----------------------------------------
+
+                    dataframe = candlestick_engine.detect_evening_star(
+                        dataframe=dataframe
+                    )
+
+                    app_logger.info(
+                        "Evening Star Detection:"
+                    )
+
+                    app_logger.info(
+                        dataframe[
+                            [
+                                "time",
+                                "open",
+                                "close",
+                                "BULLISH",
+                                "BEARISH",
+                                "EVENING_STAR"
+                            ]
+                        ].tail(10)
+                    )
+                    # -----------------------------------------
+                    # Three White Soldiers
+                    # -----------------------------------------
+
+                    dataframe = candlestick_engine.detect_three_white_soldiers(
+                        dataframe=dataframe
+                    )
+
+                    app_logger.info(
+                        "Three White Soldiers Detection:"
+                    )
+
+                    app_logger.info(
+                        dataframe[
+                            [
+                                "time",
+                                "open",
+                                "close",
+                                "BULLISH",
+                                "THREE_WHITE_SOLDIERS"
+                            ]
+                        ].tail(10)
+                    )
+                    dataframe = candlestick_engine.detect_three_black_crows(
+                        dataframe=dataframe
+                    )
+
+                    app_logger.info(
+                        "Three Black Crows Detection:"
+                    )
+
+                    app_logger.info(
+                        dataframe[
+                            [
+                                "time",
+                                "open",
+                                "close",
+                                "BEARISH",
+                                "THREE_BLACK_CROWS"
+                            ]
+                        ].tail(10)
+                    )
+                    # -----------------------------------------
+                    # Tweezer Top
+                    # -----------------------------------------
+
+                    dataframe = candlestick_engine.detect_tweezer_top(
+                        dataframe=dataframe
+                    )
+
+                    app_logger.info(
+                        dataframe[
+                            [
+                                "time",
+                                "open",
+                                "high",
+                                "close",
+                                "BULLISH",
+                                "BEARISH",
+                                "TWEEZER_TOP"
+                            ]
+                        ].tail(10)
+                    )                    
+                    dataframe = candlestick_engine.detect_tweezer_bottom(
+                        dataframe=dataframe
+                    )
+
+                    app_logger.info(
+                        "Tweezer Top Detection:"
+                    )
+                    app_logger.info(
+                    "Tweezer Bottom Detection:"
+                    )
+
+                    app_logger.info(
+                        dataframe[
+                            [
+                                "time",
+                                "open",
+                                "low",
+                                "close",
+                                "BULLISH",
+                                "BEARISH",
+                                "TWEEZER_BOTTOM"
+                            ]
+                        ].tail(10)
+                    )
+                    # -----------------------------------------
+                    # Inside Bar
+                    # -----------------------------------------
+
+                    dataframe = candlestick_engine.detect_inside_bar(
+                        dataframe=dataframe
+                    )
+
+                    app_logger.info(
+                        "Inside Bar Detection:"
+                    )
+
+                    app_logger.info(
+                        dataframe[
+                            [
+                                "time",
+                                "high",
+                                "low",
+                                "INSIDE_BAR"
+                            ]
+                        ].tail(10)
+                    )
+                    dataframe = candlestick_engine.detect_outside_bar(
+                        dataframe=dataframe
+                    )
+
+                    app_logger.info(
+                        "Outside Bar Detection:"
+                    )
+
+                    app_logger.info(
+                        dataframe[
+                            [
+                                "time",
+                                "high",
+                                "low",
+                                "OUTSIDE_BAR"
+                            ]
+                        ].tail(10)
+                    )
+                    dataframe = candlestick_engine.detect_rising_three_methods(
+                        dataframe=dataframe
+                    )
+
+                    app_logger.info(
+                        "Rising Three Methods Detection:"
+                    )
+
+                    app_logger.info(
+                        dataframe[
+                            [
+                                "time",
+                                "open",
+                                "close",
+                                "BULLISH",
+                                "BEARISH",
+                                "RISING_THREE_METHODS",
+                            ]
+                        ].tail(10)
+                    )
+                    dataframe = candlestick_engine.detect_falling_three_methods(
+                        dataframe=dataframe
+                    )
+
+                    app_logger.info(
+                        "Falling Three Methods Detection:"
+                    )
+
+                    app_logger.info(
+                        dataframe[
+                            [
+                                "time",
+                                "open",
+                                "close",
+                                "BULLISH",
+                                "BEARISH",
+                                "FALLING_THREE_METHODS",
+                            ]
+                        ].tail(10)
+                    )
+                                        # -----------------------------------------
+                    # Three Inside Up
+                    # -----------------------------------------
+
+                    dataframe = candlestick_engine.detect_three_inside_up(
+                        dataframe=dataframe
+                    )
+
+                    app_logger.info(
+                        "Three Inside Up Detection:"
+                    )
+
+                    app_logger.info(
+                        dataframe[
+                            [
+                                "time",
+                                "open",
+                                "close",
+                                "BULLISH",
+                                "BEARISH",
+                                "THREE_INSIDE_UP"
+                            ]
+                        ].tail(10)
+                    )
+                                        # -----------------------------------------
+                    # Three Inside Down
+                    # -----------------------------------------
+
+                    dataframe = candlestick_engine.detect_three_inside_down(
+                        dataframe=dataframe
+                    )
+
+                    app_logger.info(
+                        "Three Inside Down Detection:"
+                    )
+
+                    app_logger.info(
+                        dataframe[
+                            [
+                                "time",
+                                "open",
+                                "close",
+                                "BULLISH",
+                                "BEARISH",
+                                "THREE_INSIDE_DOWN"
+                            ]
+                        ].tail(10)
+                    )
+                                        # -----------------------------------------
+                    # Tasuki Gap
+                    # -----------------------------------------
+
+                    dataframe = candlestick_engine.detect_tasuki_gap(
+                        dataframe=dataframe
+                    )
+
+                    app_logger.info(
+                        "Tasuki Gap Detection:"
+                    )
+
+                    app_logger.info(
+                        dataframe[
+                            [
+                                "time",
+                                "open",
+                                "close",
+                                "BULLISH",
+                                "BEARISH",
+                                "BULLISH_TASUKI_GAP",
+                                "BEARISH_TASUKI_GAP"
+                            ]
+                        ].tail(10)
+                    )
+                    # -----------------------------------------
+                    # Bullish Marubozu
+                    # -----------------------------------------
+
+                    dataframe = candlestick_engine.detect_bullish_marubozu(
+                        dataframe=dataframe
+                    )
+
+                    app_logger.info(
+                        "Bullish Marubozu Detection:"
+                    )
+
+                    # -----------------------------------------
+                    # Bearish Marubozu
+                    # -----------------------------------------
+
+                    dataframe = candlestick_engine.detect_bearish_marubozu(
+                        dataframe=dataframe
+                    )
+
+                    app_logger.info(
+                        "Bearish Marubozu Detection:"
+                    )
+                    # -----------------------------------------
+                    # Kicking Pattern
+                    # -----------------------------------------
+
+                    dataframe = candlestick_engine.detect_kicking_pattern(
+                        dataframe=dataframe
+                    )
+
+                    app_logger.info(
+                        "Kicking Pattern Detection:"
+                    )
+
+                    app_logger.info(
+                        dataframe[
+                            [
+                                "time",
+                                "open",
+                                "close",
+                                "BULLISH_MARUBOZU",
+                                "BEARISH_MARUBOZU",
+                                "BULLISH_KICKING",
+                                "BEARISH_KICKING"
+                            ]
+                        ].tail(10)
+                    )
+                                        # -----------------------------------------
+                    # Belt Hold
+                    # -----------------------------------------
+
+                    dataframe = candlestick_engine.detect_belt_hold(
+                        dataframe=dataframe
+                    )
+
+                    app_logger.info(
+                        "Belt Hold Detection:"
+                    )
+
+                    app_logger.info(
+                        dataframe[
+                            [
+                                "time",
+                                "open",
+                                "high",
+                                "low",
+                                "close",
+                                "BULLISH_BELT_HOLD",
+                                "BEARISH_BELT_HOLD"
+                            ]
+                        ].tail(10)
+                    )
                     # -----------------------------------------
                     # Live Tick Test
                     # -----------------------------------------
