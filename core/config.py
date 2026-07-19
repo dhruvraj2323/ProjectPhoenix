@@ -75,7 +75,9 @@ class Config:
         """
 
         if not self.env_loaded:
-            print("WARNING: Environment variables are not loaded.")
+            raise RuntimeError(
+                "Environment variables are not loaded."
+            )
 
         if not isinstance(self.settings, dict):
             raise TypeError(
