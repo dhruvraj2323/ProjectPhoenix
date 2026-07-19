@@ -1,0 +1,2425 @@
+============================================================
+FILE: C:\Projects\ProjectPhoenix\execution\__init__.py
+============================================================
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\execution\execution_engine.py
+============================================================
+"""
+Project Phoenix
+Milestone M10 - Execution Rules Engine
+
+Module:
+    execution_engine.py
+
+Purpose:
+    Coordinates the complete execution workflow.
+"""
+
+from __future__ import annotations
+
+from execution.execution_logger import ExecutionLogger
+from execution.execution_models import (
+    ExecutionDecision,
+    ExecutionStatus,
+)
+from execution.execution_rules import ExecutionRules
+from execution.execution_validator import ExecutionValidator
+from risk.risk_models import RiskDecision
+
+
+class ExecutionEngine:
+    """
+    Main Execution Rules Engine.
+    """
+
+    def __init__(self) -> None:
+        self._rules = ExecutionRules()
+        self._validator = ExecutionValidator()
+        self._logger = ExecutionLogger()
+
+    def execute(
+        self,
+        decision: RiskDecision,
+    ) -> ExecutionDecision:
+        """
+        Execute the complete M10 workflow.
+        """
+
+        order = self._rules.create_order(decision)
+
+        validation = self._validator.validate(order)
+
+        execution = ExecutionDecision(
+            status=(
+                ExecutionStatus.READY
+                if validation.valid
+                else ExecutionStatus.REJECTED
+            ),
+            order=order,
+            approved=validation.valid,
+            reason=validation.reason,
+        )
+
+        self._logger.log(execution)
+
+        return execution
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\execution\execution_logger.py
+============================================================
+"""
+Project Phoenix
+Milestone M10 - Execution Rules Engine
+
+Module:
+    execution_logger.py
+
+Purpose:
+    Logs execution decisions.
+"""
+
+from __future__ import annotations
+
+from execution.execution_models import ExecutionDecision
+
+
+class ExecutionLogger:
+    """
+    Logs execution decisions.
+    """
+
+    def log(
+        self,
+        decision: ExecutionDecision,
+    ) -> None:
+        """
+        Log an execution decision.
+        """
+
+        print("===== Execution Decision =====")
+        print(f"Symbol      : {decision.order.symbol}")
+        print(f"Side        : {decision.order.side.value}")
+        print(f"Order Type  : {decision.order.order_type.value}")
+        print(f"Volume      : {decision.order.volume}")
+        print(f"Status      : {decision.status.value}")
+        print(f"Approved    : {decision.approved}")
+        print(f"Reason      : {decision.reason}")
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\execution\execution_models.py
+============================================================
+"""
+Project Phoenix
+Milestone M10 - Execution Rules Engine
+
+Module:
+    execution_models.py
+
+Purpose:
+    Defines all shared data models used by the Execution Rules Engine.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Dict, Optional
+
+from risk.risk_models import RiskDecision
+
+
+class OrderSide(Enum):
+    """
+    Direction of the execution order.
+    """
+
+    BUY = "BUY"
+    SELL = "SELL"
+
+
+class OrderType(Enum):
+    """
+    Type of execution order.
+    """
+
+    MARKET = "MARKET"
+    LIMIT = "LIMIT"
+    STOP = "STOP"
+
+
+class ExecutionStatus(Enum):
+    """
+    Current execution status.
+    """
+
+    READY = "READY"
+    PENDING = "PENDING"
+    EXECUTED = "EXECUTED"
+    FAILED = "FAILED"
+    REJECTED = "REJECTED"
+
+
+@dataclass
+class ExecutionContext:
+    """
+    Context supplied to the Execution Engine.
+    """
+
+    risk_decision: RiskDecision
+
+    symbol: str
+
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class OrderRequest:
+    """
+    Broker order request prepared by the Execution Engine.
+    """
+
+    symbol: str
+
+    side: OrderSide
+
+    order_type: OrderType
+
+    volume: float
+
+    entry_price: float
+
+    stop_loss: float
+
+    take_profit: float
+
+    comment: str = ""
+
+    magic_number: Optional[int] = None
+
+
+@dataclass
+class ExecutionDecision:
+    """
+    Final execution decision returned by the Execution Engine.
+    """
+
+    status: ExecutionStatus
+
+    order: OrderRequest
+
+    approved: bool
+
+    reason: str
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\execution\execution_rules.py
+============================================================
+"""
+Project Phoenix
+Milestone M10 - Execution Rules Engine
+
+Module:
+    execution_rules.py
+
+Purpose:
+    Converts a RiskDecision into an OrderRequest.
+"""
+
+from __future__ import annotations
+
+from execution.execution_models import (
+    OrderRequest,
+    OrderSide,
+    OrderType,
+)
+from risk.risk_models import RiskDecision
+
+
+class ExecutionRules:
+    """
+    Generates an OrderRequest from a RiskDecision.
+    """
+
+    def create_order(self, decision: RiskDecision) -> OrderRequest:
+        """
+        Create an execution order from an approved risk decision.
+        """
+
+        return OrderRequest(
+            symbol="XAUUSD",
+            side=OrderSide.BUY,
+            order_type=OrderType.MARKET,
+            volume=decision.position.quantity,
+            entry_price=250.0,
+            stop_loss=decision.stop_loss.price,
+            take_profit=decision.take_profit.price,
+            comment="Initial M10 placeholder order.",
+        )
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\execution\execution_validator.py
+============================================================
+"""
+Project Phoenix
+Milestone M10 - Execution Rules Engine
+
+Module:
+    execution_validator.py
+
+Purpose:
+    Validates an OrderRequest before execution.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from execution.execution_models import OrderRequest
+
+
+@dataclass
+class ExecutionValidationResult:
+    """
+    Result returned by the execution validator.
+    """
+
+    valid: bool
+
+    reason: str = ""
+
+
+class ExecutionValidator:
+    """
+    Validates execution requests.
+    """
+
+    def validate(
+        self,
+        order: OrderRequest,
+    ) -> ExecutionValidationResult:
+        """
+        Validate an OrderRequest.
+        """
+
+        if order.volume <= 0:
+            return ExecutionValidationResult(
+                valid=False,
+                reason="Volume must be greater than zero.",
+            )
+
+        if order.stop_loss <= 0:
+            return ExecutionValidationResult(
+                valid=False,
+                reason="Invalid stop-loss.",
+            )
+
+        if order.take_profit <= 0:
+            return ExecutionValidationResult(
+                valid=False,
+                reason="Invalid take-profit.",
+            )
+
+        if not order.symbol:
+            return ExecutionValidationResult(
+                valid=False,
+                reason="Symbol is required.",
+            )
+
+        return ExecutionValidationResult(
+            valid=True,
+            reason="Execution validation passed.",
+        )
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\performance\__init__.py
+============================================================
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\performance\performance_analyzer.py
+============================================================
+"""
+Project Phoenix
+Milestone M11 - Performance Feedback Engine
+
+Module:
+    performance_analyzer.py
+
+Purpose:
+    Analyzes completed trades and generates performance metrics.
+"""
+
+from __future__ import annotations
+
+from performance.performance_metrics import PerformanceMetricsCalculator
+from performance.performance_models import (
+    PerformanceContext,
+    PerformanceMetrics,
+)
+
+
+class PerformanceAnalyzer:
+    """
+    Performs performance analysis on completed trades.
+    """
+
+    def __init__(self) -> None:
+        self._calculator = PerformanceMetricsCalculator()
+
+    def analyze(
+        self,
+        context: PerformanceContext,
+    ) -> PerformanceMetrics:
+        """
+        Analyze completed trades and return performance metrics.
+        """
+
+        return self._calculator.calculate(context)
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\performance\performance_engine.py
+============================================================
+"""
+Project Phoenix
+Milestone M11 - Performance Feedback Engine
+
+Module:
+    performance_engine.py
+
+Purpose:
+    Coordinates the complete Performance Feedback Engine.
+"""
+
+from __future__ import annotations
+
+from performance.performance_analyzer import PerformanceAnalyzer
+from performance.performance_logger import PerformanceLogger
+from performance.performance_models import (
+    PerformanceContext,
+    PerformanceDecision,
+    PerformanceDecisionType,
+)
+from performance.performance_validator import PerformanceValidator
+
+
+class PerformanceEngine:
+    """
+    Coordinates the complete Performance Feedback Engine.
+    """
+
+    def __init__(self) -> None:
+        self._analyzer = PerformanceAnalyzer()
+        self._validator = PerformanceValidator()
+        self._logger = PerformanceLogger()
+
+    def evaluate(
+        self,
+        context: PerformanceContext,
+    ) -> PerformanceDecision:
+        """
+        Analyze completed trades and return the final decision.
+        """
+
+        metrics = self._analyzer.analyze(context)
+
+        validation = self._validator.validate(metrics)
+
+        self._logger.log(metrics)
+
+        if validation.valid:
+            return PerformanceDecision(
+                decision=PerformanceDecisionType.ACCEPT,
+                metrics=metrics,
+                approved=True,
+                reason=validation.reason,
+            )
+
+        return PerformanceDecision(
+            decision=PerformanceDecisionType.REVIEW,
+            metrics=metrics,
+            approved=False,
+            reason=validation.reason,
+        )
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\performance\performance_logger.py
+============================================================
+"""
+Project Phoenix
+Milestone M11 - Performance Feedback Engine
+
+Module:
+    performance_logger.py
+
+Purpose:
+    Logs performance metrics.
+"""
+
+from __future__ import annotations
+
+from performance.performance_models import PerformanceMetrics
+
+
+class PerformanceLogger:
+    """
+    Logs calculated performance metrics.
+    """
+
+    def log(
+        self,
+        metrics: PerformanceMetrics,
+    ) -> None:
+        """
+        Log performance metrics.
+        """
+
+        print("===== Performance Summary =====")
+        print(f"Total Trades   : {metrics.total_trades}")
+        print(f"Wins           : {metrics.wins}")
+        print(f"Losses         : {metrics.losses}")
+        print(f"Breakeven      : {metrics.breakeven}")
+        print(f"Win Rate       : {metrics.win_rate:.2f}%")
+        print(f"Average Profit : {metrics.average_profit}")
+        print(f"Average Loss   : {metrics.average_loss}")
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\performance\performance_metrics.py
+============================================================
+"""
+Project Phoenix
+Milestone M11 - Performance Feedback Engine
+
+Module:
+    performance_metrics.py
+
+Purpose:
+    Calculates performance statistics from completed trades.
+"""
+
+from __future__ import annotations
+
+from performance.performance_models import (
+    PerformanceMetrics,
+    PerformanceContext,
+    TradeOutcome,
+)
+
+
+class PerformanceMetricsCalculator:
+    """
+    Calculates trading performance metrics.
+    """
+
+    def calculate(
+        self,
+        context: PerformanceContext,
+    ) -> PerformanceMetrics:
+        """
+        Calculate basic performance metrics.
+        """
+
+        total = len(context.trades)
+
+        wins = sum(
+            1
+            for trade in context.trades
+            if trade.outcome == TradeOutcome.WIN
+        )
+
+        losses = sum(
+            1
+            for trade in context.trades
+            if trade.outcome == TradeOutcome.LOSS
+        )
+
+        breakeven = sum(
+            1
+            for trade in context.trades
+            if trade.outcome == TradeOutcome.BREAKEVEN
+        )
+
+        win_rate = (wins / total * 100.0) if total > 0 else 0.0
+
+        profits = [
+            trade.profit_loss
+            for trade in context.trades
+            if trade.profit_loss > 0
+        ]
+
+        losses_list = [
+            trade.profit_loss
+            for trade in context.trades
+            if trade.profit_loss < 0
+        ]
+
+        average_profit = (
+            sum(profits) / len(profits)
+            if profits
+            else 0.0
+        )
+
+        average_loss = (
+            sum(losses_list) / len(losses_list)
+            if losses_list
+            else 0.0
+        )
+
+        return PerformanceMetrics(
+            total_trades=total,
+            wins=wins,
+            losses=losses,
+            breakeven=breakeven,
+            win_rate=win_rate,
+            average_profit=average_profit,
+            average_loss=average_loss,
+        )
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\performance\performance_models.py
+============================================================
+"""
+Project Phoenix
+Milestone M11 - Performance Feedback Engine
+
+Module:
+    performance_models.py
+
+Purpose:
+    Defines all core data models used by the Performance Feedback Engine.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Dict, Optional
+
+
+class TradeOutcome(Enum):
+    """
+    Final outcome of a completed trade.
+    """
+
+    WIN = "WIN"
+    LOSS = "LOSS"
+    BREAKEVEN = "BREAKEVEN"
+
+
+class PerformanceDecisionType(Enum):
+    """
+    Final decision produced by the Performance Engine.
+    """
+
+    ACCEPT = "ACCEPT"
+    REVIEW = "REVIEW"
+
+
+@dataclass
+class TradeResult:
+    """
+    Represents the result of a completed trade.
+    """
+
+    symbol: str
+
+    outcome: TradeOutcome
+
+    profit_loss: float
+
+    entry_price: float
+
+    exit_price: float
+
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class PerformanceMetrics:
+    """
+    Stores calculated performance statistics.
+    """
+
+    total_trades: int
+
+    wins: int
+
+    losses: int
+
+    breakeven: int
+
+    win_rate: float
+
+    average_profit: float
+
+    average_loss: float
+
+
+@dataclass
+class PerformanceContext:
+    """
+    Context required for performance analysis.
+    """
+
+    trades: list[TradeResult]
+
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class PerformanceDecision:
+    """
+    Final output of the Performance Engine.
+    """
+
+    decision: PerformanceDecisionType
+
+    metrics: PerformanceMetrics
+
+    approved: bool
+
+    reason: Optional[str] = None
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\performance\performance_validator.py
+============================================================
+"""
+Project Phoenix
+Milestone M11 - Performance Feedback Engine
+
+Module:
+    performance_validator.py
+
+Purpose:
+    Validates calculated performance metrics.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from performance.performance_models import PerformanceMetrics
+
+
+@dataclass
+class PerformanceValidationResult:
+    """
+    Result returned by the performance validator.
+    """
+
+    valid: bool
+
+    reason: str
+
+
+class PerformanceValidator:
+    """
+    Validates calculated performance metrics.
+    """
+
+    def validate(
+        self,
+        metrics: PerformanceMetrics,
+    ) -> PerformanceValidationResult:
+        """
+        Validate performance metrics.
+        """
+
+        if metrics.total_trades < 1:
+            return PerformanceValidationResult(
+                valid=False,
+                reason="No completed trades available.",
+            )
+
+        if not 0.0 <= metrics.win_rate <= 100.0:
+            return PerformanceValidationResult(
+                valid=False,
+                reason="Invalid win rate.",
+            )
+
+        return PerformanceValidationResult(
+            valid=True,
+            reason="Performance validation passed.",
+        )
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\risk\__init__.py
+============================================================
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\risk\risk_engine.py
+============================================================
+"""
+Project Phoenix
+Milestone M9 - Risk Management Engine
+
+Module:
+    risk_engine.py
+
+Purpose:
+    Coordinates the complete Risk Management Engine workflow.
+"""
+
+from __future__ import annotations
+
+from risk.risk_logger import RiskLogger
+from risk.risk_models import (
+    RiskContext,
+    RiskDecision,
+    TradeDecision,
+)
+from risk.risk_position import PositionSizer
+from risk.risk_stoploss import StopLossCalculator
+from risk.risk_takeprofit import TakeProfitCalculator
+from risk.risk_validator import RiskValidator
+
+
+class RiskEngine:
+    """
+    Main coordinator for the Risk Management Engine.
+    """
+
+    def __init__(self) -> None:
+        self.position_sizer = PositionSizer()
+        self.stoploss = StopLossCalculator()
+        self.takeprofit = TakeProfitCalculator()
+        self.validator = RiskValidator()
+        self.logger = RiskLogger()
+
+    def evaluate(self, context: RiskContext) -> RiskDecision:
+        """
+        Execute the complete risk workflow.
+        """
+
+        position = self.position_sizer.calculate(
+            account_balance=context.account_balance,
+            risk_percent=1.0,
+        )
+
+        entry_price = context.signal.metadata.get("entry_price", 250.0)
+
+        stop_loss = self.stoploss.calculate(
+            entry_price=entry_price,
+        )
+
+        take_profit = self.takeprofit.calculate(
+            entry_price=entry_price,
+            stop_loss_price=stop_loss.price,
+        )
+
+        decision = RiskDecision(
+            decision=TradeDecision.APPROVE,
+            position=position,
+            stop_loss=stop_loss,
+            take_profit=take_profit,
+            approved=True,
+            reason="Initial M9 placeholder decision.",
+        )
+
+        self.validator.validate(decision)
+
+        self.logger.log(decision)
+
+        return decision
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\risk\risk_logger.py
+============================================================
+"""
+Project Phoenix
+Milestone M9 - Risk Management Engine
+
+Module:
+    risk_logger.py
+
+Purpose:
+    Logs risk management decisions.
+"""
+
+from __future__ import annotations
+
+from risk.risk_models import RiskDecision
+
+
+class RiskLogger:
+    """
+    Logs risk decisions.
+
+    Current implementation prints the
+    decision to the console.
+    """
+
+    def log(
+        self,
+        decision: RiskDecision,
+    ) -> None:
+        """
+        Log the supplied risk decision.
+        """
+
+        print("===== Risk Decision =====")
+        print(f"Decision   : {decision.decision.value}")
+        print(f"Approved   : {decision.approved}")
+        print(f"Reason     : {decision.reason}")
+        print(f"Position   : {decision.position.quantity}")
+        print(f"Stop Loss  : {decision.stop_loss.price}")
+        print(f"Take Profit: {decision.take_profit.price}")
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\risk\risk_models.py
+============================================================
+"""
+Project Phoenix
+Milestone M9 - Risk Management Engine
+
+Module:
+    risk_models.py
+
+Purpose:
+    Defines all core data models used by the Risk Management Engine.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Dict, Optional
+
+from signals.signal_models import TradingSignal
+
+
+class TradeDecision(Enum):
+    """
+    Final decision produced by the Risk Engine.
+    """
+
+    APPROVE = "APPROVE"
+    REJECT = "REJECT"
+
+
+@dataclass
+class PositionSize:
+    """
+    Represents calculated position sizing.
+    """
+
+    quantity: float
+
+    capital_allocated: float
+
+    risk_percent: float
+
+
+@dataclass
+class StopLoss:
+    """
+    Represents stop-loss information.
+    """
+
+    price: float
+
+    reason: str = ""
+
+
+@dataclass
+class TakeProfit:
+    """
+    Represents take-profit information.
+    """
+
+    price: float
+
+    risk_reward_ratio: float = 2.0
+
+
+@dataclass
+class RiskContext:
+    """
+    Context required for risk calculations.
+    """
+
+    signal: TradingSignal
+
+    account_balance: float
+
+    symbol: str
+
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class RiskDecision:
+    """
+    Final output of the Risk Management Engine.
+    """
+
+    decision: TradeDecision
+
+    position: PositionSize
+
+    stop_loss: StopLoss
+
+    take_profit: TakeProfit
+
+    approved: bool
+
+    reason: Optional[str] = None
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\risk\risk_position.py
+============================================================
+"""
+Project Phoenix
+Milestone M9 - Risk Management Engine
+
+Module:
+    risk_position.py
+
+Purpose:
+    Calculates position sizing for approved trading signals.
+"""
+
+from __future__ import annotations
+
+from risk.risk_models import PositionSize
+
+
+class PositionSizer:
+    """
+    Calculates the position size based on account balance
+    and risk percentage.
+    """
+
+    def calculate(
+        self,
+        account_balance: float,
+        risk_percent: float = 1.0
+    ) -> PositionSize:
+        """
+        Calculate position size.
+
+        Placeholder implementation:
+        Allocates the requested percentage of account balance.
+        """
+
+        capital = account_balance * (risk_percent / 100)
+
+        quantity = capital
+
+        return PositionSize(
+            quantity=quantity,
+            capital_allocated=capital,
+            risk_percent=risk_percent,
+        )
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\risk\risk_stoploss.py
+============================================================
+"""
+Project Phoenix
+Milestone M9 - Risk Management Engine
+
+Module:
+    risk_stoploss.py
+
+Purpose:
+    Calculates stop-loss levels for trading signals.
+"""
+
+from __future__ import annotations
+
+from risk.risk_models import StopLoss
+
+
+class StopLossCalculator:
+    """
+    Calculates the stop-loss level.
+
+    Current implementation uses a simple placeholder
+    percentage-based calculation.
+    """
+
+    def calculate(
+        self,
+        entry_price: float,
+        stop_loss_percent: float = 2.0,
+    ) -> StopLoss:
+        """
+        Calculate stop-loss price.
+
+        Placeholder:
+        Stop-loss = Entry Price - Percentage
+        """
+
+        stop_price = entry_price * (1 - stop_loss_percent / 100)
+
+        return StopLoss(
+            price=stop_price,
+            reason="Default percentage-based stop-loss.",
+        )
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\risk\risk_takeprofit.py
+============================================================
+"""
+Project Phoenix
+Milestone M9 - Risk Management Engine
+
+Module:
+    risk_takeprofit.py
+
+Purpose:
+    Calculates take-profit levels for trading signals.
+"""
+
+from __future__ import annotations
+
+from risk.risk_models import TakeProfit
+
+
+class TakeProfitCalculator:
+    """
+    Calculates the take-profit level.
+
+    Current implementation uses a configurable
+    Risk:Reward ratio.
+    """
+
+    def calculate(
+        self,
+        entry_price: float,
+        stop_loss_price: float,
+        risk_reward_ratio: float = 2.0,
+    ) -> TakeProfit:
+        """
+        Calculate take-profit price.
+
+        Placeholder:
+        Take Profit = Entry + (Risk × RR Ratio)
+        """
+
+        risk = entry_price - stop_loss_price
+
+        take_profit_price = entry_price + (risk * risk_reward_ratio)
+
+        return TakeProfit(
+            price=take_profit_price,
+            risk_reward_ratio=risk_reward_ratio,
+        )
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\risk\risk_validator.py
+============================================================
+"""
+Project Phoenix
+Milestone M9 - Risk Management Engine
+
+Module:
+    risk_validator.py
+
+Purpose:
+    Validates whether a calculated risk decision
+    satisfies the minimum trading requirements.
+"""
+
+from __future__ import annotations
+
+from risk.risk_models import RiskDecision
+
+
+class RiskValidator:
+    """
+    Performs validation of risk decisions.
+    """
+
+    def validate(
+        self,
+        decision: RiskDecision,
+    ) -> bool:
+        """
+        Validate the supplied risk decision.
+
+        Current placeholder logic:
+        A trade is valid if it has been approved.
+        """
+
+        return decision.approved
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\signals\__init__.py
+============================================================
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\signals\signal_filters.py
+============================================================
+"""
+Project Phoenix
+Milestone M8 - Signal Generation Engine
+
+Module:
+    signal_filters.py
+
+Purpose:
+    Filters trading signals before they are released.
+
+Responsibilities:
+    - Apply signal filters
+    - Accept or reject signals
+"""
+
+from __future__ import annotations
+
+from signals.signal_models import TradingSignal, FilterResult
+
+
+class SignalFilter:
+    """
+    Applies basic filtering to trading signals.
+    """
+
+    def filter(self, signal: TradingSignal) -> FilterResult:
+        """
+        Apply signal filters.
+
+        Returns:
+            FilterResult
+        """
+
+        if signal.signal.name == "HOLD":
+            return FilterResult(
+                accepted=False,
+                reason="HOLD signals are filtered."
+            )
+
+        return FilterResult(
+            accepted=True,
+            reason="Signal accepted."
+        )
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\signals\signal_generator.py
+============================================================
+"""
+Project Phoenix
+Milestone M8 - Signal Generation Engine
+
+Module:
+    signal_generator.py
+
+Purpose:
+    Coordinates all Signal Engine modules.
+
+Responsibilities:
+    - Generate trading signals
+    - Validate signals
+    - Filter signals
+    - Log signals
+"""
+
+from __future__ import annotations
+
+from signals.signal_models import TradingSignal, SignalType
+from signals.signal_validator import SignalValidator
+from signals.signal_filters import SignalFilter
+from signals.signal_logger import SignalLogger
+
+
+class SignalGenerator:
+    """
+    Main Signal Generation Engine.
+    """
+
+    def __init__(self) -> None:
+        self.validator = SignalValidator()
+        self.filter = SignalFilter()
+        self.logger = SignalLogger()
+
+    def generate(self) -> TradingSignal:
+        """
+        Generate a trading signal.
+        """
+
+        signal = TradingSignal(
+            signal=SignalType.BUY,
+            strength=0.80,
+            confidence=0.90,
+            reason="Initial M8 placeholder signal."
+        )
+
+        validation = self.validator.validate(signal)
+
+        if not validation.valid:
+            raise ValueError(validation.reason)
+
+        filtered = self.filter.filter(signal)
+
+        if not filtered.accepted:
+            raise ValueError(filtered.reason)
+
+        self.logger.log(signal)
+
+        return signal
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\signals\signal_logger.py
+============================================================
+"""
+Project Phoenix
+Milestone M8 - Signal Generation Engine
+
+Module:
+    signal_logger.py
+
+Purpose:
+    Logs generated trading signals.
+
+Responsibilities:
+    - Log signal details
+    - Provide a central logging point for the Signal Engine
+"""
+
+from __future__ import annotations
+
+from signals.signal_models import TradingSignal
+
+
+class SignalLogger:
+    """
+    Simple logger for trading signals.
+    """
+
+    def log(self, signal: TradingSignal) -> None:
+        """
+        Log a trading signal.
+        """
+
+        print("===== Trading Signal =====")
+        print(f"Signal     : {signal.signal.value}")
+        print(f"Strength   : {signal.strength}")
+        print(f"Confidence : {signal.confidence}")
+        print(f"Reason     : {signal.reason}")
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\signals\signal_models.py
+============================================================
+"""
+Project Phoenix
+Milestone M8 - Signal Generation Engine
+
+Module:
+    signal_models.py
+
+Purpose:
+    Defines all core data models used by the Signal Generation Engine.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
+
+class SignalType(Enum):
+    """
+    Final trading signal produced by the Signal Engine.
+    """
+
+    BUY = "BUY"
+    SELL = "SELL"
+    HOLD = "HOLD"
+
+
+class RuleDirection(Enum):
+    """
+    Direction returned by an individual trading rule.
+    """
+
+    BULLISH = "BULLISH"
+    BEARISH = "BEARISH"
+    NEUTRAL = "NEUTRAL"
+
+
+@dataclass
+class RuleResult:
+    """
+    Result produced by a single trading rule.
+    """
+
+    rule_name: str
+    direction: RuleDirection
+    strength: float
+    passed: bool
+    reason: Optional[str] = None
+
+
+@dataclass
+class TradingSignal:
+    """
+    Final trading signal generated by the Signal Engine.
+    """
+
+    signal: SignalType
+    strength: float
+    confidence: float
+
+    rules: List[RuleResult] = field(default_factory=list)
+
+    reason: str = ""
+
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class SignalContext:
+    """
+    Context information used while generating a signal.
+    """
+
+    symbol: str
+    timeframe: str
+
+    price: float = 0.0
+
+    indicators: Dict[str, Any] = field(default_factory=dict)
+
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class ValidationResult:
+    """
+    Result returned by the signal validator.
+    """
+
+    valid: bool
+
+    score: float = 0.0
+
+    reason: Optional[str] = None
+
+
+@dataclass
+class FilterResult:
+    """
+    Result returned by the signal filter stage.
+    """
+
+    accepted: bool
+
+    reason: Optional[str] = None
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\signals\signal_rules.py
+============================================================
+"""
+Project Phoenix
+Milestone M8 - Signal Generation Engine
+
+Module:
+    signal_rules.py
+
+Purpose:
+    Evaluates trading rules and produces RuleResult objects.
+"""
+
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+
+from signals.signal_models import RuleResult, RuleDirection
+
+
+class BaseRule(ABC):
+    """
+    Abstract base class for all trading rules.
+    """
+
+    @abstractmethod
+    def evaluate(self) -> RuleResult:
+        """
+        Evaluate the trading rule.
+        """
+        pass
+
+
+class AlwaysHoldRule(BaseRule):
+    """
+    Default placeholder rule.
+
+    Always returns a neutral signal.
+    """
+
+    def evaluate(self) -> RuleResult:
+        return RuleResult(
+            rule_name="AlwaysHoldRule",
+            direction=RuleDirection.NEUTRAL,
+            strength=0.0,
+            passed=True,
+            reason="Default placeholder rule."
+        )
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\signals\signal_strength.py
+============================================================
+"""
+Project Phoenix
+Milestone M8 - Signal Generation Engine
+
+Module:
+    signal_strength.py
+
+Purpose:
+    Calculates overall signal strength from rule results.
+"""
+
+from __future__ import annotations
+
+from typing import List
+
+from signals.signal_models import RuleResult
+
+
+class SignalStrengthCalculator:
+    """
+    Calculates overall signal strength.
+    """
+
+    def calculate(self, rules: List[RuleResult]) -> float:
+        """
+        Returns average strength of all passed rules.
+
+        Returns:
+            float
+        """
+
+        passed_rules = [rule for rule in rules if rule.passed]
+
+        if not passed_rules:
+            return 0.0
+
+        total_strength = sum(rule.strength for rule in passed_rules)
+
+        return total_strength / len(passed_rules)
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\signals\signal_validator.py
+============================================================
+"""
+Project Phoenix
+Milestone M8 - Signal Generation Engine
+
+Module:
+    signal_validator.py
+
+Purpose:
+    Validates generated trading signals before they are released.
+
+Responsibilities:
+    - Validate signal strength
+    - Validate confidence
+    - Return ValidationResult
+"""
+
+from __future__ import annotations
+
+from signals.signal_models import TradingSignal, ValidationResult
+
+
+class SignalValidator:
+    """
+    Validates TradingSignal objects.
+    """
+
+    def __init__(
+        self,
+        min_strength: float = 0.50,
+        min_confidence: float = 0.50,
+    ):
+        self.min_strength = min_strength
+        self.min_confidence = min_confidence
+
+    def validate(self, signal: TradingSignal) -> ValidationResult:
+        """
+        Validate a trading signal.
+        """
+
+        if signal.strength < self.min_strength:
+            return ValidationResult(
+                valid=False,
+                reason="Signal strength below minimum threshold."
+            )
+
+        if signal.confidence < self.min_confidence:
+            return ValidationResult(
+                valid=False,
+                reason="Signal confidence below minimum threshold."
+            )
+
+        return ValidationResult(
+            valid=True,
+            reason="Signal validation passed."
+        )
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\tests\__init__.py
+============================================================
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\tests\test_execution_engine.py
+============================================================
+"""
+Test for execution_engine.py
+"""
+
+from execution.execution_engine import ExecutionEngine
+from risk.risk_models import (
+    PositionSize,
+    RiskDecision,
+    StopLoss,
+    TakeProfit,
+    TradeDecision,
+)
+
+decision = RiskDecision(
+    decision=TradeDecision.APPROVE,
+    position=PositionSize(
+        quantity=0.10,
+        capital_allocated=1000.0,
+        risk_percent=1.0,
+    ),
+    stop_loss=StopLoss(
+        price=3345.0,
+        reason="Test stop-loss",
+    ),
+    take_profit=TakeProfit(
+        price=3360.0,
+        risk_reward_ratio=2.0,
+    ),
+    approved=True,
+    reason="Risk approved.",
+)
+
+engine = ExecutionEngine()
+
+result = engine.execute(decision)
+
+print()
+print("===== Execution Engine Test =====")
+print(f"Status    : {result.status.value}")
+print(f"Approved  : {result.approved}")
+print(f"Reason    : {result.reason}")
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\tests\test_execution_logger.py
+============================================================
+"""
+Test for execution_logger.py
+"""
+
+from execution.execution_logger import ExecutionLogger
+from execution.execution_models import (
+    ExecutionDecision,
+    ExecutionStatus,
+    OrderRequest,
+    OrderSide,
+    OrderType,
+)
+
+order = OrderRequest(
+    symbol="XAUUSD",
+    side=OrderSide.BUY,
+    order_type=OrderType.MARKET,
+    volume=0.10,
+    entry_price=3350.0,
+    stop_loss=3345.0,
+    take_profit=3360.0,
+)
+
+decision = ExecutionDecision(
+    status=ExecutionStatus.READY,
+    order=order,
+    approved=True,
+    reason="Execution validation passed.",
+)
+
+logger = ExecutionLogger()
+
+logger.log(decision)
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\tests\test_execution_models.py
+============================================================
+"""
+Test for execution_models.py
+"""
+
+from execution.execution_models import (
+    ExecutionDecision,
+    ExecutionStatus,
+    OrderRequest,
+    OrderSide,
+    OrderType,
+)
+
+order = OrderRequest(
+    symbol="XAUUSD",
+    side=OrderSide.BUY,
+    order_type=OrderType.MARKET,
+    volume=0.10,
+    entry_price=3350.00,
+    stop_loss=3345.00,
+    take_profit=3360.00,
+)
+
+decision = ExecutionDecision(
+    status=ExecutionStatus.READY,
+    order=order,
+    approved=True,
+    reason="Initial M10 placeholder execution.",
+)
+
+print("===== Execution Models Test =====")
+print(f"Symbol      : {decision.order.symbol}")
+print(f"Side        : {decision.order.side.value}")
+print(f"Order Type  : {decision.order.order_type.value}")
+print(f"Volume      : {decision.order.volume}")
+print(f"Status      : {decision.status.value}")
+print(f"Approved    : {decision.approved}")
+print(f"Reason      : {decision.reason}")
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\tests\test_execution_rules.py
+============================================================
+"""
+Test for execution_rules.py
+"""
+
+from execution.execution_rules import ExecutionRules
+from risk.risk_models import (
+    PositionSize,
+    RiskDecision,
+    StopLoss,
+    TakeProfit,
+    TradeDecision,
+)
+
+decision = RiskDecision(
+    decision=TradeDecision.APPROVE,
+    position=PositionSize(
+        quantity=0.10,
+        capital_allocated=1000.0,
+        risk_percent=1.0,
+    ),
+    stop_loss=StopLoss(
+        price=3345.0,
+        reason="Test stop-loss",
+    ),
+    take_profit=TakeProfit(
+        price=3360.0,
+        risk_reward_ratio=2.0,
+    ),
+    approved=True,
+    reason="Risk approved.",
+)
+
+engine = ExecutionRules()
+
+order = engine.create_order(decision)
+
+print("===== Execution Rules Test =====")
+print(f"Symbol      : {order.symbol}")
+print(f"Side        : {order.side.value}")
+print(f"Order Type  : {order.order_type.value}")
+print(f"Volume      : {order.volume}")
+print(f"Stop Loss   : {order.stop_loss}")
+print(f"Take Profit : {order.take_profit}")
+print(f"Comment     : {order.comment}")
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\tests\test_execution_validator.py
+============================================================
+"""
+Test for execution_validator.py
+"""
+
+from execution.execution_models import (
+    OrderRequest,
+    OrderSide,
+    OrderType,
+)
+from execution.execution_validator import ExecutionValidator
+
+order = OrderRequest(
+    symbol="XAUUSD",
+    side=OrderSide.BUY,
+    order_type=OrderType.MARKET,
+    volume=0.10,
+    entry_price=3350.0,
+    stop_loss=3345.0,
+    take_profit=3360.0,
+)
+
+validator = ExecutionValidator()
+
+result = validator.validate(order)
+
+print("===== Execution Validator Test =====")
+print(f"Valid  : {result.valid}")
+print(f"Reason : {result.reason}")
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\tests\test_performance_analyzer.py
+============================================================
+"""
+Test for performance_analyzer.py
+"""
+
+from performance.performance_analyzer import PerformanceAnalyzer
+from performance.performance_models import (
+    PerformanceContext,
+    TradeOutcome,
+    TradeResult,
+)
+
+trades = [
+    TradeResult(
+        symbol="XAUUSD",
+        outcome=TradeOutcome.WIN,
+        profit_loss=150.0,
+        entry_price=3350.0,
+        exit_price=3365.0,
+    ),
+    TradeResult(
+        symbol="XAUUSD",
+        outcome=TradeOutcome.LOSS,
+        profit_loss=-75.0,
+        entry_price=3365.0,
+        exit_price=3358.0,
+    ),
+    TradeResult(
+        symbol="XAUUSD",
+        outcome=TradeOutcome.WIN,
+        profit_loss=100.0,
+        entry_price=3370.0,
+        exit_price=3380.0,
+    ),
+]
+
+context = PerformanceContext(
+    trades=trades,
+)
+
+analyzer = PerformanceAnalyzer()
+
+metrics = analyzer.analyze(context)
+
+print("===== Performance Analyzer Test =====")
+print(f"Total Trades   : {metrics.total_trades}")
+print(f"Wins           : {metrics.wins}")
+print(f"Losses         : {metrics.losses}")
+print(f"Win Rate       : {metrics.win_rate:.2f}%")
+print(f"Average Profit : {metrics.average_profit}")
+print(f"Average Loss   : {metrics.average_loss}")
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\tests\test_performance_engine.py
+============================================================
+"""
+Test for performance_engine.py
+"""
+
+from performance.performance_engine import PerformanceEngine
+from performance.performance_models import (
+    PerformanceContext,
+    TradeOutcome,
+    TradeResult,
+)
+
+trades = [
+    TradeResult(
+        symbol="XAUUSD",
+        outcome=TradeOutcome.WIN,
+        profit_loss=150.0,
+        entry_price=3350.0,
+        exit_price=3365.0,
+    ),
+    TradeResult(
+        symbol="XAUUSD",
+        outcome=TradeOutcome.LOSS,
+        profit_loss=-75.0,
+        entry_price=3365.0,
+        exit_price=3358.0,
+    ),
+    TradeResult(
+        symbol="XAUUSD",
+        outcome=TradeOutcome.WIN,
+        profit_loss=100.0,
+        entry_price=3370.0,
+        exit_price=3380.0,
+    ),
+]
+
+context = PerformanceContext(
+    trades=trades,
+)
+
+engine = PerformanceEngine()
+
+decision = engine.evaluate(context)
+
+print()
+print("===== Performance Engine Test =====")
+print(f"Decision     : {decision.decision.value}")
+print(f"Approved     : {decision.approved}")
+print(f"Win Rate     : {decision.metrics.win_rate:.2f}%")
+print(f"Reason       : {decision.reason}")
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\tests\test_performance_logger.py
+============================================================
+"""
+Test for performance_logger.py
+"""
+
+from performance.performance_logger import PerformanceLogger
+from performance.performance_models import PerformanceMetrics
+
+metrics = PerformanceMetrics(
+    total_trades=10,
+    wins=7,
+    losses=2,
+    breakeven=1,
+    win_rate=70.0,
+    average_profit=120.0,
+    average_loss=-60.0,
+)
+
+logger = PerformanceLogger()
+
+logger.log(metrics)
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\tests\test_performance_metrics.py
+============================================================
+"""
+Test for performance_metrics.py
+"""
+
+from performance.performance_metrics import PerformanceMetricsCalculator
+from performance.performance_models import (
+    PerformanceContext,
+    TradeOutcome,
+    TradeResult,
+)
+
+trades = [
+    TradeResult(
+        symbol="XAUUSD",
+        outcome=TradeOutcome.WIN,
+        profit_loss=150.0,
+        entry_price=3350.0,
+        exit_price=3365.0,
+    ),
+    TradeResult(
+        symbol="XAUUSD",
+        outcome=TradeOutcome.LOSS,
+        profit_loss=-75.0,
+        entry_price=3365.0,
+        exit_price=3358.0,
+    ),
+    TradeResult(
+        symbol="XAUUSD",
+        outcome=TradeOutcome.WIN,
+        profit_loss=100.0,
+        entry_price=3370.0,
+        exit_price=3380.0,
+    ),
+]
+
+context = PerformanceContext(
+    trades=trades,
+)
+
+calculator = PerformanceMetricsCalculator()
+
+metrics = calculator.calculate(context)
+
+print("===== Performance Metrics Test =====")
+print(f"Total Trades   : {metrics.total_trades}")
+print(f"Wins           : {metrics.wins}")
+print(f"Losses         : {metrics.losses}")
+print(f"Breakeven      : {metrics.breakeven}")
+print(f"Win Rate       : {metrics.win_rate:.2f}%")
+print(f"Average Profit : {metrics.average_profit}")
+print(f"Average Loss   : {metrics.average_loss}")
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\tests\test_performance_models.py
+============================================================
+"""
+Test for performance_models.py
+"""
+
+from performance.performance_models import (
+    PerformanceDecision,
+    PerformanceDecisionType,
+    PerformanceMetrics,
+    TradeOutcome,
+    TradeResult,
+)
+
+trade = TradeResult(
+    symbol="XAUUSD",
+    outcome=TradeOutcome.WIN,
+    profit_loss=150.0,
+    entry_price=3350.0,
+    exit_price=3365.0,
+)
+
+metrics = PerformanceMetrics(
+    total_trades=10,
+    wins=7,
+    losses=2,
+    breakeven=1,
+    win_rate=70.0,
+    average_profit=120.0,
+    average_loss=-60.0,
+)
+
+decision = PerformanceDecision(
+    decision=PerformanceDecisionType.ACCEPT,
+    metrics=metrics,
+    approved=True,
+    reason="Initial M11 placeholder performance.",
+)
+
+print("===== Performance Models Test =====")
+print(f"Symbol          : {trade.symbol}")
+print(f"Outcome         : {trade.outcome.value}")
+print(f"Profit/Loss     : {trade.profit_loss}")
+print(f"Total Trades    : {metrics.total_trades}")
+print(f"Win Rate        : {metrics.win_rate}%")
+print(f"Decision        : {decision.decision.value}")
+print(f"Approved        : {decision.approved}")
+print(f"Reason          : {decision.reason}")
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\tests\test_performance_validator.py
+============================================================
+"""
+Test for performance_validator.py
+"""
+
+from performance.performance_models import PerformanceMetrics
+from performance.performance_validator import PerformanceValidator
+
+metrics = PerformanceMetrics(
+    total_trades=10,
+    wins=7,
+    losses=2,
+    breakeven=1,
+    win_rate=70.0,
+    average_profit=120.0,
+    average_loss=-60.0,
+)
+
+validator = PerformanceValidator()
+
+result = validator.validate(metrics)
+
+print("===== Performance Validator Test =====")
+print(f"Valid  : {result.valid}")
+print(f"Reason : {result.reason}")
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\tests\test_risk_engine.py
+============================================================
+"""
+Test for risk_engine.py
+"""
+
+from risk.risk_engine import RiskEngine
+from risk.risk_models import RiskContext
+from signals.signal_models import SignalType, TradingSignal
+
+signal = TradingSignal(
+    signal=SignalType.BUY,
+    strength=0.8,
+    confidence=0.9,
+    reason="Test signal",
+    metadata={
+        "entry_price": 250.0,
+    },
+)
+
+context = RiskContext(
+    signal=signal,
+    account_balance=100000,
+    symbol="RELIANCE",
+)
+
+engine = RiskEngine()
+
+decision = engine.evaluate(context)
+
+print()
+print("===== Risk Engine Test =====")
+print(f"Decision : {decision.decision.value}")
+print(f"Approved : {decision.approved}")
+print(f"Reason   : {decision.reason}")
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\tests\test_risk_logger.py
+============================================================
+"""
+Test for risk_logger.py
+"""
+
+from risk.risk_logger import RiskLogger
+from risk.risk_models import (
+    PositionSize,
+    RiskDecision,
+    StopLoss,
+    TakeProfit,
+    TradeDecision,
+)
+
+decision = RiskDecision(
+    decision=TradeDecision.APPROVE,
+    position=PositionSize(
+        quantity=100,
+        capital_allocated=1000,
+        risk_percent=1.0,
+    ),
+    stop_loss=StopLoss(
+        price=245.0,
+        reason="Default stop-loss",
+    ),
+    take_profit=TakeProfit(
+        price=260.0,
+        risk_reward_ratio=2.0,
+    ),
+    approved=True,
+    reason="Risk validation passed.",
+)
+
+logger = RiskLogger()
+
+logger.log(decision)
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\tests\test_risk_position.py
+============================================================
+"""
+Test for risk_position.py
+"""
+
+from risk.risk_position import PositionSizer
+
+
+sizer = PositionSizer()
+
+position = sizer.calculate(
+    account_balance=100000,
+    risk_percent=1.0,
+)
+
+print("===== Position Size Test =====")
+print(f"Quantity          : {position.quantity}")
+print(f"Capital Allocated : {position.capital_allocated}")
+print(f"Risk %            : {position.risk_percent}")
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\tests\test_risk_stoploss.py
+============================================================
+"""
+Test for risk_stoploss.py
+"""
+
+from risk.risk_stoploss import StopLossCalculator
+
+
+calculator = StopLossCalculator()
+
+result = calculator.calculate(
+    entry_price=250.0,
+    stop_loss_percent=2.0,
+)
+
+print("===== Stop Loss Test =====")
+print(f"Entry Price : 250.0")
+print(f"Stop Loss   : {result.price}")
+print(f"Reason      : {result.reason}")
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\tests\test_risk_takeprofit.py
+============================================================
+"""
+Test for risk_takeprofit.py
+"""
+
+from risk.risk_takeprofit import TakeProfitCalculator
+
+
+calculator = TakeProfitCalculator()
+
+result = calculator.calculate(
+    entry_price=250.0,
+    stop_loss_price=245.0,
+    risk_reward_ratio=2.0,
+)
+
+print("===== Take Profit Test =====")
+print(f"Entry Price    : 250.0")
+print(f"Stop Loss      : 245.0")
+print(f"Take Profit    : {result.price}")
+print(f"Risk : Reward  : 1 : {result.risk_reward_ratio}")
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\tests\test_risk_validator.py
+============================================================
+"""
+Test for risk_validator.py
+"""
+
+from risk.risk_models import (
+    PositionSize,
+    RiskDecision,
+    StopLoss,
+    TakeProfit,
+    TradeDecision,
+)
+from risk.risk_validator import RiskValidator
+
+
+decision = RiskDecision(
+    decision=TradeDecision.APPROVE,
+    position=PositionSize(
+        quantity=100,
+        capital_allocated=1000,
+        risk_percent=1.0,
+    ),
+    stop_loss=StopLoss(
+        price=245.0,
+        reason="Test stop-loss",
+    ),
+    take_profit=TakeProfit(
+        price=260.0,
+        risk_reward_ratio=2.0,
+    ),
+    approved=True,
+    reason="Risk validation passed.",
+)
+
+validator = RiskValidator()
+
+result = validator.validate(decision)
+
+print("===== Risk Validator Test =====")
+print(f"Approved : {decision.approved}")
+print(f"Valid    : {result}")
+print(f"Reason   : {decision.reason}")
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\tests\test_signal_filters.py
+============================================================
+from signals.signal_models import (
+    TradingSignal,
+    SignalType,
+)
+
+from signals.signal_filters import SignalFilter
+
+
+signal = TradingSignal(
+    signal=SignalType.BUY,
+    strength=0.80,
+    confidence=0.90,
+)
+
+filter_engine = SignalFilter()
+
+result = filter_engine.filter(signal)
+
+print("===== Filter Test =====")
+print("Accepted :", result.accepted)
+print("Reason   :", result.reason)
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\tests\test_signal_generator.py
+============================================================
+from signals.signal_generator import SignalGenerator
+
+
+generator = SignalGenerator()
+
+signal = generator.generate()
+
+print("\n===== Generator Test =====")
+print("Final Signal :", signal.signal.value)
+print("Strength     :", signal.strength)
+print("Confidence   :", signal.confidence)
+print("Reason       :", signal.reason)
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\tests\test_signal_logger.py
+============================================================
+from signals.signal_models import (
+    TradingSignal,
+    SignalType,
+)
+
+from signals.signal_logger import SignalLogger
+
+
+signal = TradingSignal(
+    signal=SignalType.BUY,
+    strength=0.80,
+    confidence=0.92,
+    reason="Test signal."
+)
+
+logger = SignalLogger()
+
+logger.log(signal)
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\tests\test_signal_rules.py
+============================================================
+"""
+Project Phoenix
+M8 Test - signal_rules.py
+"""
+
+from signals.signal_rules import AlwaysHoldRule
+
+
+def main():
+    rule = AlwaysHoldRule()
+
+    result = rule.evaluate()
+
+    print("===== Rule Test =====")
+    print(f"Rule Name : {result.rule_name}")
+    print(f"Direction : {result.direction.name}")
+    print(f"Strength  : {result.strength}")
+    print(f"Passed    : {result.passed}")
+    print(f"Reason    : {result.reason}")
+
+
+if __name__ == "__main__":
+    main()
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\tests\test_signal_strength.py
+============================================================
+from signals.signal_models import RuleDirection, RuleResult
+from signals.signal_strength import SignalStrengthCalculator
+
+
+calculator = SignalStrengthCalculator()
+
+rules = [
+    RuleResult(
+        rule_name="Rule1",
+        direction=RuleDirection.BULLISH,
+        strength=0.80,
+        passed=True,
+    ),
+    RuleResult(
+        rule_name="Rule2",
+        direction=RuleDirection.BULLISH,
+        strength=0.60,
+        passed=True,
+    ),
+    RuleResult(
+        rule_name="Rule3",
+        direction=RuleDirection.NEUTRAL,
+        strength=0.40,
+        passed=False,
+    ),
+]
+
+strength = calculator.calculate(rules)
+
+print("===== Strength Test =====")
+print("Signal Strength :", strength)
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\tests\test_signal_validator.py
+============================================================
+from signals.signal_models import (
+    TradingSignal,
+    SignalType,
+)
+
+from signals.signal_validator import SignalValidator
+
+
+signal = TradingSignal(
+    signal=SignalType.BUY,
+    strength=0.80,
+    confidence=0.90,
+)
+
+validator = SignalValidator()
+
+result = validator.validate(signal)
+
+print("===== Validator Test =====")
+print("Valid  :", result.valid)
+print("Reason :", result.reason)
+
+

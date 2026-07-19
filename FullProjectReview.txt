@@ -1,0 +1,4323 @@
+============================================================
+FILE: C:\Projects\ProjectPhoenix\core\__init__.py
+============================================================
+"""
+=================================================
+Project Phoenix
+Core Package
+=================================================
+
+This package contains the core components used
+throughout the Project Phoenix trading system.
+
+Modules:
+    - config
+    - logger
+"""
+
+__version__ = "1.0.0"
+__author__ = "Dhruv Chavda"
+__project__ = "Project Phoenix"
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\core\config.py
+============================================================
+"""
+=================================================
+Project Phoenix
+Configuration Manager
+=================================================
+
+Responsible for:
+- Loading environment variables
+- Reading YAML configuration
+- Validating project settings
+"""
+
+from pathlib import Path
+
+from dotenv import load_dotenv
+import yaml
+
+# -------------------------------------------------
+# Project Root Directory
+# -------------------------------------------------
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+CONFIG_DIR = PROJECT_ROOT / "config"
+
+# -------------------------------------------------
+# Configuration Manager
+# -------------------------------------------------
+
+
+class Config:
+    """
+    Central configuration manager for Project Phoenix.
+    """
+
+    def __init__(self):
+        """Initialize configuration."""
+        self.project_root = PROJECT_ROOT
+        self.config_dir = CONFIG_DIR
+
+        self.env_loaded = False
+        self.settings = {}
+
+    def load_environment(self):
+        """
+        Load environment variables from .env file.
+        """
+
+        env_file = self.project_root / ".env"
+
+        if env_file.exists():
+            load_dotenv(env_file)
+            self.env_loaded = True
+        else:
+            print("WARNING: .env file not found.")
+
+    def load_settings(self):
+        """
+        Load settings from YAML configuration file.
+        """
+
+        settings_file = self.config_dir / "settings.yaml"
+
+        if not settings_file.exists():
+            raise FileNotFoundError(
+                f"Configuration file not found: {settings_file}"
+            )
+
+        with open(settings_file, "r", encoding="utf-8") as file:
+            self.settings = yaml.safe_load(file) or {}
+
+    def validate(self):
+        """
+        Validate loaded configuration.
+        """
+
+        if not self.env_loaded:
+            print("WARNING: Environment variables are not loaded.")
+
+        if not isinstance(self.settings, dict):
+            raise TypeError(
+                "Settings must be a dictionary."
+            )
+
+        return True
+
+
+# -------------------------------------------------
+# Global Configuration Instance
+# -------------------------------------------------
+
+config = Config()
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\core\core\config.py
+============================================================
+"""
+=================================================
+Project Phoenix
+Configuration Manager
+=================================================
+
+Responsible for:
+- Loading environment variables
+- Reading YAML configuration
+- Validating project settings
+"""
+
+from pathlib import Path
+from dotenv import load_dotenv
+import os
+import yaml
+
+# -------------------------------------------------
+# Project Root Directory
+# -------------------------------------------------
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+CONFIG_DIR = PROJECT_ROOT / "config"
+# -------------------------------------------------
+# Configuration Manager
+# -------------------------------------------------
+
+class Config:
+    """
+    Central configuration manager for Project Phoenix.
+    """
+
+    def __init__(self):
+        """Initialize configuration."""
+        self.project_root = PROJECT_ROOT
+        self.config_dir = CONFIG_DIR
+
+        self.env_loaded = False
+        self.settings = {}
+
+    def load_environment(self):
+        """
+        Load environment variables from .env file.
+        """
+
+        env_file = self.project_root / ".env"
+
+        if env_file.exists():
+            load_dotenv(env_file)
+            self.env_loaded = True
+        else:
+            print("WARNING: .env file not found.")
+
+    def load_settings(self):
+        """
+        Load settings from YAML configuration file.
+        """
+
+        settings_file = self.config_dir / "settings.yaml"
+
+        if not settings_file.exists():
+            raise FileNotFoundError(
+                f"Configuration file not found: {settings_file}"
+            )
+
+        with open(settings_file, "r", encoding="utf-8") as file:
+            self.settings = yaml.safe_load(file) or {}
+            
+    def validate(self):
+        """
+        Validate loaded configuration.
+        """
+
+        if not self.env_loaded:
+            raise RuntimeError(
+                "Environment variables are not loaded."
+            )
+
+        if not isinstance(self.settings, dict):
+            raise TypeError(
+                "Settings must be a dictionary."
+            )
+
+        return True
+# -------------------------------------------------
+# Global Configuration Instance
+# -------------------------------------------------
+
+config = Config()
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\core\logger.py
+============================================================
+"""
+=================================================
+Project Phoenix
+Central Logging System
+=================================================
+
+Responsible for:
+
+- Console logging
+- File logging
+- Error logging
+- Application logging
+"""
+
+import logging
+
+from core.config import PROJECT_ROOT
+
+# -------------------------------------------------
+# Logger Manager
+# -------------------------------------------------
+
+
+class LoggerManager:
+    """
+    Central logging manager for Project Phoenix.
+    """
+
+    def __init__(self):
+        """Initialize the logger manager."""
+
+        self.logger = None
+
+    def setup_console_logger(self):
+        """
+        Configure console logger.
+        """
+
+        self.logger = logging.getLogger("ProjectPhoenix")
+        self.logger.setLevel(logging.INFO)
+
+        if not self.logger.handlers:
+
+            console_handler = logging.StreamHandler()
+
+            formatter = logging.Formatter(
+                "%(asctime)s | %(levelname)s | %(message)s"
+            )
+
+            console_handler.setFormatter(formatter)
+
+            self.logger.addHandler(console_handler)
+
+        return self.logger
+
+    def setup_file_logger(self):
+        """
+        Configure file logger.
+        """
+
+        log_dir = PROJECT_ROOT / "logs"
+        log_dir.mkdir(exist_ok=True)
+
+        log_file = log_dir / "project_phoenix.log"
+
+        file_exists = any(
+            isinstance(handler, logging.FileHandler)
+            for handler in self.logger.handlers
+        )
+
+        if not file_exists:
+
+            file_handler = logging.FileHandler(
+                log_file,
+                encoding="utf-8"
+            )
+
+            formatter = logging.Formatter(
+                "%(asctime)s | %(levelname)s | %(message)s"
+            )
+
+            file_handler.setFormatter(formatter)
+
+            self.logger.addHandler(file_handler)
+
+        return self.logger
+
+    def initialize(self):
+        """
+        Initialize logging only once.
+        """
+
+        if self.logger is not None:
+            return self.logger
+
+        self.setup_console_logger()
+        self.setup_file_logger()
+
+        self.logger.info(
+            "Logging system initialized successfully."
+        )
+
+        return self.logger
+
+
+# -------------------------------------------------
+# Global Logger Manager
+# -------------------------------------------------
+
+logger = LoggerManager()
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\execution\__init__.py
+============================================================
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\execution\execution_engine.py
+============================================================
+"""
+Project Phoenix
+Milestone M10 - Execution Rules Engine
+
+Module:
+    execution_engine.py
+
+Purpose:
+    Coordinates the complete execution workflow.
+"""
+
+from __future__ import annotations
+
+from execution.execution_logger import ExecutionLogger
+from execution.execution_models import (
+    ExecutionDecision,
+    ExecutionStatus,
+)
+from execution.execution_rules import ExecutionRules
+from execution.execution_validator import ExecutionValidator
+from risk.risk_models import RiskDecision
+
+
+class ExecutionEngine:
+    """
+    Main Execution Rules Engine.
+    """
+
+    def __init__(self) -> None:
+        self._rules = ExecutionRules()
+        self._validator = ExecutionValidator()
+        self._logger = ExecutionLogger()
+
+    def execute(
+        self,
+        decision: RiskDecision,
+    ) -> ExecutionDecision:
+        """
+        Execute the complete M10 workflow.
+        """
+
+        order = self._rules.create_order(decision)
+
+        validation = self._validator.validate(order)
+
+        execution = ExecutionDecision(
+            status=(
+                ExecutionStatus.READY
+                if validation.valid
+                else ExecutionStatus.REJECTED
+            ),
+            order=order,
+            approved=validation.valid,
+            reason=validation.reason,
+        )
+
+        self._logger.log(execution)
+
+        return execution
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\execution\execution_logger.py
+============================================================
+"""
+Project Phoenix
+Milestone M10 - Execution Rules Engine
+
+Module:
+    execution_logger.py
+
+Purpose:
+    Logs execution decisions.
+"""
+
+from __future__ import annotations
+
+from execution.execution_models import ExecutionDecision
+
+
+class ExecutionLogger:
+    """
+    Logs execution decisions.
+    """
+
+    def log(
+        self,
+        decision: ExecutionDecision,
+    ) -> None:
+        """
+        Log an execution decision.
+        """
+
+        print("===== Execution Decision =====")
+        print(f"Symbol      : {decision.order.symbol}")
+        print(f"Side        : {decision.order.side.value}")
+        print(f"Order Type  : {decision.order.order_type.value}")
+        print(f"Volume      : {decision.order.volume}")
+        print(f"Status      : {decision.status.value}")
+        print(f"Approved    : {decision.approved}")
+        print(f"Reason      : {decision.reason}")
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\execution\execution_models.py
+============================================================
+"""
+Project Phoenix
+Milestone M10 - Execution Rules Engine
+
+Module:
+    execution_models.py
+
+Purpose:
+    Defines all shared data models used by the Execution Rules Engine.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Dict, Optional
+
+from risk.risk_models import RiskDecision
+
+
+class OrderSide(Enum):
+    """
+    Direction of the execution order.
+    """
+
+    BUY = "BUY"
+    SELL = "SELL"
+
+
+class OrderType(Enum):
+    """
+    Type of execution order.
+    """
+
+    MARKET = "MARKET"
+    LIMIT = "LIMIT"
+    STOP = "STOP"
+
+
+class ExecutionStatus(Enum):
+    """
+    Current execution status.
+    """
+
+    READY = "READY"
+    PENDING = "PENDING"
+    EXECUTED = "EXECUTED"
+    FAILED = "FAILED"
+    REJECTED = "REJECTED"
+
+
+@dataclass
+class ExecutionContext:
+    """
+    Context supplied to the Execution Engine.
+    """
+
+    risk_decision: RiskDecision
+
+    symbol: str
+
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class OrderRequest:
+    """
+    Broker order request prepared by the Execution Engine.
+    """
+
+    symbol: str
+
+    side: OrderSide
+
+    order_type: OrderType
+
+    volume: float
+
+    entry_price: float
+
+    stop_loss: float
+
+    take_profit: float
+
+    comment: str = ""
+
+    magic_number: Optional[int] = None
+
+
+@dataclass
+class ExecutionDecision:
+    """
+    Final execution decision returned by the Execution Engine.
+    """
+
+    status: ExecutionStatus
+
+    order: OrderRequest
+
+    approved: bool
+
+    reason: str
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\execution\execution_rules.py
+============================================================
+"""
+Project Phoenix
+Milestone M10 - Execution Rules Engine
+
+Module:
+    execution_rules.py
+
+Purpose:
+    Converts a RiskDecision into an OrderRequest.
+"""
+
+from __future__ import annotations
+
+from execution.execution_models import (
+    OrderRequest,
+    OrderSide,
+    OrderType,
+)
+from risk.risk_models import RiskDecision
+
+
+class ExecutionRules:
+    """
+    Generates an OrderRequest from a RiskDecision.
+    """
+
+    def create_order(self, decision: RiskDecision) -> OrderRequest:
+        """
+        Create an execution order from an approved risk decision.
+        """
+
+        return OrderRequest(
+            symbol="XAUUSD",
+            side=OrderSide.BUY,
+            order_type=OrderType.MARKET,
+            volume=decision.position.quantity,
+            entry_price=250.0,
+            stop_loss=decision.stop_loss.price,
+            take_profit=decision.take_profit.price,
+            comment="Initial M10 placeholder order.",
+        )
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\execution\execution_validator.py
+============================================================
+"""
+Project Phoenix
+Milestone M10 - Execution Rules Engine
+
+Module:
+    execution_validator.py
+
+Purpose:
+    Validates an OrderRequest before execution.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from execution.execution_models import OrderRequest
+
+
+@dataclass
+class ExecutionValidationResult:
+    """
+    Result returned by the execution validator.
+    """
+
+    valid: bool
+
+    reason: str = ""
+
+
+class ExecutionValidator:
+    """
+    Validates execution requests.
+    """
+
+    def validate(
+        self,
+        order: OrderRequest,
+    ) -> ExecutionValidationResult:
+        """
+        Validate an OrderRequest.
+        """
+
+        if order.volume <= 0:
+            return ExecutionValidationResult(
+                valid=False,
+                reason="Volume must be greater than zero.",
+            )
+
+        if order.stop_loss <= 0:
+            return ExecutionValidationResult(
+                valid=False,
+                reason="Invalid stop-loss.",
+            )
+
+        if order.take_profit <= 0:
+            return ExecutionValidationResult(
+                valid=False,
+                reason="Invalid take-profit.",
+            )
+
+        if not order.symbol:
+            return ExecutionValidationResult(
+                valid=False,
+                reason="Symbol is required.",
+            )
+
+        return ExecutionValidationResult(
+            valid=True,
+            reason="Execution validation passed.",
+        )
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\indicators\__init__.py
+============================================================
+"""
+Project Phoenix
+Indicators Package
+"""
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\indicators\candlestick_engine.py
+============================================================
+"""
+=================================================
+Project Phoenix
+Candlestick Recognition Engine
+=================================================
+
+Responsible for:
+- Candle Body
+- Upper Wick
+- Lower Wick
+- Candle Range
+- Bullish / Bearish Candle
+"""
+
+from core.logger import logger
+
+app_logger = logger.initialize()
+
+
+class CandlestickEngine:
+    """
+    Handles candlestick calculations.
+    """
+
+    def __init__(self):
+        app_logger.info(
+            "Candlestick Engine initialized."
+        )
+
+    def prepare_candles(
+        self,
+        dataframe
+    ):
+        """
+        Prepare candle anatomy for pattern recognition.
+        """
+
+        dataframe = dataframe.copy()
+
+        # -----------------------------------------
+        # Candle Body
+        # -----------------------------------------
+
+        dataframe["BODY"] = (
+            dataframe["close"] -
+            dataframe["open"]
+        ).abs()
+
+        # -----------------------------------------
+        # Upper Wick
+        # -----------------------------------------
+
+        dataframe["UPPER_WICK"] = (
+            dataframe[["open", "close"]].max(axis=1)
+        )
+
+        dataframe["UPPER_WICK"] = (
+            dataframe["high"] -
+            dataframe["UPPER_WICK"]
+        )
+
+        # -----------------------------------------
+        # Lower Wick
+        # -----------------------------------------
+
+        dataframe["LOWER_WICK"] = (
+            dataframe[["open", "close"]].min(axis=1)
+        )
+
+        dataframe["LOWER_WICK"] = (
+            dataframe["LOWER_WICK"] -
+            dataframe["low"]
+        )
+
+        # -----------------------------------------
+        # Candle Range
+        # -----------------------------------------
+
+        dataframe["RANGE"] = (
+            dataframe["high"] -
+            dataframe["low"]
+        )
+
+        # -----------------------------------------
+        # Bullish Candle
+        # -----------------------------------------
+
+        dataframe["BULLISH"] = (
+            dataframe["close"] >
+            dataframe["open"]
+        )
+
+        # -----------------------------------------
+        # Bearish Candle
+        # -----------------------------------------
+
+        dataframe["BEARISH"] = (
+            dataframe["close"] <
+            dataframe["open"]
+        )
+
+        app_logger.info(
+            "Candlestick preparation completed."
+        )
+
+        return dataframe
+
+    def detect_doji(
+        self,
+        dataframe,
+        body_percentage=0.10
+    ):
+        """
+        Detect Doji candlestick pattern.
+
+        A candle is considered a Doji when its body
+        is less than or equal to 10% of its total range.
+        """
+
+        dataframe = dataframe.copy()
+
+        dataframe["DOJI"] = (
+            dataframe["BODY"]
+            <=
+            (dataframe["RANGE"] * body_percentage)
+        )
+
+        app_logger.info(
+            "Doji detection completed."
+        )
+
+        return dataframe
+
+    def detect_hammer(
+        self,
+        dataframe
+    ):
+        """
+        Detect Hammer candlestick pattern.
+
+        Rules:
+        - Lower wick >= 2 × body
+        - Upper wick <= body
+        """
+
+        dataframe = dataframe.copy()
+
+        dataframe["HAMMER"] = (
+            (dataframe["LOWER_WICK"] >= (dataframe["BODY"] * 2))
+            &
+            (dataframe["UPPER_WICK"] <= dataframe["BODY"])
+        )
+
+        app_logger.info(
+            "Hammer detection completed."
+        )
+
+        return dataframe
+
+    def detect_inverted_hammer(
+        self,
+        dataframe
+    ):
+        """
+        Detect Inverted Hammer candlestick pattern.
+
+        Rules:
+        - Upper wick >= 2 × Body
+        - Lower wick <= Body
+        """
+
+        dataframe = dataframe.copy()
+
+        dataframe["INVERTED_HAMMER"] = (
+            (
+                dataframe["UPPER_WICK"]
+                >=
+                (dataframe["BODY"] * 2)
+            )
+            &
+            (
+                dataframe["LOWER_WICK"]
+                <=
+                dataframe["BODY"]
+            )
+        )
+
+        app_logger.info(
+            "Inverted Hammer detection completed."
+        )
+
+        return dataframe
+
+
+    def detect_shooting_star(
+        self,
+        dataframe
+    ):
+        """
+        Detect Shooting Star candlestick pattern.
+
+        Rules:
+        - Upper wick >= 2 × Body
+        - Lower wick <= Body
+        - Bearish candle
+        """
+
+        dataframe = dataframe.copy()
+
+        dataframe["SHOOTING_STAR"] = (
+            (
+                dataframe["UPPER_WICK"]
+                >=
+                (dataframe["BODY"] * 2)
+            )
+            &
+            (
+                dataframe["LOWER_WICK"]
+                <=
+                dataframe["BODY"]
+            )
+            &
+            (
+                dataframe["BEARISH"]
+            )
+        )
+
+        app_logger.info(
+            "Shooting Star detection completed."
+        )
+
+        return dataframe       
+                  
+    def detect_hanging_man(
+        self,
+        dataframe
+    ):
+        """
+        Detect Hanging Man candlestick pattern.
+
+        Rules:
+        - Lower wick >= 2 × Body
+        - Upper wick <= Body
+        - Bearish candle
+        """
+
+        dataframe = dataframe.copy()
+
+        dataframe["HANGING_MAN"] = (
+            (
+                dataframe["LOWER_WICK"]
+                >=
+                (dataframe["BODY"] * 2)
+            )
+            &
+            (
+                dataframe["UPPER_WICK"]
+                <=
+                dataframe["BODY"]
+            )
+            &
+            (
+                dataframe["BEARISH"]
+            )
+        )
+
+        app_logger.info(
+            "Hanging Man detection completed."
+        )
+
+        return dataframe  
+
+    def detect_spinning_top(
+        self,
+        dataframe,
+        body_percentage=0.30
+    ):
+        """
+        Detect Spinning Top candlestick pattern.
+
+        Rules:
+        - Small body (<= 30% of total range)
+        - Upper wick >= Body
+        - Lower wick >= Body
+        """
+
+        dataframe = dataframe.copy()
+
+        dataframe["SPINNING_TOP"] = (
+            (
+                dataframe["BODY"]
+                <=
+                (dataframe["RANGE"] * body_percentage)
+            )
+            &
+            (
+                dataframe["UPPER_WICK"]
+                >=
+                dataframe["BODY"]
+            )
+            &
+            (
+                dataframe["LOWER_WICK"]
+                >=
+                dataframe["BODY"]
+            )
+        )
+
+        app_logger.info(
+            "Spinning Top detection completed."
+        )
+
+        return dataframe     
+
+    def detect_marubozu(
+        self,
+        dataframe
+    ):
+        """
+        Detect Marubozu candlestick pattern.
+
+        Rules:
+        - Very small upper wick
+        - Very small lower wick
+        - Strong candle body
+        """
+
+        dataframe = dataframe.copy()
+
+        dataframe["MARUBOZU"] = (
+            (
+                dataframe["UPPER_WICK"]
+                <=
+                (dataframe["BODY"] * 0.10)
+            )
+            &
+            (
+                dataframe["LOWER_WICK"]
+                <=
+                (dataframe["BODY"] * 0.10)
+            )
+        )
+
+        app_logger.info(
+            "Marubozu detection completed."
+        )
+
+        return dataframe
+
+    def detect_bullish_engulfing(
+        self,
+        dataframe
+    ):
+        """
+        Detect Bullish Engulfing pattern.
+
+        Rules:
+        - Previous candle is Bearish
+        - Current candle is Bullish
+        - Current Open < Previous Close
+        - Current Close > Previous Open
+        """
+
+        dataframe = dataframe.copy()
+
+        dataframe["BULLISH_ENGULFING"] = (
+            (
+                dataframe["BEARISH"].shift(1)
+            )
+            &
+            (
+                dataframe["BULLISH"]
+            )
+            &
+            (
+                dataframe["open"]
+                <
+                dataframe["close"].shift(1)
+            )
+            &
+            (
+                dataframe["close"]
+                >
+                dataframe["open"].shift(1)
+            )
+        )
+
+        app_logger.info(
+            "Bullish Engulfing detection completed."
+        )
+
+        return dataframe  
+
+    def detect_bearish_engulfing(
+        self,
+        dataframe
+    ):
+        """
+        Detect Bearish Engulfing pattern.
+
+        Rules:
+        - Previous candle is Bullish
+        - Current candle is Bearish
+        - Current Open > Previous Close
+        - Current Close < Previous Open
+        """
+
+        dataframe = dataframe.copy()
+
+        dataframe["BEARISH_ENGULFING"] = (
+            (
+                dataframe["BULLISH"].shift(1)
+            )
+            &
+            (
+                dataframe["BEARISH"]
+            )
+            &
+            (
+                dataframe["open"]
+                >
+                dataframe["close"].shift(1)
+            )
+            &
+            (
+                dataframe["close"]
+                <
+                dataframe["open"].shift(1)
+            )
+        )
+
+        app_logger.info(
+            "Bearish Engulfing detection completed."
+        )
+
+        return dataframe         
+
+    def detect_piercing_pattern(
+        self,
+        dataframe
+    ):
+        """
+        Detect Piercing Pattern.
+
+        Rules:
+        - Previous candle is Bearish
+        - Current candle is Bullish
+        - Current Open < Previous Close
+        - Current Close > Midpoint of Previous Body
+        """
+
+        dataframe = dataframe.copy()
+
+        previous_midpoint = (
+            dataframe["open"].shift(1)
+            +
+            dataframe["close"].shift(1)
+        ) / 2
+
+        dataframe["PIERCING_PATTERN"] = (
+            (
+                dataframe["BEARISH"].shift(1)
+            )
+            &
+            (
+                dataframe["BULLISH"]
+            )
+            &
+            (
+                dataframe["open"]
+                <
+                dataframe["close"].shift(1)
+            )
+            &
+            (
+                dataframe["close"]
+                >
+                previous_midpoint
+            )
+        )
+
+        app_logger.info(
+            "Piercing Pattern detection completed."
+        )
+
+        return dataframe    
+
+    def detect_dark_cloud_cover(
+        self,
+        dataframe
+    ):
+        """
+        Detect Dark Cloud Cover pattern.
+
+        Rules:
+        - Previous candle is Bullish
+        - Current candle is Bearish
+        - Current Open > Previous Close
+        - Current Close < Previous Body Midpoint
+        """
+
+        dataframe = dataframe.copy()
+
+        previous_open = dataframe["open"].shift(1)
+        previous_close = dataframe["close"].shift(1)
+
+        previous_body_midpoint = (
+            previous_open + previous_close
+        ) / 2
+
+        dataframe["DARK_CLOUD_COVER"] = (
+            (
+                dataframe["BEARISH"]
+            )
+            &
+            (
+                dataframe["BULLISH"].shift(1)
+            )
+            &
+            (
+                dataframe["open"]
+                >
+                previous_close
+            )
+            &
+            (
+                dataframe["close"]
+                <
+                previous_body_midpoint
+            )
+        )
+
+        app_logger.info(
+            "Dark Cloud Cover detection completed."
+        )
+
+        return dataframe
+
+    def detect_harami(
+        self,
+        dataframe
+    ):
+        """
+        Detect Bullish Harami and Bearish Harami patterns.
+
+        Bullish Harami:
+        - Previous candle is Bearish
+        - Current candle is Bullish
+        - Current body completely inside previous body
+
+        Bearish Harami:
+        - Previous candle is Bullish
+        - Current candle is Bearish
+        - Current body completely inside previous body
+        """
+
+        dataframe = dataframe.copy()
+
+        dataframe["BULLISH_HARAMI"] = False
+        dataframe["BEARISH_HARAMI"] = False
+
+        for i in range(1, len(dataframe)):
+
+            previous = dataframe.iloc[i - 1]
+            current = dataframe.iloc[i]
+
+            previous_body_high = max(
+                previous["open"],
+                previous["close"]
+            )
+
+            previous_body_low = min(
+                previous["open"],
+                previous["close"]
+            )
+
+            current_body_high = max(
+                current["open"],
+                current["close"]
+            )
+
+            current_body_low = min(
+                current["open"],
+                current["close"]
+            )
+
+            # -----------------------------
+            # Bullish Harami
+            # -----------------------------
+            if (
+                previous["BEARISH"]
+                and current["BULLISH"]
+                and current_body_high < previous_body_high
+                and current_body_low > previous_body_low
+            ):
+                dataframe.loc[
+                    dataframe.index[i],
+                    "BULLISH_HARAMI"
+                ] = True
+
+            # -----------------------------
+            # Bearish Harami
+            # -----------------------------
+            if (
+                previous["BULLISH"]
+                and current["BEARISH"]
+                and current_body_high < previous_body_high
+                and current_body_low > previous_body_low
+            ):
+                dataframe.loc[
+                    dataframe.index[i],
+                    "BEARISH_HARAMI"
+                ] = True
+
+        app_logger.info(
+            "Harami detection completed."
+        )
+
+        return dataframe      
+
+    def detect_morning_star(
+        self,
+        dataframe
+    ):
+        """
+        Detect Morning Star pattern.
+
+        Rules
+
+        Candle 1
+        - Bearish
+
+        Candle 2
+        - Small body (<=30% of range)
+
+        Candle 3
+        - Bullish
+        - Close above midpoint of Candle 1
+        """
+
+        dataframe = dataframe.copy()
+
+        dataframe["MORNING_STAR"] = False
+
+        for i in range(2, len(dataframe)):
+
+            candle1 = dataframe.iloc[i - 2]
+            candle2 = dataframe.iloc[i - 1]
+            candle3 = dataframe.iloc[i]
+
+            midpoint = (
+                candle1["open"] +
+                candle1["close"]
+            ) / 2
+
+            if (
+
+                candle1["BEARISH"]
+
+                and
+
+                (
+                    candle2["BODY"]
+                    <=
+                    candle2["RANGE"] * 0.30
+                )
+
+                and
+
+                candle3["BULLISH"]
+
+                and
+
+                (
+                    candle3["close"]
+                    >
+                    midpoint
+                )
+
+            ):
+
+                dataframe.loc[
+                    dataframe.index[i],
+                    "MORNING_STAR"
+                ] = True
+
+        app_logger.info(
+            "Morning Star detection completed."
+        )
+
+        return dataframe 
+
+    def detect_evening_star(
+        self,
+        dataframe
+    ):
+        """
+        Detect Evening Star pattern.
+
+        Rules:
+        Candle 1:
+            Strong Bullish
+
+        Candle 2:
+            Small body
+
+        Candle 3:
+            Strong Bearish
+            Close below midpoint of Candle 1
+        """
+
+        dataframe = dataframe.copy()
+
+        dataframe["EVENING_STAR"] = False
+
+        for i in range(2, len(dataframe)):
+
+            first = dataframe.iloc[i - 2]
+            second = dataframe.iloc[i - 1]
+            third = dataframe.iloc[i]
+
+            midpoint = (
+                first["open"] +
+                first["close"]
+            ) / 2
+
+            if (
+
+                first["BULLISH"]
+
+                and
+
+                second["BODY"]
+                <=
+                (
+                    second["RANGE"] * 0.30
+                )
+
+                and
+
+                third["BEARISH"]
+
+                and
+
+                third["close"] < midpoint
+
+            ):
+
+                dataframe.loc[
+                    dataframe.index[i],
+                    "EVENING_STAR"
+                ] = True
+
+        app_logger.info(
+            "Evening Star detection completed."
+        )
+
+        return dataframe  
+
+    def detect_three_white_soldiers(
+        self,
+        dataframe
+    ):
+        """
+        Detect Three White Soldiers pattern.
+
+        Rules:
+        - Three consecutive Bullish candles
+        - Each candle opens inside previous body
+        - Each candle closes higher than previous close
+        """
+
+        dataframe = dataframe.copy()
+
+        dataframe["THREE_WHITE_SOLDIERS"] = False
+
+        for i in range(2, len(dataframe)):
+
+            c1 = dataframe.iloc[i - 2]
+            c2 = dataframe.iloc[i - 1]
+            c3 = dataframe.iloc[i]
+
+            if (
+
+                c1["BULLISH"]
+                and
+                c2["BULLISH"]
+                and
+                c3["BULLISH"]
+
+                and
+
+                c2["open"] > c1["open"]
+                and
+                c2["open"] < c1["close"]
+
+                and
+
+                c3["open"] > c2["open"]
+                and
+                c3["open"] < c2["close"]
+
+                and
+
+                c2["close"] > c1["close"]
+                and
+                c3["close"] > c2["close"]
+
+            ):
+
+                dataframe.loc[
+                    dataframe.index[i],
+                    "THREE_WHITE_SOLDIERS"
+                ] = True
+
+        app_logger.info(
+            "Three White Soldiers detection completed."
+        )
+
+        return dataframe  
+
+    def detect_three_black_crows(
+        self,
+        dataframe
+    ):
+        """
+        Detect Three Black Crows pattern.
+
+        Rules:
+        - Three consecutive bearish candles
+        - Each close lower than previous close
+        - Each open inside previous candle body
+        """
+
+        dataframe = dataframe.copy()
+
+        dataframe["THREE_BLACK_CROWS"] = (
+            (
+                dataframe["BEARISH"]
+            )
+            &
+            (
+                dataframe["BEARISH"].shift(1)
+            )
+            &
+            (
+                dataframe["BEARISH"].shift(2)
+            )
+            &
+            (
+                dataframe["close"]
+                <
+                dataframe["close"].shift(1)
+            )
+            &
+            (
+                dataframe["close"].shift(1)
+                <
+                dataframe["close"].shift(2)
+            )
+            &
+            (
+                dataframe["open"]
+                <
+                dataframe["open"].shift(1)
+            )
+            &
+            (
+                dataframe["open"]
+                >
+                dataframe["close"].shift(1)
+            )
+            &
+            (
+                dataframe["open"].shift(1)
+                <
+                dataframe["open"].shift(2)
+            )
+            &
+            (
+                dataframe["open"].shift(1)
+                >
+                dataframe["close"].shift(2)
+            )
+        )
+
+        app_logger.info(
+            "Three Black Crows detection completed."
+        )
+
+        return dataframe  
+
+    def detect_tweezer_top(
+        self,
+        dataframe
+    ):
+        """
+        Detect Tweezer Top pattern.
+
+        Rules:
+        - Previous candle is Bullish
+        - Current candle is Bearish
+        - Highs are approximately equal
+        """
+
+        dataframe = dataframe.copy()
+
+        tolerance = 0.001
+
+        dataframe["TWEEZER_TOP"] = (
+            (
+                dataframe["BULLISH"].shift(1)
+            )
+            &
+            (
+                dataframe["BEARISH"]
+            )
+            &
+            (
+                (
+                    dataframe["high"]
+                    -
+                    dataframe["high"].shift(1)
+                ).abs()
+                <=
+                tolerance
+            )
+        )
+
+        app_logger.info(
+            "Tweezer Top detection completed."
+        )
+
+        return dataframe  
+
+    def detect_tweezer_bottom(
+        self,
+        dataframe,
+        tolerance=0.20
+    ):
+        """
+        Detect Tweezer Bottom pattern.
+
+        Rules:
+        - Previous candle is Bearish
+        - Current candle is Bullish
+        - Both candles have nearly equal lows
+        """
+
+        dataframe = dataframe.copy()
+
+        dataframe["TWEEZER_BOTTOM"] = (
+            (
+                dataframe["BEARISH"].shift(1)
+            )
+            &
+            (
+                dataframe["BULLISH"]
+            )
+            &
+            (
+                (
+                    dataframe["low"]
+                    -
+                    dataframe["low"].shift(1)
+                ).abs()
+                <=
+                tolerance
+            )
+        )
+
+        app_logger.info(
+            "Tweezer Bottom detection completed."
+        )
+
+        return dataframe 
+
+    def detect_inside_bar(
+        self,
+        dataframe
+    ):
+        """
+        Detect Inside Bar pattern.
+
+        Rules:
+        - Current High < Previous High
+        - Current Low > Previous Low
+        """
+
+        dataframe = dataframe.copy()
+
+        dataframe["INSIDE_BAR"] = (
+            (
+                dataframe["high"]
+                <
+                dataframe["high"].shift(1)
+            )
+            &
+            (
+                dataframe["low"]
+                >
+                dataframe["low"].shift(1)
+            )
+        )
+
+        app_logger.info(
+            "Inside Bar detection completed."
+        )
+
+        return dataframe  
+
+    def detect_outside_bar(
+        self,
+        dataframe
+    ):
+        """
+        Detect Outside Bar.
+
+        Rules:
+        - Current High > Previous High
+        - Current Low < Previous Low
+        """
+
+        dataframe = dataframe.copy()
+
+        dataframe["OUTSIDE_BAR"] = (
+            (
+                dataframe["high"]
+                >
+                dataframe["high"].shift(1)
+            )
+            &
+            (
+                dataframe["low"]
+                <
+                dataframe["low"].shift(1)
+            )
+        )
+
+        app_logger.info(
+            "Outside Bar detection completed."
+        )
+
+        return dataframe   
+
+    def detect_rising_three_methods(
+        self,
+        dataframe
+    ):
+        """
+        Detect Rising Three Methods.
+
+        Rules:
+        - Candle 1 : Large Bullish
+        - Candle 2 : Small Bearish inside Candle 1
+        - Candle 3 : Small Bearish inside Candle 1
+        - Candle 4 : Small Bearish inside Candle 1
+        - Candle 5 : Strong Bullish closes above Candle 1 High
+        """
+
+        dataframe = dataframe.copy()
+
+        dataframe["RISING_THREE_METHODS"] = False
+
+        for i in range(4, len(dataframe)):
+
+            c1 = dataframe.iloc[i - 4]
+            c2 = dataframe.iloc[i - 3]
+            c3 = dataframe.iloc[i - 2]
+            c4 = dataframe.iloc[i - 1]
+            c5 = dataframe.iloc[i]
+
+            inside_1 = (
+                c2["high"] < c1["high"]
+                and
+                c2["low"] > c1["low"]
+            )
+
+            inside_2 = (
+                c3["high"] < c1["high"]
+                and
+                c3["low"] > c1["low"]
+            )
+
+            inside_3 = (
+                c4["high"] < c1["high"]
+                and
+                c4["low"] > c1["low"]
+            )
+
+            if (
+
+                c1["BULLISH"]
+
+                and
+
+                c2["BEARISH"]
+
+                and
+
+                c3["BEARISH"]
+
+                and
+
+                c4["BEARISH"]
+
+                and
+
+                c5["BULLISH"]
+
+                and
+
+                inside_1
+
+                and
+
+                inside_2
+
+                and
+
+                inside_3
+
+                and
+
+                c5["close"] > c1["high"]
+
+            ):
+
+                dataframe.loc[
+                    dataframe.index[i],
+                    "RISING_THREE_METHODS"
+                ] = True
+
+        app_logger.info(
+            "Rising Three Methods detection completed."
+        )
+
+        return dataframe   
+
+    def detect_falling_three_methods(
+        self,
+        dataframe
+    ):
+        """
+        Detect Falling Three Methods.
+
+        Rules:
+        - Candle 1 : Large Bearish
+        - Candle 2 : Small Bullish inside Candle 1
+        - Candle 3 : Small Bullish inside Candle 1
+        - Candle 4 : Small Bullish inside Candle 1
+        - Candle 5 : Strong Bearish closes below Candle 1 Low
+        """
+
+        dataframe = dataframe.copy()
+
+        dataframe["FALLING_THREE_METHODS"] = False
+
+        for i in range(4, len(dataframe)):
+
+            c1 = dataframe.iloc[i - 4]
+            c2 = dataframe.iloc[i - 3]
+            c3 = dataframe.iloc[i - 2]
+            c4 = dataframe.iloc[i - 1]
+            c5 = dataframe.iloc[i]
+
+            inside_1 = (
+                c2["high"] < c1["high"]
+                and
+                c2["low"] > c1["low"]
+            )
+
+            inside_2 = (
+                c3["high"] < c1["high"]
+                and
+                c3["low"] > c1["low"]
+            )
+
+            inside_3 = (
+                c4["high"] < c1["high"]
+                and
+                c4["low"] > c1["low"]
+            )
+
+            if (
+
+                c1["BEARISH"]
+
+                and
+
+                c2["BULLISH"]
+
+                and
+
+                c3["BULLISH"]
+
+                and
+
+                c4["BULLISH"]
+
+                and
+
+                c5["BEARISH"]
+
+                and
+
+                inside_1
+
+                and
+
+                inside_2
+
+                and
+
+                inside_3
+
+                and
+
+                c5["close"] < c1["low"]
+
+            ):
+
+                dataframe.loc[
+                    dataframe.index[i],
+                    "FALLING_THREE_METHODS"
+                ] = True
+
+        app_logger.info(
+            "Falling Three Methods detection completed."
+        )
+
+        return dataframe                                                                        
+
+    def detect_bullish_marubozu(
+        self,
+        dataframe
+    ):
+        """
+        Detect Bullish Marubozu candlestick pattern.
+
+        Rules:
+        - Bullish candle
+        - Upper wick <= 5% of body
+        - Lower wick <= 5% of body
+        """
+
+        dataframe = dataframe.copy()
+
+        dataframe["BULLISH_MARUBOZU"] = (
+            (
+                dataframe["UPPER_WICK"]
+                <=
+                (dataframe["BODY"] * 0.05)
+            )
+            &
+            (
+                dataframe["LOWER_WICK"]
+                <=
+                (dataframe["BODY"] * 0.05)
+            )
+            &
+            (
+                dataframe["BULLISH"]
+            )
+        )
+
+        app_logger.info(
+            "Bullish Marubozu detection completed."
+        )
+
+        return dataframe        
+
+    def detect_bearish_marubozu(
+        self,
+        dataframe
+    ):
+        """
+        Detect Bearish Marubozu candlestick pattern.
+
+        Rules:
+        - Bearish candle
+        - Upper wick <= 5% of body
+        - Lower wick <= 5% of body
+        """
+
+        dataframe = dataframe.copy()
+
+        dataframe["BEARISH_MARUBOZU"] = (
+            (
+                dataframe["UPPER_WICK"]
+                <=
+                (dataframe["BODY"] * 0.05)
+            )
+            &
+            (
+                dataframe["LOWER_WICK"]
+                <=
+                (dataframe["BODY"] * 0.05)
+            )
+            &
+            (
+                dataframe["BEARISH"]
+            )
+        )
+
+        app_logger.info(
+            "Bearish Marubozu detection completed."
+        )
+
+        return dataframe
+
+    def detect_three_inside_up(
+        self,
+        dataframe
+    ):
+        """
+        Detect Three Inside Up pattern.
+
+        Rules:
+        - Candle 1 : Bearish
+        - Candle 2 : Bullish Harami
+        - Candle 3 : Bullish
+        - Candle 3 closes above Candle 1 open
+        """
+
+        dataframe = dataframe.copy()
+
+        dataframe["THREE_INSIDE_UP"] = False
+
+        for i in range(2, len(dataframe)):
+
+            c1 = dataframe.iloc[i - 2]
+            c2 = dataframe.iloc[i - 1]
+            c3 = dataframe.iloc[i]
+
+            c1_body_high = max(
+                c1["open"],
+                c1["close"]
+            )
+
+            c1_body_low = min(
+                c1["open"],
+                c1["close"]
+            )
+
+            c2_body_high = max(
+                c2["open"],
+                c2["close"]
+            )
+
+            c2_body_low = min(
+                c2["open"],
+                c2["close"]
+            )
+
+            if (
+
+                c1["BEARISH"]
+
+                and
+
+                c2["BULLISH"]
+
+                and
+
+                c2_body_high < c1_body_high
+
+                and
+
+                c2_body_low > c1_body_low
+
+                and
+
+                c3["BULLISH"]
+
+                and
+
+                c3["close"] > c1["open"]
+
+            ):
+
+                dataframe.loc[
+                    dataframe.index[i],
+                    "THREE_INSIDE_UP"
+                ] = True
+
+        app_logger.info(
+            "Three Inside Up detection completed."
+        )
+
+        return dataframe
+
+    def detect_three_inside_down(
+        self,
+        dataframe
+    ):
+        """
+        Detect Three Inside Down pattern.
+
+        Rules:
+        - Candle 1 : Bullish
+        - Candle 2 : Bearish body completely inside Candle 1 body
+        - Candle 3 : Bearish closes below Candle 1 open
+        """
+
+        dataframe = dataframe.copy()
+
+        dataframe["THREE_INSIDE_DOWN"] = False
+
+        for i in range(2, len(dataframe)):
+
+            candle1 = dataframe.iloc[i - 2]
+            candle2 = dataframe.iloc[i - 1]
+            candle3 = dataframe.iloc[i]
+
+            body1_high = max(
+                candle1["open"],
+                candle1["close"]
+            )
+
+            body1_low = min(
+                candle1["open"],
+                candle1["close"]
+            )
+
+            body2_high = max(
+                candle2["open"],
+                candle2["close"]
+            )
+
+            body2_low = min(
+                candle2["open"],
+                candle2["close"]
+            )
+
+            if (
+
+                candle1["BULLISH"]
+
+                and
+
+                candle2["BEARISH"]
+
+                and
+
+                body2_high < body1_high
+
+                and
+
+                body2_low > body1_low
+
+                and
+
+                candle3["BEARISH"]
+
+                and
+
+                candle3["close"] < candle1["open"]
+
+            ):
+
+                dataframe.loc[
+                    dataframe.index[i],
+                    "THREE_INSIDE_DOWN"
+                ] = True
+
+        app_logger.info(
+            "Three Inside Down detection completed."
+        )
+
+        return dataframe
+
+    def detect_tasuki_gap(
+        self,
+        dataframe
+    ):
+        """
+        Detect Bullish and Bearish Tasuki Gap.
+
+        Bullish Tasuki Gap:
+        - Candle 1 Bullish
+        - Candle 2 Bullish with Gap Up
+        - Candle 3 Bearish
+        - Candle 3 closes inside the gap
+        - Gap not completely filled
+
+        Bearish Tasuki Gap:
+        - Candle 1 Bearish
+        - Candle 2 Bearish with Gap Down
+        - Candle 3 Bullish
+        - Candle 3 closes inside the gap
+        - Gap not completely filled
+        """
+
+        dataframe = dataframe.copy()
+
+        dataframe["BULLISH_TASUKI_GAP"] = False
+        dataframe["BEARISH_TASUKI_GAP"] = False
+
+        for i in range(2, len(dataframe)):
+
+            c1 = dataframe.iloc[i - 2]
+            c2 = dataframe.iloc[i - 1]
+            c3 = dataframe.iloc[i]
+
+            # ---------------------------------
+            # Bullish Tasuki Gap
+            # ---------------------------------
+
+            if (
+
+                c1["BULLISH"]
+
+                and
+
+                c2["BULLISH"]
+
+                and
+
+                c2["low"] > c1["high"]
+
+                and
+
+                c3["BEARISH"]
+
+                and
+
+                c3["close"] < c2["open"]
+
+                and
+
+                c3["close"] > c1["high"]
+
+            ):
+
+                dataframe.loc[
+                    dataframe.index[i],
+                    "BULLISH_TASUKI_GAP"
+                ] = True
+
+            # ---------------------------------
+            # Bearish Tasuki Gap
+            # ---------------------------------
+
+            if (
+
+                c1["BEARISH"]
+
+                and
+
+                c2["BEARISH"]
+
+                and
+
+                c2["high"] < c1["low"]
+
+                and
+
+                c3["BULLISH"]
+
+                and
+
+                c3["close"] > c2["open"]
+
+                and
+
+                c3["close"] < c1["low"]
+
+            ):
+
+                dataframe.loc[
+                    dataframe.index[i],
+                    "BEARISH_TASUKI_GAP"
+                ] = True
+
+        app_logger.info(
+            "Tasuki Gap detection completed."
+        )
+
+        return dataframe
+
+    def detect_kicking_pattern(
+        self,
+        dataframe
+    ):
+        """
+        Detect Bullish and Bearish Kicking Pattern.
+
+        Rules
+
+        Bullish Kicking
+        - Candle 1 Bearish Marubozu
+        - Candle 2 Bullish Marubozu
+        - Gap Up between both candles
+
+        Bearish Kicking
+        - Candle 1 Bullish Marubozu
+        - Candle 2 Bearish Marubozu
+        - Gap Down between both candles
+        """
+
+        dataframe = dataframe.copy()
+
+        dataframe["BULLISH_KICKING"] = False
+        dataframe["BEARISH_KICKING"] = False
+
+        for i in range(1, len(dataframe)):
+
+            previous = dataframe.iloc[i - 1]
+            current = dataframe.iloc[i]
+
+            # ---------------------------------
+            # Bullish Kicking
+            # ---------------------------------
+
+            if (
+
+                previous["BEARISH_MARUBOZU"]
+
+                and
+
+                current["BULLISH_MARUBOZU"]
+
+                and
+
+                current["low"] > previous["high"]
+
+            ):
+
+                dataframe.loc[
+                    dataframe.index[i],
+                    "BULLISH_KICKING"
+                ] = True
+
+            # ---------------------------------
+            # Bearish Kicking
+            # ---------------------------------
+
+            if (
+
+                previous["BULLISH_MARUBOZU"]
+
+                and
+
+                current["BEARISH_MARUBOZU"]
+
+                and
+
+                current["high"] < previous["low"]
+
+            ):
+
+                dataframe.loc[
+                    dataframe.index[i],
+                    "BEARISH_KICKING"
+                ] = True
+
+        app_logger.info(
+            "Kicking Pattern detection completed."
+        )
+
+        return dataframe
+    def detect_belt_hold(
+        self,
+        dataframe
+    ):
+        """
+        Detect Bullish and Bearish Belt Hold patterns.
+
+        Bullish Belt Hold
+        - Bullish candle
+        - Opens at (or very near) the Low
+        - Strong bullish body
+
+        Bearish Belt Hold
+        - Bearish candle
+        - Opens at (or very near) the High
+        - Strong bearish body
+        """
+
+        dataframe = dataframe.copy()
+
+        tolerance = 0.001
+
+        dataframe["BULLISH_BELT_HOLD"] = (
+
+            dataframe["BULLISH"]
+
+            &
+
+            (
+                (
+                    dataframe["open"]
+                    -
+                    dataframe["low"]
+                ).abs()
+                <=
+                tolerance
+            )
+
+            &
+
+            (
+                dataframe["BODY"]
+                >=
+                dataframe["RANGE"] * 0.60
+            )
+
+        )
+
+        dataframe["BEARISH_BELT_HOLD"] = (
+
+            dataframe["BEARISH"]
+
+            &
+
+            (
+                (
+                    dataframe["high"]
+                    -
+                    dataframe["open"]
+                ).abs()
+                <=
+                tolerance
+            )
+
+            &
+
+            (
+                dataframe["BODY"]
+                >=
+                dataframe["RANGE"] * 0.60
+            )
+
+        )
+
+        app_logger.info(
+            "Belt Hold detection completed."
+        )
+
+        return dataframe                                       
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\indicators\indicator_engine.py
+============================================================
+"""
+=================================================
+Project Phoenix
+Indicator Engine
+=================================================
+
+Responsible for:
+- EMA
+- SMA
+- RSI
+- ATR
+- MACD
+- Bollinger Bands
+"""
+
+import pandas as pd
+
+from core.logger import logger
+
+app_logger = logger.initialize()
+
+
+class IndicatorEngine:
+    """
+    Handles all technical indicator calculations.
+    """
+
+    def __init__(self):
+        app_logger.info(
+            "Indicator Engine initialized."
+        )
+
+    def calculate_ema(
+        self,
+        dataframe,
+        period=20
+    ):
+        """
+        Calculate Exponential Moving Average.
+        """
+
+        dataframe = dataframe.copy()
+
+        dataframe[f"EMA_{period}"] = (
+            dataframe["close"]
+            .ewm(
+                span=period,
+                adjust=False
+            )
+            .mean()
+        )
+
+        app_logger.info(
+            f"EMA {period} calculated."
+        )
+
+        return dataframe
+
+    def calculate_sma(
+        self,
+        dataframe,
+        period=20
+    ):
+        """
+        Calculate Simple Moving Average.
+        """
+
+        dataframe = dataframe.copy()
+
+        dataframe[f"SMA_{period}"] = (
+            dataframe["close"]
+            .rolling(
+                window=period
+            )
+            .mean()
+        )
+
+        app_logger.info(
+            f"SMA {period} calculated."
+        )
+
+        return dataframe
+
+    def calculate_rsi(
+        self,
+        dataframe,
+        period=14
+    ):
+        """
+        Calculate RSI indicator.
+        """
+
+        dataframe = dataframe.copy()
+
+        delta = dataframe["close"].diff()
+
+        gain = delta.where(
+            delta > 0,
+            0
+        )
+
+        loss = -delta.where(
+            delta < 0,
+            0
+        )
+
+        average_gain = gain.rolling(
+            window=period
+        ).mean()
+
+        average_loss = loss.rolling(
+            window=period
+        ).mean()
+
+        rs = average_gain / average_loss
+
+        dataframe[f"RSI_{period}"] = (
+            100 - (100 / (1 + rs))
+        )
+
+        app_logger.info(
+            f"RSI {period} calculated."
+        )
+
+        return dataframe
+
+    def calculate_atr(
+        self,
+        dataframe,
+        period=14
+    ):
+        """
+        Calculate Average True Range (ATR).
+        """
+
+        dataframe = dataframe.copy()
+
+        high_low = (
+            dataframe["high"] -
+            dataframe["low"]
+        )
+
+        high_close = (
+            dataframe["high"] -
+            dataframe["close"].shift()
+        ).abs()
+
+        low_close = (
+            dataframe["low"] -
+            dataframe["close"].shift()
+        ).abs()
+
+        true_range = (
+            dataframe[
+                [
+                    "high_low",
+                    "high_close",
+                    "low_close"
+                ]
+            ]
+            if False else None
+        )
+
+        dataframe["TR"] = (
+            pd.concat(
+                [
+                    high_low,
+                    high_close,
+                    low_close
+                ],
+                axis=1
+            )
+            .max(axis=1)
+        )
+
+        dataframe[f"ATR_{period}"] = (
+            dataframe["TR"]
+            .rolling(window=period)
+            .mean()
+        )
+
+        dataframe.drop(
+            columns=["TR"],
+            inplace=True
+        )
+
+        app_logger.info(
+            f"ATR {period} calculated."
+        )
+
+        return dataframe      
+    def calculate_macd(
+        self,
+        dataframe,
+        fast_period=12,
+        slow_period=26,
+        signal_period=9
+    ):
+        """
+        Calculate MACD indicator.
+        """
+
+        dataframe = dataframe.copy()
+
+        ema_fast = (
+            dataframe["close"]
+            .ewm(
+                span=fast_period,
+                adjust=False
+            )
+            .mean()
+        )
+
+        ema_slow = (
+            dataframe["close"]
+            .ewm(
+                span=slow_period,
+                adjust=False
+            )
+            .mean()
+        )
+
+        dataframe["MACD"] = (
+            ema_fast - ema_slow
+        )
+
+        dataframe["MACD_SIGNAL"] = (
+            dataframe["MACD"]
+            .ewm(
+                span=signal_period,
+                adjust=False
+            )
+            .mean()
+        )
+
+        dataframe["MACD_HISTOGRAM"] = (
+            dataframe["MACD"]
+            - dataframe["MACD_SIGNAL"]
+        )
+
+        app_logger.info(
+            "MACD calculated."
+        )
+
+        return dataframe
+    def calculate_bollinger_bands(
+        self,
+        dataframe,
+        period=20,
+        std_dev=2
+    ):
+        """
+        Calculate Bollinger Bands.
+        """
+
+        dataframe = dataframe.copy()
+
+        dataframe["BB_MIDDLE"] = (
+            dataframe["close"]
+            .rolling(
+                window=period
+            )
+            .mean()
+        )
+
+        rolling_std = (
+            dataframe["close"]
+            .rolling(
+                window=period
+            )
+            .std()
+        )
+
+        dataframe["BB_UPPER"] = (
+            dataframe["BB_MIDDLE"]
+            + (rolling_std * std_dev)
+        )
+
+        dataframe["BB_LOWER"] = (
+            dataframe["BB_MIDDLE"]
+            - (rolling_std * std_dev)
+        )
+
+        app_logger.info(
+            "Bollinger Bands calculated."
+        )
+
+        return dataframe
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\market\__init__.py
+============================================================
+"""
+Project Phoenix
+Market Package
+"""
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\market\market_data.py
+============================================================
+"""
+=================================================
+Project Phoenix
+Market Data Manager
+=================================================
+
+Responsible for:
+- Historical OHLC data
+- Live Tick data
+- Bid / Ask prices
+- Data conversion
+- Data validation
+"""
+
+import pandas as pd
+import MetaTrader5 as mt5
+
+from core.logger import logger
+from core.config import config
+
+# -------------------------------------------------
+# Logger Instance
+# -------------------------------------------------
+
+app_logger = logger.initialize()
+
+# -------------------------------------------------
+# Market Data Manager
+# -------------------------------------------------
+
+
+class MarketData:
+    """
+    Handles all market data operations.
+    """
+
+    def __init__(self):
+        """
+        Initialize Market Data Manager.
+        """
+
+        self.symbol = config.settings["market"]["symbol"]
+        self.timeframe = config.settings["market"]["timeframe"]
+
+        app_logger.info(
+            "Market Data Manager initialized."
+        )
+
+    def get_historical_data(
+        self,
+        candle_count=500
+    ):
+        """
+        Retrieve historical OHLC data from MT5.
+        """
+
+        timeframe_map = {
+            "M1": mt5.TIMEFRAME_M1,
+            "M5": mt5.TIMEFRAME_M5,
+            "M15": mt5.TIMEFRAME_M15,
+            "M30": mt5.TIMEFRAME_M30,
+            "H1": mt5.TIMEFRAME_H1,
+            "H4": mt5.TIMEFRAME_H4,
+            "D1": mt5.TIMEFRAME_D1,
+        }
+
+        timeframe = timeframe_map.get(
+            self.timeframe
+        )
+
+        if timeframe is None:
+
+            app_logger.error(
+                f"Unsupported timeframe: {self.timeframe}"
+            )
+
+            return None
+
+        rates = mt5.copy_rates_from_pos(
+            self.symbol,
+            timeframe,
+            0,
+            candle_count
+        )
+
+        if rates is None:
+
+            app_logger.error(
+                "Unable to retrieve historical data."
+            )
+
+            app_logger.error(
+                f"MT5 Error: {mt5.last_error()}"
+            )
+
+            return None
+
+        app_logger.info(
+            f"{len(rates)} candles received."
+        )
+
+        return rates
+
+    def get_dataframe(
+        self,
+        candle_count=500
+    ):
+        """
+        Return historical data as a Pandas DataFrame.
+        """
+
+        rates = self.get_historical_data(
+            candle_count
+        )
+
+        if rates is None:
+            return None
+
+        dataframe = pd.DataFrame(rates)
+
+        dataframe["time"] = pd.to_datetime(
+            dataframe["time"],
+            unit="s"
+        )
+
+        app_logger.info(
+            f"DataFrame created with {len(dataframe)} rows."
+        )
+
+        return dataframe
+
+    def get_tick(self):
+        """
+        Retrieve latest market tick.
+        """
+
+        tick = mt5.symbol_info_tick(self.symbol)
+
+        if tick is None:
+
+            app_logger.error(
+                f"Unable to retrieve tick data."
+            )
+
+            app_logger.error(
+                f"MT5 Error: {mt5.last_error()}"
+            )
+
+            return None
+
+        app_logger.info(
+            "Live tick data received."
+        )
+
+        return tick
+
+    def get_symbol_info(self):
+        """
+        Retrieve symbol information.
+        """
+
+        symbol_info = mt5.symbol_info(
+            self.symbol
+        )
+
+        if symbol_info is None:
+
+            app_logger.error(
+                "Unable to retrieve symbol information."
+            )
+
+            app_logger.error(
+                f"MT5 Error: {mt5.last_error()}"
+            )
+
+            return None
+
+        app_logger.info(
+            "Symbol information received."
+        )
+
+        return symbol_info
+
+    def get_current_price(self):
+        """
+        Return current Bid and Ask prices.
+        """
+
+        tick = self.get_tick()
+
+        if tick is None:
+            return None
+
+        return {
+            "bid": tick.bid,
+            "ask": tick.ask
+        }        
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\market\mt5_connector.py
+============================================================
+"""
+=================================================
+Project Phoenix
+MT5 Connection Manager
+=================================================
+
+Responsible for:
+- MetaTrader 5 initialization
+- Terminal connection
+- Login management
+- Connection validation
+- Account information
+- Graceful shutdown
+"""
+
+import MetaTrader5 as mt5
+
+from core.logger import logger
+
+# -------------------------------------------------
+# Shared Application Logger
+# -------------------------------------------------
+
+app_logger = logger.initialize()
+
+# -------------------------------------------------
+# MT5 Connection Manager
+# -------------------------------------------------
+
+
+class MT5Connection:
+    """
+    Handles all MetaTrader 5 connection operations.
+    """
+
+    def __init__(self):
+        """Initialize MT5 connection manager."""
+
+        self.connected = False
+        self.authorized = False
+
+    def initialize(self):
+        """
+        Initialize MetaTrader 5 terminal.
+        """
+
+        if mt5.initialize():
+            self.connected = True
+
+            app_logger.info(
+                "MetaTrader 5 initialized successfully."
+            )
+
+            return True
+
+        app_logger.error(
+            f"MT5 initialization failed: {mt5.last_error()}"
+        )
+
+        return False
+
+    def login(self, login, password, server):
+        """
+        Login to MetaTrader 5 account.
+        """
+
+        if not self.connected:
+
+            app_logger.error(
+                "MT5 terminal is not initialized."
+            )
+
+            return False
+
+        if mt5.login(
+            login=login,
+            password=password,
+            server=server
+        ):
+
+            self.authorized = True
+
+            app_logger.info(
+                "MT5 login successful."
+            )
+
+            return True
+
+        app_logger.error(
+            f"MT5 login failed: {mt5.last_error()}"
+        )
+
+        return False
+
+    def is_connected(self):
+        """
+        Verify MT5 connection status.
+        """
+
+        return self.connected and self.authorized
+
+    def get_account_info(self):
+        """
+        Retrieve MT5 account information.
+        """
+
+        if not self.is_connected():
+
+            app_logger.error(
+                "MT5 is not connected."
+            )
+
+            return None
+
+        account = mt5.account_info()
+
+        if account is None:
+
+            app_logger.error(
+                "Unable to retrieve account information."
+            )
+
+            return None
+
+        return account
+
+    def shutdown(self):
+        """
+        Shutdown MetaTrader 5 connection.
+        """
+
+        mt5.shutdown()
+
+        self.connected = False
+        self.authorized = False
+
+        app_logger.info(
+            "MetaTrader 5 connection closed."
+        )
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\performance\__init__.py
+============================================================
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\performance\performance_analyzer.py
+============================================================
+"""
+Project Phoenix
+Milestone M11 - Performance Feedback Engine
+
+Module:
+    performance_analyzer.py
+
+Purpose:
+    Analyzes completed trades and generates performance metrics.
+"""
+
+from __future__ import annotations
+
+from performance.performance_metrics import PerformanceMetricsCalculator
+from performance.performance_models import (
+    PerformanceContext,
+    PerformanceMetrics,
+)
+
+
+class PerformanceAnalyzer:
+    """
+    Performs performance analysis on completed trades.
+    """
+
+    def __init__(self) -> None:
+        self._calculator = PerformanceMetricsCalculator()
+
+    def analyze(
+        self,
+        context: PerformanceContext,
+    ) -> PerformanceMetrics:
+        """
+        Analyze completed trades and return performance metrics.
+        """
+
+        return self._calculator.calculate(context)
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\performance\performance_engine.py
+============================================================
+"""
+Project Phoenix
+Milestone M11 - Performance Feedback Engine
+
+Module:
+    performance_engine.py
+
+Purpose:
+    Coordinates the complete Performance Feedback Engine.
+"""
+
+from __future__ import annotations
+
+from performance.performance_analyzer import PerformanceAnalyzer
+from performance.performance_logger import PerformanceLogger
+from performance.performance_models import (
+    PerformanceContext,
+    PerformanceDecision,
+    PerformanceDecisionType,
+)
+from performance.performance_validator import PerformanceValidator
+
+
+class PerformanceEngine:
+    """
+    Coordinates the complete Performance Feedback Engine.
+    """
+
+    def __init__(self) -> None:
+        self._analyzer = PerformanceAnalyzer()
+        self._validator = PerformanceValidator()
+        self._logger = PerformanceLogger()
+
+    def evaluate(
+        self,
+        context: PerformanceContext,
+    ) -> PerformanceDecision:
+        """
+        Analyze completed trades and return the final decision.
+        """
+
+        metrics = self._analyzer.analyze(context)
+
+        validation = self._validator.validate(metrics)
+
+        self._logger.log(metrics)
+
+        if validation.valid:
+            return PerformanceDecision(
+                decision=PerformanceDecisionType.ACCEPT,
+                metrics=metrics,
+                approved=True,
+                reason=validation.reason,
+            )
+
+        return PerformanceDecision(
+            decision=PerformanceDecisionType.REVIEW,
+            metrics=metrics,
+            approved=False,
+            reason=validation.reason,
+        )
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\performance\performance_logger.py
+============================================================
+"""
+Project Phoenix
+Milestone M11 - Performance Feedback Engine
+
+Module:
+    performance_logger.py
+
+Purpose:
+    Logs performance metrics.
+"""
+
+from __future__ import annotations
+
+from performance.performance_models import PerformanceMetrics
+
+
+class PerformanceLogger:
+    """
+    Logs calculated performance metrics.
+    """
+
+    def log(
+        self,
+        metrics: PerformanceMetrics,
+    ) -> None:
+        """
+        Log performance metrics.
+        """
+
+        print("===== Performance Summary =====")
+        print(f"Total Trades   : {metrics.total_trades}")
+        print(f"Wins           : {metrics.wins}")
+        print(f"Losses         : {metrics.losses}")
+        print(f"Breakeven      : {metrics.breakeven}")
+        print(f"Win Rate       : {metrics.win_rate:.2f}%")
+        print(f"Average Profit : {metrics.average_profit}")
+        print(f"Average Loss   : {metrics.average_loss}")
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\performance\performance_metrics.py
+============================================================
+"""
+Project Phoenix
+Milestone M11 - Performance Feedback Engine
+
+Module:
+    performance_metrics.py
+
+Purpose:
+    Calculates performance statistics from completed trades.
+"""
+
+from __future__ import annotations
+
+from performance.performance_models import (
+    PerformanceMetrics,
+    PerformanceContext,
+    TradeOutcome,
+)
+
+
+class PerformanceMetricsCalculator:
+    """
+    Calculates trading performance metrics.
+    """
+
+    def calculate(
+        self,
+        context: PerformanceContext,
+    ) -> PerformanceMetrics:
+        """
+        Calculate basic performance metrics.
+        """
+
+        total = len(context.trades)
+
+        wins = sum(
+            1
+            for trade in context.trades
+            if trade.outcome == TradeOutcome.WIN
+        )
+
+        losses = sum(
+            1
+            for trade in context.trades
+            if trade.outcome == TradeOutcome.LOSS
+        )
+
+        breakeven = sum(
+            1
+            for trade in context.trades
+            if trade.outcome == TradeOutcome.BREAKEVEN
+        )
+
+        win_rate = (wins / total * 100.0) if total > 0 else 0.0
+
+        profits = [
+            trade.profit_loss
+            for trade in context.trades
+            if trade.profit_loss > 0
+        ]
+
+        losses_list = [
+            trade.profit_loss
+            for trade in context.trades
+            if trade.profit_loss < 0
+        ]
+
+        average_profit = (
+            sum(profits) / len(profits)
+            if profits
+            else 0.0
+        )
+
+        average_loss = (
+            sum(losses_list) / len(losses_list)
+            if losses_list
+            else 0.0
+        )
+
+        return PerformanceMetrics(
+            total_trades=total,
+            wins=wins,
+            losses=losses,
+            breakeven=breakeven,
+            win_rate=win_rate,
+            average_profit=average_profit,
+            average_loss=average_loss,
+        )
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\performance\performance_models.py
+============================================================
+"""
+Project Phoenix
+Milestone M11 - Performance Feedback Engine
+
+Module:
+    performance_models.py
+
+Purpose:
+    Defines all core data models used by the Performance Feedback Engine.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Dict, Optional
+
+
+class TradeOutcome(Enum):
+    """
+    Final outcome of a completed trade.
+    """
+
+    WIN = "WIN"
+    LOSS = "LOSS"
+    BREAKEVEN = "BREAKEVEN"
+
+
+class PerformanceDecisionType(Enum):
+    """
+    Final decision produced by the Performance Engine.
+    """
+
+    ACCEPT = "ACCEPT"
+    REVIEW = "REVIEW"
+
+
+@dataclass
+class TradeResult:
+    """
+    Represents the result of a completed trade.
+    """
+
+    symbol: str
+
+    outcome: TradeOutcome
+
+    profit_loss: float
+
+    entry_price: float
+
+    exit_price: float
+
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class PerformanceMetrics:
+    """
+    Stores calculated performance statistics.
+    """
+
+    total_trades: int
+
+    wins: int
+
+    losses: int
+
+    breakeven: int
+
+    win_rate: float
+
+    average_profit: float
+
+    average_loss: float
+
+
+@dataclass
+class PerformanceContext:
+    """
+    Context required for performance analysis.
+    """
+
+    trades: list[TradeResult]
+
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class PerformanceDecision:
+    """
+    Final output of the Performance Engine.
+    """
+
+    decision: PerformanceDecisionType
+
+    metrics: PerformanceMetrics
+
+    approved: bool
+
+    reason: Optional[str] = None
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\performance\performance_validator.py
+============================================================
+"""
+Project Phoenix
+Milestone M11 - Performance Feedback Engine
+
+Module:
+    performance_validator.py
+
+Purpose:
+    Validates calculated performance metrics.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from performance.performance_models import PerformanceMetrics
+
+
+@dataclass
+class PerformanceValidationResult:
+    """
+    Result returned by the performance validator.
+    """
+
+    valid: bool
+
+    reason: str
+
+
+class PerformanceValidator:
+    """
+    Validates calculated performance metrics.
+    """
+
+    def validate(
+        self,
+        metrics: PerformanceMetrics,
+    ) -> PerformanceValidationResult:
+        """
+        Validate performance metrics.
+        """
+
+        if metrics.total_trades < 1:
+            return PerformanceValidationResult(
+                valid=False,
+                reason="No completed trades available.",
+            )
+
+        if not 0.0 <= metrics.win_rate <= 100.0:
+            return PerformanceValidationResult(
+                valid=False,
+                reason="Invalid win rate.",
+            )
+
+        return PerformanceValidationResult(
+            valid=True,
+            reason="Performance validation passed.",
+        )
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\risk\__init__.py
+============================================================
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\risk\risk_engine.py
+============================================================
+"""
+Project Phoenix
+Milestone M9 - Risk Management Engine
+
+Module:
+    risk_engine.py
+
+Purpose:
+    Coordinates the complete Risk Management Engine workflow.
+"""
+
+from __future__ import annotations
+
+from risk.risk_logger import RiskLogger
+from risk.risk_models import (
+    RiskContext,
+    RiskDecision,
+    TradeDecision,
+)
+from risk.risk_position import PositionSizer
+from risk.risk_stoploss import StopLossCalculator
+from risk.risk_takeprofit import TakeProfitCalculator
+from risk.risk_validator import RiskValidator
+
+
+class RiskEngine:
+    """
+    Main coordinator for the Risk Management Engine.
+    """
+
+    def __init__(self) -> None:
+        self.position_sizer = PositionSizer()
+        self.stoploss = StopLossCalculator()
+        self.takeprofit = TakeProfitCalculator()
+        self.validator = RiskValidator()
+        self.logger = RiskLogger()
+
+    def evaluate(self, context: RiskContext) -> RiskDecision:
+        """
+        Execute the complete risk workflow.
+        """
+
+        position = self.position_sizer.calculate(
+            account_balance=context.account_balance,
+            risk_percent=1.0,
+        )
+
+        entry_price = context.signal.metadata.get("entry_price", 250.0)
+
+        stop_loss = self.stoploss.calculate(
+            entry_price=entry_price,
+        )
+
+        take_profit = self.takeprofit.calculate(
+            entry_price=entry_price,
+            stop_loss_price=stop_loss.price,
+        )
+
+        decision = RiskDecision(
+            decision=TradeDecision.APPROVE,
+            position=position,
+            stop_loss=stop_loss,
+            take_profit=take_profit,
+            approved=True,
+            reason="Initial M9 placeholder decision.",
+        )
+
+        self.validator.validate(decision)
+
+        self.logger.log(decision)
+
+        return decision
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\risk\risk_logger.py
+============================================================
+"""
+Project Phoenix
+Milestone M9 - Risk Management Engine
+
+Module:
+    risk_logger.py
+
+Purpose:
+    Logs risk management decisions.
+"""
+
+from __future__ import annotations
+
+from risk.risk_models import RiskDecision
+
+
+class RiskLogger:
+    """
+    Logs risk decisions.
+
+    Current implementation prints the
+    decision to the console.
+    """
+
+    def log(
+        self,
+        decision: RiskDecision,
+    ) -> None:
+        """
+        Log the supplied risk decision.
+        """
+
+        print("===== Risk Decision =====")
+        print(f"Decision   : {decision.decision.value}")
+        print(f"Approved   : {decision.approved}")
+        print(f"Reason     : {decision.reason}")
+        print(f"Position   : {decision.position.quantity}")
+        print(f"Stop Loss  : {decision.stop_loss.price}")
+        print(f"Take Profit: {decision.take_profit.price}")
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\risk\risk_models.py
+============================================================
+"""
+Project Phoenix
+Milestone M9 - Risk Management Engine
+
+Module:
+    risk_models.py
+
+Purpose:
+    Defines all core data models used by the Risk Management Engine.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Dict, Optional
+
+from signals.signal_models import TradingSignal
+
+
+class TradeDecision(Enum):
+    """
+    Final decision produced by the Risk Engine.
+    """
+
+    APPROVE = "APPROVE"
+    REJECT = "REJECT"
+
+
+@dataclass
+class PositionSize:
+    """
+    Represents calculated position sizing.
+    """
+
+    quantity: float
+
+    capital_allocated: float
+
+    risk_percent: float
+
+
+@dataclass
+class StopLoss:
+    """
+    Represents stop-loss information.
+    """
+
+    price: float
+
+    reason: str = ""
+
+
+@dataclass
+class TakeProfit:
+    """
+    Represents take-profit information.
+    """
+
+    price: float
+
+    risk_reward_ratio: float = 2.0
+
+
+@dataclass
+class RiskContext:
+    """
+    Context required for risk calculations.
+    """
+
+    signal: TradingSignal
+
+    account_balance: float
+
+    symbol: str
+
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class RiskDecision:
+    """
+    Final output of the Risk Management Engine.
+    """
+
+    decision: TradeDecision
+
+    position: PositionSize
+
+    stop_loss: StopLoss
+
+    take_profit: TakeProfit
+
+    approved: bool
+
+    reason: Optional[str] = None
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\risk\risk_position.py
+============================================================
+"""
+Project Phoenix
+Milestone M9 - Risk Management Engine
+
+Module:
+    risk_position.py
+
+Purpose:
+    Calculates position sizing for approved trading signals.
+"""
+
+from __future__ import annotations
+
+from risk.risk_models import PositionSize
+
+
+class PositionSizer:
+    """
+    Calculates the position size based on account balance
+    and risk percentage.
+    """
+
+    def calculate(
+        self,
+        account_balance: float,
+        risk_percent: float = 1.0
+    ) -> PositionSize:
+        """
+        Calculate position size.
+
+        Placeholder implementation:
+        Allocates the requested percentage of account balance.
+        """
+
+        capital = account_balance * (risk_percent / 100)
+
+        quantity = capital
+
+        return PositionSize(
+            quantity=quantity,
+            capital_allocated=capital,
+            risk_percent=risk_percent,
+        )
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\risk\risk_stoploss.py
+============================================================
+"""
+Project Phoenix
+Milestone M9 - Risk Management Engine
+
+Module:
+    risk_stoploss.py
+
+Purpose:
+    Calculates stop-loss levels for trading signals.
+"""
+
+from __future__ import annotations
+
+from risk.risk_models import StopLoss
+
+
+class StopLossCalculator:
+    """
+    Calculates the stop-loss level.
+
+    Current implementation uses a simple placeholder
+    percentage-based calculation.
+    """
+
+    def calculate(
+        self,
+        entry_price: float,
+        stop_loss_percent: float = 2.0,
+    ) -> StopLoss:
+        """
+        Calculate stop-loss price.
+
+        Placeholder:
+        Stop-loss = Entry Price - Percentage
+        """
+
+        stop_price = entry_price * (1 - stop_loss_percent / 100)
+
+        return StopLoss(
+            price=stop_price,
+            reason="Default percentage-based stop-loss.",
+        )
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\risk\risk_takeprofit.py
+============================================================
+"""
+Project Phoenix
+Milestone M9 - Risk Management Engine
+
+Module:
+    risk_takeprofit.py
+
+Purpose:
+    Calculates take-profit levels for trading signals.
+"""
+
+from __future__ import annotations
+
+from risk.risk_models import TakeProfit
+
+
+class TakeProfitCalculator:
+    """
+    Calculates the take-profit level.
+
+    Current implementation uses a configurable
+    Risk:Reward ratio.
+    """
+
+    def calculate(
+        self,
+        entry_price: float,
+        stop_loss_price: float,
+        risk_reward_ratio: float = 2.0,
+    ) -> TakeProfit:
+        """
+        Calculate take-profit price.
+
+        Placeholder:
+        Take Profit = Entry + (Risk × RR Ratio)
+        """
+
+        risk = entry_price - stop_loss_price
+
+        take_profit_price = entry_price + (risk * risk_reward_ratio)
+
+        return TakeProfit(
+            price=take_profit_price,
+            risk_reward_ratio=risk_reward_ratio,
+        )
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\risk\risk_validator.py
+============================================================
+"""
+Project Phoenix
+Milestone M9 - Risk Management Engine
+
+Module:
+    risk_validator.py
+
+Purpose:
+    Validates whether a calculated risk decision
+    satisfies the minimum trading requirements.
+"""
+
+from __future__ import annotations
+
+from risk.risk_models import RiskDecision
+
+
+class RiskValidator:
+    """
+    Performs validation of risk decisions.
+    """
+
+    def validate(
+        self,
+        decision: RiskDecision,
+    ) -> bool:
+        """
+        Validate the supplied risk decision.
+
+        Current placeholder logic:
+        A trade is valid if it has been approved.
+        """
+
+        return decision.approved
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\signals\__init__.py
+============================================================
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\signals\signal_filters.py
+============================================================
+"""
+Project Phoenix
+Milestone M8 - Signal Generation Engine
+
+Module:
+    signal_filters.py
+
+Purpose:
+    Filters trading signals before they are released.
+
+Responsibilities:
+    - Apply signal filters
+    - Accept or reject signals
+"""
+
+from __future__ import annotations
+
+from signals.signal_models import TradingSignal, FilterResult
+
+
+class SignalFilter:
+    """
+    Applies basic filtering to trading signals.
+    """
+
+    def filter(self, signal: TradingSignal) -> FilterResult:
+        """
+        Apply signal filters.
+
+        Returns:
+            FilterResult
+        """
+
+        if signal.signal.name == "HOLD":
+            return FilterResult(
+                accepted=False,
+                reason="HOLD signals are filtered."
+            )
+
+        return FilterResult(
+            accepted=True,
+            reason="Signal accepted."
+        )
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\signals\signal_generator.py
+============================================================
+"""
+Project Phoenix
+Milestone M8 - Signal Generation Engine
+
+Module:
+    signal_generator.py
+
+Purpose:
+    Coordinates all Signal Engine modules.
+
+Responsibilities:
+    - Generate trading signals
+    - Validate signals
+    - Filter signals
+    - Log signals
+"""
+
+from __future__ import annotations
+
+from signals.signal_models import TradingSignal, SignalType
+from signals.signal_validator import SignalValidator
+from signals.signal_filters import SignalFilter
+from signals.signal_logger import SignalLogger
+
+
+class SignalGenerator:
+    """
+    Main Signal Generation Engine.
+    """
+
+    def __init__(self) -> None:
+        self.validator = SignalValidator()
+        self.filter = SignalFilter()
+        self.logger = SignalLogger()
+
+    def generate(self) -> TradingSignal:
+        """
+        Generate a trading signal.
+        """
+
+        signal = TradingSignal(
+            signal=SignalType.BUY,
+            strength=0.80,
+            confidence=0.90,
+            reason="Initial M8 placeholder signal."
+        )
+
+        validation = self.validator.validate(signal)
+
+        if not validation.valid:
+            raise ValueError(validation.reason)
+
+        filtered = self.filter.filter(signal)
+
+        if not filtered.accepted:
+            raise ValueError(filtered.reason)
+
+        self.logger.log(signal)
+
+        return signal
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\signals\signal_logger.py
+============================================================
+"""
+Project Phoenix
+Milestone M8 - Signal Generation Engine
+
+Module:
+    signal_logger.py
+
+Purpose:
+    Logs generated trading signals.
+
+Responsibilities:
+    - Log signal details
+    - Provide a central logging point for the Signal Engine
+"""
+
+from __future__ import annotations
+
+from signals.signal_models import TradingSignal
+
+
+class SignalLogger:
+    """
+    Simple logger for trading signals.
+    """
+
+    def log(self, signal: TradingSignal) -> None:
+        """
+        Log a trading signal.
+        """
+
+        print("===== Trading Signal =====")
+        print(f"Signal     : {signal.signal.value}")
+        print(f"Strength   : {signal.strength}")
+        print(f"Confidence : {signal.confidence}")
+        print(f"Reason     : {signal.reason}")
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\signals\signal_models.py
+============================================================
+"""
+Project Phoenix
+Milestone M8 - Signal Generation Engine
+
+Module:
+    signal_models.py
+
+Purpose:
+    Defines all core data models used by the Signal Generation Engine.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
+
+class SignalType(Enum):
+    """
+    Final trading signal produced by the Signal Engine.
+    """
+
+    BUY = "BUY"
+    SELL = "SELL"
+    HOLD = "HOLD"
+
+
+class RuleDirection(Enum):
+    """
+    Direction returned by an individual trading rule.
+    """
+
+    BULLISH = "BULLISH"
+    BEARISH = "BEARISH"
+    NEUTRAL = "NEUTRAL"
+
+
+@dataclass
+class RuleResult:
+    """
+    Result produced by a single trading rule.
+    """
+
+    rule_name: str
+    direction: RuleDirection
+    strength: float
+    passed: bool
+    reason: Optional[str] = None
+
+
+@dataclass
+class TradingSignal:
+    """
+    Final trading signal generated by the Signal Engine.
+    """
+
+    signal: SignalType
+    strength: float
+    confidence: float
+
+    rules: List[RuleResult] = field(default_factory=list)
+
+    reason: str = ""
+
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class SignalContext:
+    """
+    Context information used while generating a signal.
+    """
+
+    symbol: str
+    timeframe: str
+
+    price: float = 0.0
+
+    indicators: Dict[str, Any] = field(default_factory=dict)
+
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class ValidationResult:
+    """
+    Result returned by the signal validator.
+    """
+
+    valid: bool
+
+    score: float = 0.0
+
+    reason: Optional[str] = None
+
+
+@dataclass
+class FilterResult:
+    """
+    Result returned by the signal filter stage.
+    """
+
+    accepted: bool
+
+    reason: Optional[str] = None
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\signals\signal_rules.py
+============================================================
+"""
+Project Phoenix
+Milestone M8 - Signal Generation Engine
+
+Module:
+    signal_rules.py
+
+Purpose:
+    Evaluates trading rules and produces RuleResult objects.
+"""
+
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+
+from signals.signal_models import RuleResult, RuleDirection
+
+
+class BaseRule(ABC):
+    """
+    Abstract base class for all trading rules.
+    """
+
+    @abstractmethod
+    def evaluate(self) -> RuleResult:
+        """
+        Evaluate the trading rule.
+        """
+        pass
+
+
+class AlwaysHoldRule(BaseRule):
+    """
+    Default placeholder rule.
+
+    Always returns a neutral signal.
+    """
+
+    def evaluate(self) -> RuleResult:
+        return RuleResult(
+            rule_name="AlwaysHoldRule",
+            direction=RuleDirection.NEUTRAL,
+            strength=0.0,
+            passed=True,
+            reason="Default placeholder rule."
+        )
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\signals\signal_strength.py
+============================================================
+"""
+Project Phoenix
+Milestone M8 - Signal Generation Engine
+
+Module:
+    signal_strength.py
+
+Purpose:
+    Calculates overall signal strength from rule results.
+"""
+
+from __future__ import annotations
+
+from typing import List
+
+from signals.signal_models import RuleResult
+
+
+class SignalStrengthCalculator:
+    """
+    Calculates overall signal strength.
+    """
+
+    def calculate(self, rules: List[RuleResult]) -> float:
+        """
+        Returns average strength of all passed rules.
+
+        Returns:
+            float
+        """
+
+        passed_rules = [rule for rule in rules if rule.passed]
+
+        if not passed_rules:
+            return 0.0
+
+        total_strength = sum(rule.strength for rule in passed_rules)
+
+        return total_strength / len(passed_rules)
+
+
+============================================================
+FILE: C:\Projects\ProjectPhoenix\signals\signal_validator.py
+============================================================
+"""
+Project Phoenix
+Milestone M8 - Signal Generation Engine
+
+Module:
+    signal_validator.py
+
+Purpose:
+    Validates generated trading signals before they are released.
+
+Responsibilities:
+    - Validate signal strength
+    - Validate confidence
+    - Return ValidationResult
+"""
+
+from __future__ import annotations
+
+from signals.signal_models import TradingSignal, ValidationResult
+
+
+class SignalValidator:
+    """
+    Validates TradingSignal objects.
+    """
+
+    def __init__(
+        self,
+        min_strength: float = 0.50,
+        min_confidence: float = 0.50,
+    ):
+        self.min_strength = min_strength
+        self.min_confidence = min_confidence
+
+    def validate(self, signal: TradingSignal) -> ValidationResult:
+        """
+        Validate a trading signal.
+        """
+
+        if signal.strength < self.min_strength:
+            return ValidationResult(
+                valid=False,
+                reason="Signal strength below minimum threshold."
+            )
+
+        if signal.confidence < self.min_confidence:
+            return ValidationResult(
+                valid=False,
+                reason="Signal confidence below minimum threshold."
+            )
+
+        return ValidationResult(
+            valid=True,
+            reason="Signal validation passed."
+        )
+
+
