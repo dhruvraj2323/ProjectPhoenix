@@ -11,6 +11,7 @@ from __future__ import annotations
 from market_pipeline.pipeline_context import PipelineContext
 from market_pipeline.pipeline_models import PipelineStage
 from market_pipeline.pipeline_router import PipelineRouter
+from market_pipeline.pipeline_logger import PipelineLogger
 
 
 class PipelineExecutor:
@@ -26,6 +27,9 @@ class PipelineExecutor:
     def __init__(self) -> None:
 
         self.router = PipelineRouter()
+
+        # Added Logger
+        self.logger = PipelineLogger()
 
     # ---------------------------------------------------------
 
@@ -46,6 +50,9 @@ class PipelineExecutor:
             context.current_stage = next_stage
 
             self._execute_stage(next_stage, context)
+
+            # Log every completed stage
+            self.logger.log_stage(context)
 
             current_stage = next_stage
 

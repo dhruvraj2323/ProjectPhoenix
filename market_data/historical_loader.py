@@ -1,6 +1,7 @@
 import zipfile
 import csv
 import io
+from datetime import datetime
 
 
 class HistoricalLoader:
@@ -77,8 +78,9 @@ class HistoricalLoader:
             date = row[0]
             time = row[1]
 
-            candle_datetime = (
-                f"{date} {time}"
+            candle_datetime = datetime.strptime(
+                f"{date} {time}",
+                "%Y.%m.%d %H:%M"
             )
 
 

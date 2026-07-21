@@ -149,17 +149,7 @@ class IndicatorEngine:
             dataframe["low"] -
             dataframe["close"].shift()
         ).abs()
-
-        true_range = (
-            dataframe[
-                [
-                    "high_low",
-                    "high_close",
-                    "low_close"
-                ]
-            ]
-            if False else None
-        )
+        
 
         dataframe["TR"] = (
             pd.concat(

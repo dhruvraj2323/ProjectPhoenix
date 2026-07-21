@@ -155,14 +155,13 @@ class DataValidator:
             self.report["duplicate_timestamps"] == 0
             and
             self.report["invalid_ohlc"] == 0
+            and
+            self.report["missing_candles"] == 0
         ):
             self.report["status"] = "PASS"
 
         else:
             self.report["status"] = "FAIL"
-
-
-        return self.report
 
 
 
