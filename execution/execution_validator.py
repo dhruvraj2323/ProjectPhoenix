@@ -58,6 +58,12 @@ class ExecutionValidator:
                 reason="Invalid take-profit.",
             )
 
+        if order.entry_price <= 0:
+            return ExecutionValidationResult(
+                valid=False,
+                reason="Invalid entry price.",
+            )
+
         if not order.symbol:
             return ExecutionValidationResult(
                 valid=False,

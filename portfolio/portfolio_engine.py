@@ -70,8 +70,13 @@ class PortfolioEngine:
         )
 
         allocation = self.allocator.allocate(
+
             total_capital=context.account_balance,
+
             positions=context.positions,
+
+            free_margin=metrics.free_margin,
+
         )
 
         exposure = self.exposure.calculate(

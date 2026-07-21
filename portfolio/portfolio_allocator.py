@@ -31,6 +31,7 @@ class PortfolioAllocator:
         positions: Optional[List[PositionInfo]] = None,
         allocation_percent: float = 10.0,
         risk_used: float = 0.0,
+        free_margin: Optional[float] = None,
     ) -> AllocationInfo:
         """
         Allocate capital for a new position, respecting capital that
@@ -54,10 +55,19 @@ class PortfolioAllocator:
             * (allocation_percent / 100)
         )
 
-        capital_used = min(
+        limits = [
+
             requested_capital,
+
             remaining_capital,
-        )
+
+        ]
+
+        if free_margin is not None:
+
+            limits.append(free_margin)
+
+        capital_used = min(limits)
 
         capital_available = max(
             remaining_capital - capital_used,

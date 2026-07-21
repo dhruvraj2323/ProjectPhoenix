@@ -65,16 +65,22 @@ class PerformanceMetricsCalculator:
             if trade.profit_loss < 0
         ]
 
-        average_profit = (
-            sum(profits) / len(profits)
-            if profits
-            else 0.0
+        average_profit = round(
+            (
+                sum(profits) / len(profits)
+                if profits
+                else 0.0
+            ),
+            2,
         )
 
-        average_loss = (
-            sum(losses_list) / len(losses_list)
-            if losses_list
-            else 0.0
+        average_loss = round(
+            (
+                sum(losses_list) / len(losses_list)
+                if losses_list
+                else 0.0
+            ),
+            2,
         )
 
         return PerformanceMetrics(

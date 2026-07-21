@@ -59,6 +59,8 @@ class PortfolioAnalyzer:
 
         )
 
+        gross_exposure = used_margin
+
         free_margin = (
 
             context.account_equity
@@ -83,12 +85,11 @@ class PortfolioAnalyzer:
 
         portfolio_heat = (
 
-            used_margin
+            gross_exposure
             /
             context.account_balance
 
         ) * 100 if context.account_balance > 0 else 0.0
-
         return PortfolioMetrics(
 
             balance=context.account_balance,

@@ -43,15 +43,24 @@ class PerformanceEngine:
 
         validation = self._validator.validate(metrics)
 
-        self._logger.log(metrics)
+        if not validation.valid:
+            self._logger.log(metrics)
 
-        if validation.valid:
             return PerformanceDecision(
-                decision=PerformanceDecisionType.ACCEPT,
+                decision=PerformanceDecisionType.REVIEW,
                 metrics=metrics,
-                approved=True,
+                approved=False,
                 reason=validation.reason,
             )
+
+        self._logger.log(metrics)
+
+        return PerformanceDecision(
+            decision=PerformanceDecisionType.ACCEPT,
+            metrics=metrics,
+            approved=True,
+            reason=validation.reason,
+        )
 
         return PerformanceDecision(
             decision=PerformanceDecisionType.REVIEW,

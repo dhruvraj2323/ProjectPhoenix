@@ -30,7 +30,7 @@ class ExecutionRules:
         """
 
         return OrderRequest(
-            symbol="XAUUSD",
+            symbol=decision.position.__dict__.get("symbol", "XAUUSD"),
             side=OrderSide.BUY,
             order_type=OrderType.MARKET,
             volume=decision.position.quantity,

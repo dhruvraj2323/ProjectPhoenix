@@ -34,7 +34,7 @@ class PositionSizer:
 
         capital = account_balance * (risk_percent / 100)
 
-        quantity = capital
+        quantity = round(capital, 2)
 
         return PositionSize(
             quantity=quantity,

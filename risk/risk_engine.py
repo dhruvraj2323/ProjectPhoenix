@@ -65,7 +65,8 @@ class RiskEngine:
             reason="Initial M9 placeholder decision.",
         )
 
-        self.validator.validate(decision)
+        if not self.validator.validate(decision):
+            raise ValueError("Risk validation failed.")
 
         self.logger.log(decision)
 

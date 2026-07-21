@@ -12,9 +12,12 @@ Responsible for:
 - Application logging
 """
 
+from __future__ import annotations
+
 import logging
 
 from core.config import PROJECT_ROOT
+
 
 # -------------------------------------------------
 # Logger Manager
@@ -72,7 +75,7 @@ class LoggerManager:
 
             file_handler = logging.FileHandler(
                 log_file,
-                encoding="utf-8"
+                encoding="utf-8",
             )
 
             formatter = logging.Formatter(
@@ -101,6 +104,60 @@ class LoggerManager:
         )
 
         return self.logger
+
+    # -------------------------------------------------
+    # Logging Helper Methods
+    # -------------------------------------------------
+
+    def info(self, message: str) -> None:
+        """
+        Log an INFO message.
+        """
+
+        if self.logger is None:
+            self.initialize()
+
+        self.logger.info(message)
+
+    def warning(self, message: str) -> None:
+        """
+        Log a WARNING message.
+        """
+
+        if self.logger is None:
+            self.initialize()
+
+        self.logger.warning(message)
+
+    def error(self, message: str) -> None:
+        """
+        Log an ERROR message.
+        """
+
+        if self.logger is None:
+            self.initialize()
+
+        self.logger.error(message)
+
+    def debug(self, message: str) -> None:
+        """
+        Log a DEBUG message.
+        """
+
+        if self.logger is None:
+            self.initialize()
+
+        self.logger.debug(message)
+
+    def critical(self, message: str) -> None:
+        """
+        Log a CRITICAL message.
+        """
+
+        if self.logger is None:
+            self.initialize()
+
+        self.logger.critical(message)
 
 
 # -------------------------------------------------

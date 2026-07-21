@@ -82,3 +82,23 @@ class PortfolioLogger:
             f"Allocation %      : "
             f"{decision.allocation.allocation_percent:.2f}%"
         )
+
+        print(
+            f"Risk Score       : "
+            f"{decision.risk.risk_score:.2f}"
+        )
+
+        print(
+            f"Drawdown         : "
+            f"{decision.risk.drawdown:.2f}%"
+        )
+
+        print(
+            f"Correlation Risk : "
+            f"{decision.risk.correlation_risk:.2f}%"
+        )
+
+        print(
+            f"Concentration    : "
+            f"{decision.risk.concentration_risk:.2f}%"
+        )        

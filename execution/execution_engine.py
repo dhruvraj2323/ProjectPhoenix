@@ -54,6 +54,9 @@ class ExecutionEngine:
             reason=validation.reason,
         )
 
+        if not execution.approved:
+            raise ValueError(execution.reason)
+
         self._logger.log(execution)
 
         return execution

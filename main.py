@@ -14,6 +14,22 @@ from market.market_data import MarketData
 from indicators.indicator_engine import IndicatorEngine
 from indicators.candlestick_engine import CandlestickEngine
 from signals.signal_generator import SignalGenerator
+from risk.risk_engine import RiskEngine
+from risk.risk_models import RiskContext
+from execution.execution_engine import ExecutionEngine
+from performance.performance_engine import PerformanceEngine
+from performance.performance_models import (
+    PerformanceContext,
+    TradeOutcome,
+    TradeResult,
+)
+from portfolio.portfolio_engine import PortfolioEngine
+
+from portfolio.portfolio_models import (
+    PortfolioContext,
+    PositionDirection,
+    PositionInfo,
+)
 
 
 def main():
@@ -972,6 +988,268 @@ def main():
                         f"Reason     : {signal.reason}"
                     )
                     
+                    # -----------------------------------------
+                    # Risk Management Engine Test (M9)
+                    # -----------------------------------------
+
+                    risk_engine = RiskEngine()
+
+                    risk_context = RiskContext(
+                        signal=signal,
+                        account_balance=100000,
+                        symbol=config.settings["market"]["symbol"],
+                    )
+
+                    risk_decision = risk_engine.evaluate(risk_context)
+
+                    app_logger.info("Risk Management Engine:")
+
+                    app_logger.info(
+                        f"Decision      : {risk_decision.decision.value}"
+                    )
+
+                    app_logger.info(
+                        f"Approved      : {risk_decision.approved}"
+                    )
+
+                    app_logger.info(
+                        f"Position Size : {risk_decision.position.quantity}"
+                    )
+
+                    app_logger.info(
+                        f"Stop Loss     : {risk_decision.stop_loss.price}"
+                    )
+
+                    app_logger.info(
+                        f"Take Profit   : {risk_decision.take_profit.price}"
+                    )
+
+                    app_logger.info(
+                        f"Reason        : {risk_decision.reason}"
+                    )
+
+                    # -----------------------------------------
+                    # Execution Rules Engine Test (M10)
+                    # -----------------------------------------
+
+                    execution_engine = ExecutionEngine()
+
+                    execution_decision = execution_engine.execute(
+                        risk_decision
+                    )
+
+                    app_logger.info(
+                        "Execution Rules Engine:"
+                    )
+
+                    app_logger.info(
+                        f"Status       : {execution_decision.status.value}"
+                    )
+
+                    app_logger.info(
+                        f"Approved     : {execution_decision.approved}"
+                    )
+
+                    app_logger.info(
+                        f"Symbol       : {execution_decision.order.symbol}"
+                    )
+
+                    app_logger.info(
+                        f"Side         : {execution_decision.order.side.value}"
+                    )
+
+                    app_logger.info(
+                        f"Order Type   : {execution_decision.order.order_type.value}"
+                    )
+
+                    app_logger.info(
+                        f"Volume       : {execution_decision.order.volume}"
+                    )
+
+                    app_logger.info(
+                        f"Entry Price  : {execution_decision.order.entry_price}"
+                    )
+
+                    app_logger.info(
+                        f"Stop Loss    : {execution_decision.order.stop_loss}"
+                    )
+
+                    app_logger.info(
+                        f"Take Profit  : {execution_decision.order.take_profit}"
+                    )
+
+                    app_logger.info(
+                        f"Reason       : {execution_decision.reason}"
+                    )
+
+                    # -----------------------------------------
+                    # Performance Feedback Engine Test (M11)
+                    # -----------------------------------------
+
+                    performance_engine = PerformanceEngine()
+
+                    trades = [
+                        TradeResult(
+                            symbol=config.settings["market"]["symbol"],
+                            outcome=TradeOutcome.WIN,
+                            profit_loss=150.0,
+                            entry_price=250.0,
+                            exit_price=260.0,
+                        ),
+                        TradeResult(
+                            symbol=config.settings["market"]["symbol"],
+                            outcome=TradeOutcome.LOSS,
+                            profit_loss=-75.0,
+                            entry_price=260.0,
+                            exit_price=255.0,
+                        ),
+                        TradeResult(
+                            symbol=config.settings["market"]["symbol"],
+                            outcome=TradeOutcome.WIN,
+                            profit_loss=100.0,
+                            entry_price=255.0,
+                            exit_price=265.0,
+                        ),
+                    ]
+
+                    performance_context = PerformanceContext(
+                        trades=trades
+                    )
+
+                    performance_decision = performance_engine.evaluate(
+                        performance_context
+                    )
+
+                    app_logger.info(
+                        "Performance Feedback Engine:"
+                    )
+
+                    app_logger.info(
+                        f"Decision        : {performance_decision.decision.value}"
+                    )
+
+                    app_logger.info(
+                        f"Approved        : {performance_decision.approved}"
+                    )
+
+                    app_logger.info(
+                        f"Total Trades    : {performance_decision.metrics.total_trades}"
+                    )
+
+                    app_logger.info(
+                        f"Wins            : {performance_decision.metrics.wins}"
+                    )
+
+                    app_logger.info(
+                        f"Losses          : {performance_decision.metrics.losses}"
+                    )
+
+                    app_logger.info(
+                        f"Breakeven       : {performance_decision.metrics.breakeven}"
+                    )
+
+                    app_logger.info(
+                        f"Win Rate        : {performance_decision.metrics.win_rate:.2f}%"
+                    )
+
+                    app_logger.info(
+                        f"Average Profit  : {performance_decision.metrics.average_profit}"
+                    )
+
+                    app_logger.info(
+                        f"Average Loss    : {performance_decision.metrics.average_loss}"
+                    )
+
+                    app_logger.info(
+                        f"Reason          : {performance_decision.reason}"
+                    )
+
+                    # ==========================================================
+                    # M12 - Portfolio Management Engine
+                    # ==========================================================
+
+                    from portfolio.portfolio_engine import PortfolioEngine
+                    from portfolio.portfolio_models import (
+                        PortfolioContext,
+                        PositionDirection,
+                        PositionInfo,
+                    )
+
+                    positions = [
+                        PositionInfo(
+                            symbol="XAUUSD",
+                            direction=PositionDirection.BUY,
+                            volume=1000.0,
+                            entry_price=250.0,
+                            current_price=252.0,
+                            floating_profit=2000.0,
+                            currency="USD",
+                        ),
+                        PositionInfo(
+                            symbol="EURUSD",
+                            direction=PositionDirection.SELL,
+                            volume=500.0,
+                            entry_price=1.1000,
+                            current_price=1.0950,
+                            floating_profit=250.0,
+                            currency="USD",
+                        ),
+                    ]
+
+                    portfolio_context = PortfolioContext(
+                        account_balance=100000.0,
+                        account_equity=102250.0,
+                        positions=positions,
+                    )
+
+                    portfolio_engine = PortfolioEngine()
+
+                    portfolio_decision = portfolio_engine.evaluate(
+                        portfolio_context
+                    )
+
+                    logger.info("Portfolio Management Engine:")
+                    logger.info(
+                        f"Decision          : "
+                        f"{portfolio_decision.decision.value}"
+                    )
+                    logger.info(
+                        f"Approved          : "
+                        f"{portfolio_decision.approved}"
+                    )
+                    logger.info(
+                        f"Open Positions    : "
+                        f"{portfolio_decision.metrics.open_positions}"
+                    )
+                    logger.info(
+                        f"Portfolio Heat    : "
+                        f"{portfolio_decision.metrics.portfolio_heat:.2f}%"
+                    )
+                    logger.info(
+                        f"Margin Level      : "
+                        f"{portfolio_decision.metrics.margin_level:.2f}%"
+                    )
+                    logger.info(
+                        f"Gross Exposure    : "
+                        f"{portfolio_decision.exposure.gross_exposure}"
+                    )
+                    logger.info(
+                        f"Net Exposure      : "
+                        f"{portfolio_decision.exposure.net_exposure}"
+                    )
+                    logger.info(
+                        f"Correlation Risk  : "
+                        f"{portfolio_decision.risk.correlation_risk:.2f}%"
+                    )
+                    logger.info(
+                        f"Risk Score        : "
+                        f"{portfolio_decision.risk.risk_score:.2f}"
+                    )
+                    logger.info(
+                        f"Reason            : "
+                        f"{portfolio_decision.reason}"
+                    )
+
         mt5_connection.shutdown()
 
 
