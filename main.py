@@ -44,6 +44,12 @@ from ai_decision.ai_models import (
     AIContext,
 )
 
+from orchestrator.orchestrator_engine import OrchestratorEngine
+
+from orchestrator.orchestrator_models import (
+    TradingDecision,
+)
+
 def main():
     """
     Application entry point.
@@ -1363,6 +1369,42 @@ def main():
                     logger.info(
                         f"Validation Reason  : "
                         f"{ai_decision.reason}"
+                    )
+                    # ==========================================
+                    # Trading Orchestrator Engine
+                    # ==========================================
+
+                    orchestrator_engine = OrchestratorEngine()
+
+                    trading_decision: TradingDecision = (
+                        orchestrator_engine.execute()
+                    )
+
+                    logger.info("Trading Orchestrator Engine:")
+
+                    logger.info(
+                        f"Result             : "
+                        f"{trading_decision.status.value}"
+                    )
+
+                    logger.info(
+                        f"Approved           : "
+                        f"{trading_decision.approved}"
+                    )
+
+                    logger.info(
+                        f"Completed Stages   : "
+                        f"{trading_decision.result.metadata.completed_stages}"
+                    )
+
+                    logger.info(
+                        f"Execution Time     : "
+                        f"{trading_decision.result.metadata.execution_time_ms:.3f} ms"
+                    )
+
+                    logger.info(
+                        f"Reason             : "
+                        f"{trading_decision.reason}"
                     )
 
         mt5_connection.shutdown()

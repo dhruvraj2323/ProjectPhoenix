@@ -84,24 +84,28 @@ class OrchestratorPipeline:
         ]
 
         elapsed = (
-
             time.perf_counter()
-
-            -
-
-            start
-
+            - start
         ) * 1000
 
         metadata = ExecutionMetadata(
 
             execution_time_ms=elapsed,
 
-            completed_stages=len(
-                stages
+            completed_stages=sum(
+                1
+                for stage in stages
+                if stage.completed
             ),
 
-            failed_stage=None,
+            failed_stage=next(
+                (
+                    stage.name
+                    for stage in stages
+                    if not stage.completed
+                ),
+                None,
+            ),
 
         )
 

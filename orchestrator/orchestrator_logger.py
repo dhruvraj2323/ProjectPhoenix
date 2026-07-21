@@ -58,7 +58,7 @@ class OrchestratorLogger:
 
         print(
             f"Execution Time   : "
-            f"{decision.result.metadata.execution_time_ms:.3f} ms"
+            f"{decision.result.metadata.execution_time_ms:.2f} ms"
         )
 
         print(
