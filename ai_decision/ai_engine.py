@@ -62,7 +62,7 @@ class AIEngine:
             context
         )
 
-        _ = self.scoring.calculate(
+        recommendation.score = self.scoring.calculate(
             recommendation
         )
 

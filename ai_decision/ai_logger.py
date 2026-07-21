@@ -54,6 +54,11 @@ class AILogger:
         )
 
         print(
-            f"Reason            : "
+            f"AI Reason         : "
+            f"{recommendation.reason}"
+        )
+
+        print(
+            f"Validation Reason : "
             f"{decision.reason}"
         )

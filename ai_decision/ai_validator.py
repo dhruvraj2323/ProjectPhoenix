@@ -43,10 +43,13 @@ class AIValidator:
         Validate AI recommendation.
         """
 
-        if recommendation.confidence <= 0.0:
+        if (
+            recommendation.confidence < 0.0
+            or recommendation.confidence > 1.0
+        ):
             return AIValidationResult(
                 valid=False,
-                reason="Confidence must be greater than zero.",
+                reason="Confidence must be between 0.0 and 1.0.",
             )
 
         if recommendation.score < 0.0:

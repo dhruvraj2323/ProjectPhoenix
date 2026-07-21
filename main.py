@@ -23,6 +23,7 @@ from performance.performance_models import (
     TradeOutcome,
     TradeResult,
 )
+
 from portfolio.portfolio_engine import PortfolioEngine
 
 from portfolio.portfolio_models import (
@@ -31,6 +32,17 @@ from portfolio.portfolio_models import (
     PositionInfo,
 )
 
+from strategy_optimizer.strategy_engine import StrategyEngine
+
+from strategy_optimizer.strategy_models import (
+    StrategyContext,
+    StrategyPerformance,
+)
+from ai_decision.ai_engine import AIEngine
+
+from ai_decision.ai_models import (
+    AIContext,
+)
 
 def main():
     """
@@ -1248,6 +1260,109 @@ def main():
                     logger.info(
                         f"Reason            : "
                         f"{portfolio_decision.reason}"
+                    )
+                    # =================================================
+                    # Strategy Optimizer Engine
+                    # =================================================
+
+                    performance = StrategyPerformance(
+                        total_trades=150,
+                        win_rate=45.0,
+                        average_profit=180.0,
+                        average_loss=-90.0,
+                        drawdown=6.0,
+                        profit_factor=1.40,
+                        sharpe_ratio=1.20,
+                    )
+
+                    strategy_context = StrategyContext(
+                        performance=performance,
+                        current_parameters={
+                            "risk_percent": 1.0,
+                        },
+                    )
+
+                    strategy_engine = StrategyEngine()
+
+                    strategy_decision = strategy_engine.evaluate(
+                        strategy_context
+                    )
+
+                    logger.info("Strategy Optimizer Engine:")
+                    logger.info(
+                        f"Status             : {strategy_decision.status.value}"
+                    )
+                    logger.info(
+                        f"Approved           : {strategy_decision.approved}"
+                    )
+                    logger.info(
+                        f"Optimization Type  : "
+                        f"{strategy_decision.recommendation.optimization_type.value}"
+                    )
+                    logger.info(
+                        f"Current Value      : "
+                        f"{strategy_decision.recommendation.current_value}"
+                    )
+                    logger.info(
+                        f"Suggested Value    : "
+                        f"{strategy_decision.recommendation.suggested_value}"
+                    )
+                    logger.info(
+                        f"Confidence         : "
+                        f"{strategy_decision.recommendation.confidence:.2f}"
+                    )
+                    logger.info(
+                        f"Reason             : "
+                        f"{strategy_decision.reason}"
+                    )
+                    # =================================================
+                    # AI Decision Engine
+                    # =================================================
+
+                    ai_context = AIContext(
+                        signal_strength=84.0,
+                        risk_score=18.0,
+                        performance_score=79.0,
+                        portfolio_score=91.0,
+                        optimization_score=85.0,
+                    )
+
+                    ai_engine = AIEngine()
+
+                    ai_decision = ai_engine.evaluate(
+                        ai_context
+                    )
+
+                    logger.info("AI Decision Engine:")
+
+                    logger.info(
+                        f"Decision           : "
+                        f"{ai_decision.recommendation.decision.value}"
+                    )
+
+                    logger.info(
+                        f"Approved           : "
+                        f"{ai_decision.approved}"
+                    )
+
+                    logger.info(
+                        f"Confidence         : "
+                        f"{ai_decision.recommendation.confidence:.2f}"
+                    )
+
+                    logger.info(
+                        f"Score              : "
+                        f"{ai_decision.recommendation.score:.2f}"
+                    )
+
+                    logger.info(
+                        f"AI Reason          : "
+                        f"{ai_decision.recommendation.reason}"
+                    )
+
+                    logger.info(
+                        f"Validation Reason  : "
+                        f"{ai_decision.reason}"
                     )
 
         mt5_connection.shutdown()

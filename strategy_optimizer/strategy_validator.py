@@ -50,6 +50,13 @@ class StrategyValidator:
                 reason="Optimization confidence below minimum threshold.",
             )
 
+        if recommendation.suggested_value < 0:
+
+            return StrategyValidationResult(
+                valid=False,
+                reason="Suggested value cannot be negative.",
+            )    
+
         return StrategyValidationResult(
             valid=True,
             reason="Strategy optimization validation passed.",

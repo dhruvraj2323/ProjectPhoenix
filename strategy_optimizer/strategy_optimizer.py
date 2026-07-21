@@ -34,7 +34,10 @@ class StrategyOptimizer:
         Placeholder implementation for M13.
         """
 
-        if performance.win_rate < 50.0:
+        if (
+            performance.win_rate < 50.0
+            or performance.drawdown > 10.0
+        ):
 
             return OptimizationRecommendation(
                 optimization_type=OptimizationType.RISK_PERCENT,

@@ -60,7 +60,7 @@ class StrategyEngine:
         )
 
         recommendation = self.optimizer.optimize(
-            performance
+            performance=performance,
         )
 
         validation = self.validator.validate(
