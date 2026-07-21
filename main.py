@@ -13,6 +13,7 @@ from market.mt5_connector import MT5Connection
 from market.market_data import MarketData
 from indicators.indicator_engine import IndicatorEngine
 from indicators.candlestick_engine import CandlestickEngine
+from signals.signal_generator import SignalGenerator
 
 
 def main():
@@ -942,7 +943,35 @@ def main():
                         app_logger.info(
                             f"Current Ask : {price['ask']}"
                         )
+                    
+                                        # -----------------------------------------
+                    # Signal Generation Engine Test (M8)
+                    # -----------------------------------------
 
+                    signal_generator = SignalGenerator()
+
+                    signal = signal_generator.generate()
+
+                    app_logger.info(
+                        "Signal Generation Engine:"
+                    )
+
+                    app_logger.info(
+                        f"Signal     : {signal.signal.value}"
+                    )
+
+                    app_logger.info(
+                        f"Strength   : {signal.strength}"
+                    )
+
+                    app_logger.info(
+                        f"Confidence : {signal.confidence}"
+                    )
+
+                    app_logger.info(
+                        f"Reason     : {signal.reason}"
+                    )
+                    
         mt5_connection.shutdown()
 
 
