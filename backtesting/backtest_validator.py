@@ -42,6 +42,16 @@ class BacktestValidator:
         Validate backtesting statistics.
         """
 
+        if statistics is None:
+
+            return BacktestValidationResult(
+
+                valid=False,
+
+                reason="Backtest statistics not available.",
+
+            )
+
         if statistics.total_trades <= 0:
 
             return BacktestValidationResult(

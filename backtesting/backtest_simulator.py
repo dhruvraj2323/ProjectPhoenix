@@ -28,6 +28,10 @@ class BacktestSimulator:
     ) -> list[BacktestTrade]:
         """
         Execute placeholder backtest simulation.
+
+        TODO (M16.1):
+        Replace placeholder trades with
+        historical market simulation.
         """
 
         trades = [

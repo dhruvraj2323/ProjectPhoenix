@@ -54,9 +54,15 @@ class BacktestLogger:
             f"{decision.statistics.net_profit}"
         )
 
+        profit_factor = decision.statistics.profit_factor
+
         print(
-            f"Profit Factor   : "
-            f"{decision.statistics.profit_factor:.2f}"
+            "Profit Factor   : "
+            + (
+                "Infinity"
+                if profit_factor == float("inf")
+                else f"{profit_factor:.2f}"
+            )
         )
 
         print(

@@ -50,6 +50,13 @@ from orchestrator.orchestrator_models import (
     TradingDecision,
 )
 
+from backtesting.backtest_engine import BacktestEngine
+
+from backtesting.backtest_models import (
+    BacktestContext,
+    BacktestDecision,
+)
+
 def main():
     """
     Application entry point.
@@ -1405,6 +1412,86 @@ def main():
                     logger.info(
                         f"Reason             : "
                         f"{trading_decision.reason}"
+                    )
+                    # ==========================================
+                    # Backtesting Engine
+                    # ==========================================
+
+                    backtest_engine = BacktestEngine()
+
+                    backtest_context = BacktestContext(
+
+                        strategy_name="Phoenix Strategy",
+
+                        symbol="RELIANCE",
+
+                        timeframe="15m",
+
+                        initial_balance=100000.0,
+
+                    )
+
+                    backtest_decision: BacktestDecision = (
+                        backtest_engine.run(
+                            backtest_context
+                        )
+                    )
+
+                    logger.info(
+                        "Backtesting Engine:"
+                    )
+
+                    logger.info(
+                        f"Status             : "
+                        f"{backtest_decision.status.value}"
+                    )
+
+                    logger.info(
+                        f"Approved           : "
+                        f"{backtest_decision.approved}"
+                    )
+
+                    logger.info(
+                        f"Total Trades       : "
+                        f"{backtest_decision.statistics.total_trades}"
+                    )
+
+                    logger.info(
+                        f"Win Rate           : "
+                        f"{backtest_decision.statistics.win_rate:.2f}%"
+                    )
+
+                    logger.info(
+                        f"Net Profit         : "
+                        f"{backtest_decision.statistics.net_profit}"
+                    )
+
+                    profit_factor = (
+                        backtest_decision.statistics.profit_factor
+                    )
+
+                    logger.info(
+                        "Profit Factor      : "
+                        + (
+                            "Infinity"
+                            if profit_factor == float("inf")
+                            else f"{profit_factor:.2f}"
+                        )
+                    )
+
+                    logger.info(
+                        f"Drawdown           : "
+                        f"{backtest_decision.statistics.max_drawdown:.2f}%"
+                    )
+
+                    logger.info(
+                        f"Expectancy         : "
+                        f"{backtest_decision.statistics.expectancy:.2f}"
+                    )
+
+                    logger.info(
+                        f"Reason             : "
+                        f"{backtest_decision.reason}"
                     )
 
         mt5_connection.shutdown()

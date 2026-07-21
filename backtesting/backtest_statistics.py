@@ -30,96 +30,55 @@ class BacktestStatisticsCalculator:
         Calculate summary statistics.
         """
 
-        total_trades = len(
-            trades
-        )
+        total_trades = len(trades)
 
         winning_trades = sum(
-
             1
-
             for trade in trades
-
             if trade.win
-
         )
 
         total_profit = sum(
-
             trade.profit
-
             for trade in trades
-
             if trade.profit > 0
-
         )
 
         total_loss = abs(
-
             sum(
-
                 trade.profit
-
                 for trade in trades
-
                 if trade.profit < 0
-
             )
-
         )
 
         net_profit = sum(
-
             trade.profit
-
             for trade in trades
-
         )
 
         if total_trades > 0:
-
             win_rate = (
-
                 winning_trades
-
-                /
-
-                total_trades
-
+                / total_trades
             ) * 100
-
         else:
-
             win_rate = 0.0
 
         if total_loss > 0:
-
             profit_factor = (
-
                 total_profit
-
-                /
-
-                total_loss
-
+                / total_loss
             )
-
+        elif total_profit > 0:
+            profit_factor = float("inf")
         else:
-
             profit_factor = 0.0
 
         expectancy = (
-
-            net_profit
-
-            /
-
-            total_trades
-
+            net_profit / total_trades
             if total_trades > 0
-
             else 0.0
-
         )
 
         return BacktestStatistics(

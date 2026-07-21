@@ -42,21 +42,13 @@ class BacktestEngine:
 
     def __init__(self) -> None:
 
-        self.simulator = (
-            BacktestSimulator()
-        )
+        self.simulator = BacktestSimulator()
 
-        self.statistics = (
-            BacktestStatisticsCalculator()
-        )
+        self.statistics = BacktestStatisticsCalculator()
 
-        self.validator = (
-            BacktestValidator()
-        )
+        self.validator = BacktestValidator()
 
-        self.logger = (
-            BacktestLogger()
-        )
+        self.logger = BacktestLogger()
 
     def run(
         self,
@@ -70,31 +62,23 @@ class BacktestEngine:
             context
         )
 
-        statistics = (
-            self.statistics.calculate(
-                trades
-            )
+        statistics = self.statistics.calculate(
+            trades
         )
 
-        validation = (
-            self.validator.validate(
-                statistics
-            )
+        validation = self.validator.validate(
+            statistics
+        )
+
+        status = (
+            BacktestStatus.APPROVED
+            if validation.valid
+            else BacktestStatus.REJECTED
         )
 
         decision = BacktestDecision(
 
-            status=(
-
-                BacktestStatus.APPROVED
-
-                if validation.valid
-
-                else
-
-                BacktestStatus.REJECTED
-
-            ),
+            status=status,
 
             statistics=statistics,
 
