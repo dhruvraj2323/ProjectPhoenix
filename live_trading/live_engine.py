@@ -43,3 +43,8 @@ class LiveTradingEngine:
         LiveLogger.log(result)
 
         return result
+    # -------------------------------------------------
+
+    def shutdown(self):
+
+        pass        

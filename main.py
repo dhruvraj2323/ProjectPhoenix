@@ -95,6 +95,10 @@ from paper_trading.paper_engine import (
     PaperTradingEngine,
 )
 
+from live_trading.live_engine import (
+    LiveTradingEngine,
+)
+
 def main():
     """
     Application entry point.
@@ -1920,7 +1924,41 @@ def main():
                     logger.info(
                         f"Reason             : "
                         f"{paper_result.reason}"
-                    )                    
+                    )
+                    # ==================================================
+                    # M25 - Live Trading Engine
+                    # ==================================================
+
+                    live_engine = LiveTradingEngine()
+
+                    live_result = live_engine.initialize()
+
+                    logger.info("Live Trading Engine:")
+
+                    logger.info(
+                        f"Approved           : "
+                        f"{live_result.approved}"
+                    )
+
+                    logger.info(
+                        f"Running            : "
+                        f"{live_result.status.running}"
+                    )
+
+                    logger.info(
+                        f"Account Balance    : "
+                        f"{live_result.status.account_balance}"
+                    )
+
+                    logger.info(
+                        f"Open Positions     : "
+                        f"{live_result.status.total_positions}"
+                    )
+
+                    logger.info(
+                        f"Reason             : "
+                        f"{live_result.reason}"
+                    )                                        
 
         # Shutdown Engines
         database_engine.shutdown()
@@ -1930,6 +1968,8 @@ def main():
         market_adapter_engine.shutdown()
 
         paper_engine.shutdown()
+
+        live_engine.shutdown()
 
         mt5_connection.shutdown()
 
