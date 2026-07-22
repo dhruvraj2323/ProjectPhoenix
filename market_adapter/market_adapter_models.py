@@ -16,7 +16,7 @@ from datetime import datetime
 # -------------------------------------------------
 
 
-@dataclass
+@dataclass(slots=True)
 class MarketCandle:
     """
     OHLC candle.
@@ -39,7 +39,7 @@ class MarketCandle:
 # -------------------------------------------------
 
 
-@dataclass
+@dataclass(slots=True)
 class TickData:
     """
     Tick information.
@@ -59,7 +59,7 @@ class TickData:
 # -------------------------------------------------
 
 
-@dataclass
+@dataclass(slots=True)
 class SymbolInformation:
     """
     Symbol metadata.
@@ -76,7 +76,7 @@ class SymbolInformation:
 # -------------------------------------------------
 
 
-@dataclass
+@dataclass(slots=True)
 class MarketStatus:
     """
     Market provider status.
@@ -92,7 +92,7 @@ class MarketStatus:
 # -------------------------------------------------
 
 
-@dataclass
+@dataclass(slots=True)
 class MarketDataResult:
     """
     Final adapter result.

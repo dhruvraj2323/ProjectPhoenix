@@ -87,6 +87,10 @@ from broker.broker_engine import (
     BrokerEngine,
 )
 
+from market_adapter.market_adapter_engine import (
+    MarketAdapterEngine,
+)
+
 def main():
     """
     Application entry point.
@@ -1843,11 +1847,49 @@ def main():
                         f"Reason             : "
                         f"{broker_result.reason}"
                     )
+                    # ==================================================
+                    # M23 - Market Data Adapter
+                    # ==================================================
+
+                    market_adapter_engine = MarketAdapterEngine("MT5")
+
+                    market_adapter_result = (
+                        market_adapter_engine.initialize()
+                    )
+
+                    logger.info("Market Adapter Engine:")
+
+                    logger.info(
+                        f"Approved           : "
+                        f"{market_adapter_result.approved}"
+                    )
+
+                    logger.info(
+                        f"Provider           : "
+                        f"{market_adapter_result.status.provider_name}"
+                    )
+
+                    logger.info(
+                        f"Connected          : "
+                        f"{market_adapter_result.status.connected}"
+                    )
+
+                    logger.info(
+                        f"Market Open        : "
+                        f"{market_adapter_result.status.market_open}"
+                    )
+
+                    logger.info(
+                        f"Reason             : "
+                        f"{market_adapter_result.reason}"
+                    )
 
         # Shutdown Engines
         database_engine.shutdown()
 
         broker_engine.shutdown()
+
+        market_adapter_engine.shutdown()
 
         mt5_connection.shutdown()
 

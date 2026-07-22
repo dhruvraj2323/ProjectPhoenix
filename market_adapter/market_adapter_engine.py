@@ -31,7 +31,7 @@ class MarketAdapterEngine:
         status = MarketStatus(
             connected=connected,
             market_open=True,
-            provider_name="MT5",
+            provider_name=self.provider.__class__.__name__.replace("Provider", ""),
         )
 
         result = MarketDataResult(
@@ -43,3 +43,7 @@ class MarketAdapterEngine:
         MarketAdapterLogger.log(result)
 
         return result
+
+    def shutdown(self):
+
+        self.provider.disconnect()        
