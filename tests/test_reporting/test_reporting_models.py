@@ -61,9 +61,20 @@ def run_test():
     )
 
     result = ReportingResult(
+
         approved=True,
+
         reason="Reporting completed successfully.",
+
         status=status,
+
+        report={
+            "total_trades": 100,
+            "win_rate": 68.0,
+            "net_profit": 12500.0,
+            "profit_factor": 3.27,
+        },
+
     )
 
     assert summary.total_records == 250

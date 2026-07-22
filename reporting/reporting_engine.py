@@ -64,7 +64,7 @@ class ReportingEngine:
             drawdown=4.5,
         )
 
-        self.generator.generate(
+        report = self.generator.generate(
             summary,
             statistics,
             performance,
@@ -77,9 +77,15 @@ class ReportingEngine:
         )
 
         result = ReportingResult(
+
             approved=True,
+
             reason="Reporting completed successfully.",
+
             status=status,
+
+            report=report,
+
         )
 
         ReportingLogger.log(result)

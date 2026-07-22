@@ -125,3 +125,5 @@ class ReportingResult:
     reason: str
 
     status: ReportingStatus
+
+    report: dict

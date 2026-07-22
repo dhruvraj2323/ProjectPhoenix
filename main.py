@@ -79,6 +79,10 @@ from database.database_engine import (
     DatabaseEngine,
 )
 
+from reporting.reporting_engine import (
+    ReportingEngine,
+)
+
 def main():
     """
     Application entry point.
@@ -1746,6 +1750,60 @@ def main():
                     logger.info(
                         f"Reason             : "
                         f"{database_result.reason}"
+                    )
+                    # ==================================================
+                    # M21 - Reporting & Analytics Engine
+                    # ==================================================
+
+                    reporting_engine = ReportingEngine()
+
+                    reporting_result = reporting_engine.run()
+
+                    logger.info("Reporting Engine:")
+
+                    logger.info(
+                        f"Approved           : "
+                        f"{reporting_result.approved}"
+                    )
+
+                    logger.info(
+                        f"Generated          : "
+                        f"{reporting_result.status.generated}"
+                    )
+
+                    logger.info(
+                        f"Analytics          : "
+                        f"{reporting_result.status.analytics_completed}"
+                    )
+
+                    logger.info(
+                        f"Report Name        : "
+                        f"{reporting_result.status.report_name}"
+                    )
+
+                    logger.info(
+                        f"Total Trades       : "
+                        f"{reporting_result.report['total_trades']}"
+                    )
+
+                    logger.info(
+                        f"Win Rate           : "
+                        f"{reporting_result.report['win_rate']}%"
+                    )
+
+                    logger.info(
+                        f"Net Profit         : "
+                        f"{reporting_result.report['net_profit']}"
+                    )
+
+                    logger.info(
+                        f"Profit Factor      : "
+                        f"{reporting_result.report['profit_factor']}"
+                    )
+
+                    logger.info(
+                        f"Reason             : "
+                        f"{reporting_result.reason}"
                     )
 
         mt5_connection.shutdown()

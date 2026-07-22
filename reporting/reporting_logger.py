@@ -28,3 +28,25 @@ class ReportingLogger:
         print(f"Generated           : {result.status.generated}")
         print(f"Analytics Completed : {result.status.analytics_completed}")
         print(f"Report Name         : {result.status.report_name}")
+
+        print()
+
+        print(
+            f"Total Trades       : "
+            f"{result.report['total_trades']}"
+        )
+
+        print(
+            f"Win Rate           : "
+            f"{result.report['win_rate']}%"
+        )
+
+        print(
+            f"Net Profit         : "
+            f"{result.report['net_profit']}"
+        )
+
+        print(
+            f"Profit Factor      : "
+            f"{result.report['profit_factor']}"
+        )
