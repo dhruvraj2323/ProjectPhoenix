@@ -99,6 +99,10 @@ from live_trading.live_engine import (
     LiveTradingEngine,
 )
 
+from dashboard.dashboard_engine import (
+    DashboardEngine,
+)
+
 def main():
     """
     Application entry point.
@@ -1959,7 +1963,40 @@ def main():
                         f"Reason             : "
                         f"{live_result.reason}"
                     )                                        
+                    # ==================================================
+                    # M26 - Dashboard
+                    # ==================================================
 
+                    dashboard_engine = DashboardEngine()
+
+                    dashboard_result = dashboard_engine.initialize()
+
+                    logger.info("Dashboard Engine:")
+
+                    logger.info(
+                        f"Approved           : "
+                        f"{dashboard_result.approved}"
+                    )
+
+                    logger.info(
+                        f"Running            : "
+                        f"{dashboard_result.status.running}"
+                    )
+
+                    logger.info(
+                        f"Connected          : "
+                        f"{dashboard_result.status.connected}"
+                    )
+
+                    logger.info(
+                        f"Refresh Rate       : "
+                        f"{dashboard_result.status.refresh_rate}"
+                    )
+
+                    logger.info(
+                        f"Reason             : "
+                        f"{dashboard_result.reason}"
+                    )
         # Shutdown Engines
         database_engine.shutdown()
 

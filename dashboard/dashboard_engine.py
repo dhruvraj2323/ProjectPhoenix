@@ -30,7 +30,7 @@ class DashboardEngine:
 
         status = DashboardStatus(
             running=True,
-            connected=True,
+            connected=self.renderer.render(),
             refresh_rate=5,
         )
 
@@ -43,3 +43,9 @@ class DashboardEngine:
         DashboardLogger.log(result)
 
         return result
+    def shutdown(self):
+        """
+        Shutdown dashboard.
+        """
+
+        return True        
