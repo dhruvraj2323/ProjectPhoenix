@@ -83,6 +83,10 @@ from reporting.reporting_engine import (
     ReportingEngine,
 )
 
+from broker.broker_engine import (
+    BrokerEngine,
+)
+
 def main():
     """
     Application entry point.
@@ -1804,6 +1808,40 @@ def main():
                     logger.info(
                         f"Reason             : "
                         f"{reporting_result.reason}"
+                    )
+                    # ==================================================
+                    # M22 - Broker Interface
+                    # ==================================================
+
+                    broker_engine = BrokerEngine("MT5")
+
+                    broker_result = broker_engine.initialize()
+
+                    logger.info("Broker Engine:")
+
+                    logger.info(
+                        f"Approved           : "
+                        f"{broker_result.approved}"
+                    )
+
+                    logger.info(
+                        f"Broker             : "
+                        f"{broker_result.status.broker_name}"
+                    )
+
+                    logger.info(
+                        f"Connected          : "
+                        f"{broker_result.status.connected}"
+                    )
+
+                    logger.info(
+                        f"Logged In          : "
+                        f"{broker_result.status.logged_in}"
+                    )
+
+                    logger.info(
+                        f"Reason             : "
+                        f"{broker_result.reason}"
                     )
 
         mt5_connection.shutdown()

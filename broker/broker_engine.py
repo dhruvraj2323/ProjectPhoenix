@@ -10,8 +10,8 @@ Master controller of Broker Layer.
 from broker.broker_factory import BrokerFactory
 from broker.broker_logger import BrokerLogger
 from broker.broker_models import (
-    BrokerStatus,
     BrokerResult,
+    BrokerStatus,
 )
 
 
@@ -24,25 +24,51 @@ class BrokerEngine:
 
         self.broker = BrokerFactory.create(broker_name)
 
-    def initialize(self):
+    # -------------------------------------------------
+
+    def initialize(self) -> BrokerResult:
 
         connected = self.broker.connect()
 
+        logged_in = False
+
         if connected:
-            self.broker.login()
+            logged_in = self.broker.login()
 
         status = BrokerStatus(
             connected=self.broker.is_connected(),
-            logged_in=True,
-            broker_name="MT5",
+            logged_in=logged_in,
+            broker_name=self.broker.__class__.__name__.replace(
+                "Broker",
+                "",
+            ),
+        )
+
+        approved = (
+            status.connected
+            and status.logged_in
         )
 
         result = BrokerResult(
-            approved=True,
-            reason="Broker initialization completed successfully.",
+            approved=approved,
+            reason=(
+                "Broker initialization completed successfully."
+                if approved
+                else "Broker initialization failed."
+            ),
             status=status,
         )
 
         BrokerLogger.log(result)
 
         return result
+
+    # -------------------------------------------------
+
+    def shutdown(self) -> None:
+
+        if self.broker.is_connected():
+
+            self.broker.logout()
+
+            self.broker.disconnect()

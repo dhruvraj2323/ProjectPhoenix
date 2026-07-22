@@ -15,7 +15,7 @@ from dataclasses import dataclass
 # -------------------------------------------------
 
 
-@dataclass
+@dataclass(slots=True)
 class BrokerAccount:
     """
     Broker account information.
@@ -34,7 +34,7 @@ class BrokerAccount:
 # -------------------------------------------------
 
 
-@dataclass
+@dataclass(slots=True)
 class BrokerOrder:
     """
     Order model.
@@ -53,7 +53,7 @@ class BrokerOrder:
 # -------------------------------------------------
 
 
-@dataclass
+@dataclass(slots=True)
 class BrokerPosition:
     """
     Position model.
@@ -73,7 +73,7 @@ class BrokerPosition:
 # -------------------------------------------------
 
 
-@dataclass
+@dataclass(slots=True)
 class BrokerBalance:
     """
     Account balance.
@@ -90,7 +90,7 @@ class BrokerBalance:
 # -------------------------------------------------
 
 
-@dataclass
+@dataclass(slots=True)
 class BrokerSymbol:
     """
     Trading symbol.
@@ -107,7 +107,7 @@ class BrokerSymbol:
 # -------------------------------------------------
 
 
-@dataclass
+@dataclass(slots=True)
 class BrokerStatus:
     """
     Broker connection status.
@@ -123,7 +123,7 @@ class BrokerStatus:
 # -------------------------------------------------
 
 
-@dataclass
+@dataclass(slots=True)
 class BrokerResult:
     """
     Final broker operation result.
