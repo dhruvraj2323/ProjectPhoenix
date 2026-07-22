@@ -43,8 +43,16 @@ class AlertEngine:
             approved=True,
             reason="Alert system initialized successfully.",
             status=status,
+            delivered_channels=delivered,
         )
 
         AlertLogger.log(result)
 
         return result
+
+    def shutdown(self):
+        """
+        Shutdown Alert System.
+        """
+
+        return True

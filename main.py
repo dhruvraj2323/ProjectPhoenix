@@ -103,6 +103,10 @@ from dashboard.dashboard_engine import (
     DashboardEngine,
 )
 
+from alert_system.alert_engine import (
+    AlertEngine,
+)
+
 def main():
     """
     Application entry point.
@@ -1997,6 +2001,46 @@ def main():
                         f"Reason             : "
                         f"{dashboard_result.reason}"
                     )
+                    # ==================================================
+                    # M27 - Alert System
+                    # ==================================================
+
+                    alert_engine = AlertEngine()
+
+                    alert_result = alert_engine.initialize()
+
+                    logger.info("Alert System:")
+
+                    logger.info(
+                        f"Approved           : "
+                        f"{alert_result.approved}"
+                    )
+
+                    logger.info(
+                        f"Running            : "
+                        f"{alert_result.status.running}"
+                    )
+
+                    logger.info(
+                        f"Alerts Sent        : "
+                        f"{alert_result.status.alerts_sent}"
+                    )
+
+                    logger.info(
+                        f"Connected Channels : "
+                        f"{alert_result.status.connected_channels}"
+                    )
+
+                    logger.info(
+                        f"Delivered Channels : "
+                        f"{', '.join(alert_result.delivered_channels)}"
+                    )
+
+                    logger.info(
+                        f"Reason             : "
+                        f"{alert_result.reason}"
+                    )                    
+
         # Shutdown Engines
         database_engine.shutdown()
 
@@ -2007,6 +2051,8 @@ def main():
         paper_engine.shutdown()
 
         live_engine.shutdown()
+
+        alert_engine.shutdown()
 
         mt5_connection.shutdown()
 

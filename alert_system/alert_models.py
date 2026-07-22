@@ -15,7 +15,7 @@ from dataclasses import dataclass
 # -------------------------------------------------
 
 
-@dataclass
+@dataclass(slots=True)
 class AlertMessage:
 
     title: str
@@ -29,7 +29,7 @@ class AlertMessage:
 # -------------------------------------------------
 
 
-@dataclass
+@dataclass(slots=True)
 class AlertChannel:
 
     name: str
@@ -42,7 +42,7 @@ class AlertChannel:
 # -------------------------------------------------
 
 
-@dataclass
+@dataclass(slots=True)
 class AlertStatus:
 
     running: bool
@@ -55,9 +55,10 @@ class AlertStatus:
 # -------------------------------------------------
 
 
-@dataclass
+@dataclass(slots=True)
 class AlertResult:
 
     approved: bool
     reason: str
     status: AlertStatus
+    delivered_channels: list[str]
