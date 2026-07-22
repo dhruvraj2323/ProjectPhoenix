@@ -1844,6 +1844,11 @@ def main():
                         f"{broker_result.reason}"
                     )
 
+        # Shutdown Engines
+        database_engine.shutdown()
+
+        broker_engine.shutdown()
+
         mt5_connection.shutdown()
 
 
