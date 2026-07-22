@@ -31,6 +31,13 @@ class ConfigurationLoader:
         Load configuration items.
         """
 
+        # Reserved for future configuration sources
+        _ = (
+            context.application_name,
+            context.version,
+            context.environment,
+        )
+
         defaults = [
 
             ConfigurationItem(

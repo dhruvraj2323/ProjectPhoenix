@@ -59,7 +59,7 @@ class IntegrationEngine:
         # -----------------------------------------
 
         summary = ExecutionSummary(
-            execution_time_ms=15.000,
+            execution_time_ms=0.0,
             completed_stages=pipeline.completed_stages(),
             failed_stages=pipeline.failed_stages(),
         )

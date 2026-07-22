@@ -26,9 +26,9 @@ class DatabaseEngine:
 
     def run(self) -> DatabaseResult:
 
-        connection = self.db.connect()
-
         status = self.db.initialize()
+
+        connection = self.db.connection
 
         # Initialize repository (creates tables)
         DatabaseRepository(connection)

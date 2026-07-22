@@ -39,7 +39,7 @@ class LearningRecommender:
 
                 current_value=1.0,
 
-                suggested_value=1.2,
+                suggested_value=1.10,
 
                 confidence=pattern.confidence,
 

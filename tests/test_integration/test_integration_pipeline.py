@@ -38,7 +38,7 @@ def run_test():
         f"Pipeline Status  : {'APPROVED' if pipeline.pipeline_completed() else 'FAILED'}"
     )
 
-    assert pipeline.completed_stages() == 15
+    assert pipeline.completed_stages() == 16
 
     assert pipeline.failed_stages() == 0
 

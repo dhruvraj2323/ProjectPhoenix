@@ -76,6 +76,23 @@ class LearningValidator:
 
             )
 
+        if (
+            recommendation.current_value
+            ==
+            recommendation.suggested_value
+        ):
+
+            return LearningValidationResult(
+
+                valid=False,
+
+                reason=(
+                    "Suggested value must differ "
+                    "from current value."
+                ),
+
+            )
+
         return LearningValidationResult(
 
             valid=True,

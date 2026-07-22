@@ -25,7 +25,6 @@ from performance.performance_models import (
 )
 
 from portfolio.portfolio_engine import PortfolioEngine
-
 from portfolio.portfolio_models import (
     PortfolioContext,
     PositionDirection,
@@ -33,28 +32,51 @@ from portfolio.portfolio_models import (
 )
 
 from strategy_optimizer.strategy_engine import StrategyEngine
-
 from strategy_optimizer.strategy_models import (
     StrategyContext,
     StrategyPerformance,
 )
 from ai_decision.ai_engine import AIEngine
-
 from ai_decision.ai_models import (
     AIContext,
 )
 
 from orchestrator.orchestrator_engine import OrchestratorEngine
-
 from orchestrator.orchestrator_models import (
     TradingDecision,
 )
 
 from backtesting.backtest_engine import BacktestEngine
-
 from backtesting.backtest_models import (
     BacktestContext,
     BacktestDecision,
+)
+
+from learning.learning_engine import LearningEngine
+from learning.learning_models import (
+    LearningContext,
+    LearningDecision,
+)
+
+from config.config_engine import (
+    ConfigurationEngine,
+)
+
+from config.config_models import (
+    ConfigurationContext,
+    ConfigurationDecision,
+)
+
+from integration.integration_engine import (
+    IntegrationEngine,
+)
+
+from integration.integration_models import (
+    IntegrationResult,
+)
+
+from database.database_engine import (
+    DatabaseEngine,
 )
 
 def main():
@@ -1492,6 +1514,238 @@ def main():
                     logger.info(
                         f"Reason             : "
                         f"{backtest_decision.reason}"
+                    )
+                    # ==========================================
+                    # Learning Engine
+                    # ==========================================
+
+                    learning_engine = LearningEngine()
+
+                    learning_context = LearningContext(
+
+                        strategy_name="Phoenix Strategy",
+
+                        total_trades=(
+                            backtest_decision.statistics.total_trades
+                        ),
+
+                        win_rate=(
+                            backtest_decision.statistics.win_rate
+                        ),
+
+                        profit_factor=(
+                            backtest_decision.statistics.profit_factor
+                        ),
+
+                    )
+
+                    learning_decision: LearningDecision = (
+                        learning_engine.run(
+                            learning_context
+                        )
+                    )
+
+                    logger.info("Learning Engine:")
+
+                    logger.info(
+                        f"Status             : "
+                        f"{learning_decision.status.value}"
+                    )
+
+                    logger.info(
+                        f"Approved           : "
+                        f"{learning_decision.approved}"
+                    )
+
+                    logger.info(
+                        f"Pattern            : "
+                        f"{learning_decision.pattern.pattern_name}"
+                    )
+
+                    logger.info(
+                        f"Pattern Confidence : "
+                        f"{learning_decision.pattern.confidence:.2f}"
+                    )
+
+                    logger.info(
+                        f"Occurrences        : "
+                        f"{learning_decision.pattern.occurrences}"
+                    )
+
+                    logger.info(
+                        f"Recommendation     : "
+                        f"{learning_decision.recommendation.recommendation_type}"
+                    )
+
+                    logger.info(
+                        f"Current Value      : "
+                        f"{learning_decision.recommendation.current_value}"
+                    )
+
+                    logger.info(
+                        f"Suggested Value    : "
+                        f"{learning_decision.recommendation.suggested_value}"
+                    )
+
+                    logger.info(
+                        f"Confidence         : "
+                        f"{learning_decision.recommendation.confidence:.2f}"
+                    )
+
+                    logger.info(
+                        f"Reason             : "
+                        f"{learning_decision.reason}"
+                    )
+                    # ==========================================
+                    # Configuration & Settings Engine
+                    # ==========================================
+
+                    configuration_engine = (
+                        ConfigurationEngine()
+                    )
+
+                    configuration_context = (
+                        ConfigurationContext(
+                            application_name="Project Phoenix",
+                            version="1.0",
+                            environment="DEVELOPMENT",
+                        )
+                    )
+
+                    configuration_decision: ConfigurationDecision = (
+                        configuration_engine.run(
+                            configuration_context
+                        )
+                    )
+
+                    logger.info(
+                        "Configuration Engine:"
+                    )
+
+                    logger.info(
+                        f"Status             : "
+                        f"{configuration_decision.status.value}"
+                    )
+
+                    logger.info(
+                        f"Approved           : "
+                        f"{configuration_decision.approved}"
+                    )
+
+                    logger.info(
+                        f"Environment        : "
+                        f"{configuration_context.environment}"
+                    )
+
+                    logger.info(
+                        f"Version            : "
+                        f"{configuration_context.version}"
+                    )
+
+                    logger.info(
+                        f"Items Loaded       : "
+                        f"{len(configuration_decision.items)}"
+                    )
+
+                    logger.info(
+                        f"Reason             : "
+                        f"{configuration_decision.reason}"
+                    )
+                    # ==========================================
+                    # System Integration & Validation Engine
+                    # ==========================================
+
+                    integration_engine = (
+                        IntegrationEngine()
+                    )
+
+                    integration_result: IntegrationResult = (
+                        integration_engine.run()
+                    )
+
+                    logger.info(
+                        "System Integration Engine:"
+                    )
+
+                    logger.info(
+                        f"Status             : "
+                        f"{integration_result.status}"
+                    )
+
+                    logger.info(
+                        f"Approved           : "
+                        f"{integration_result.approved}"
+                    )
+
+                    logger.info(
+                        f"Validation         : "
+                        f"{integration_result.validation.valid}"
+                    )
+
+                    logger.info(
+                        f"System Healthy     : "
+                        f"{integration_result.health.healthy}"
+                    )
+
+                    logger.info(
+                        f"Modules Completed  : "
+                        f"{integration_result.health.completed_modules}"
+                        f"/"
+                        f"{integration_result.health.total_modules}"
+                    )
+
+                    logger.info(
+                        f"Completed Stages   : "
+                        f"{integration_result.summary.completed_stages}"
+                    )
+
+                    logger.info(
+                        f"Failed Stages      : "
+                        f"{integration_result.summary.failed_stages}"
+                    )
+
+                    logger.info(
+                        f"Execution Time     : "
+                        f"{integration_result.summary.execution_time_ms:.3f} ms"
+                    )
+
+                    logger.info(
+                        f"Reason             : "
+                        f"{integration_result.validation.reason}"
+                    )
+                    # ==================================================
+                    # M20 - Database Layer
+                    # ==================================================
+
+                    database_engine = DatabaseEngine()
+
+                    database_result = database_engine.run()
+
+                    logger.info("Database Engine:")
+
+                    logger.info(
+                        f"Approved           : "
+                        f"{database_result.approved}"
+                    )
+
+                    logger.info(
+                        f"Connected          : "
+                        f"{database_result.status.connected}"
+                    )
+
+                    logger.info(
+                        f"Initialized        : "
+                        f"{database_result.status.initialized}"
+                    )
+
+                    logger.info(
+                        f"Database           : "
+                        f"{database_result.status.database_name}"
+                    )
+
+                    logger.info(
+                        f"Reason             : "
+                        f"{database_result.reason}"
                     )
 
         mt5_connection.shutdown()

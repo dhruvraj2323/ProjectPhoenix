@@ -13,7 +13,10 @@ from pathlib import Path
 from database.database_models import DatabaseStatus
 
 
-DATABASE_NAME = "project_phoenix.db"
+DATABASE_NAME = (
+    Path(__file__).resolve().parent
+    / "project_phoenix.db"
+)
 
 
 class DatabaseConnection:
@@ -23,7 +26,7 @@ class DatabaseConnection:
 
     def __init__(self):
 
-        self.database_path = Path(DATABASE_NAME)
+        self.database_path = DATABASE_NAME
 
         self.connection = None
 

@@ -26,14 +26,14 @@ def run_test():
 
     health = SystemHealth(
         healthy=True,
-        total_modules=15,
-        completed_modules=15,
+        total_modules=16,
+        completed_modules=16,
         failed_modules=0,
     )
 
     summary = ExecutionSummary(
         execution_time_ms=12.350,
-        completed_stages=15,
+        completed_stages=16,
         failed_stages=0,
     )
 

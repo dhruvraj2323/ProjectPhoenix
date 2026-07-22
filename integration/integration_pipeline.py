@@ -62,6 +62,7 @@ class IntegrationPipeline:
             "Trading Orchestrator",
             "Execution",
             "Performance",
+            "Backtesting",
             "Learning",
 
         ]

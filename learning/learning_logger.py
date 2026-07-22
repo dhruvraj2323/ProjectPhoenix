@@ -72,7 +72,7 @@ class LearningLogger:
         )
 
         print(
-            f"Recommendation Conf.: "
+            f"Recommendation Confidence : "
             f"{decision.recommendation.confidence:.2f}"
         )
 

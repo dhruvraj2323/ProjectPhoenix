@@ -31,7 +31,11 @@ class LearningPatternDetector:
         Detect learning pattern.
         """
 
-        if context.win_rate >= 60.0:
+        if (
+            context.win_rate >= 60.0
+            and
+            context.profit_factor >= 1.50
+        ):
 
             pattern_name = "High Win Rate"
 
