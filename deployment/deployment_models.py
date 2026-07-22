@@ -49,3 +49,4 @@ class DeploymentResult:
     approved: bool
     reason: str
     status: DeploymentStatus
+    health_report: dict

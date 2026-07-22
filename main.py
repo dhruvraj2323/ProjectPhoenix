@@ -111,6 +111,10 @@ from scheduler.scheduler_engine import (
     SchedulerEngine,
 )
 
+from deployment.deployment_engine import (
+    DeploymentEngine,
+)
+
 def main():
     """
     Application entry point.
@@ -2082,7 +2086,40 @@ def main():
                     logger.info(
                         f"Reason             : "
                         f"{scheduler_result.reason}"
-                    )                                        
+                    )
+                    # =================================================
+                    # M29 - Production Deployment
+                    # =================================================
+
+                    deployment_engine = DeploymentEngine()
+
+                    deployment_result = deployment_engine.initialize()
+
+                    logger.info("Deployment Engine:")
+
+                    logger.info(
+                        f"Approved           : {deployment_result.approved}"
+                    )
+
+                    logger.info(
+                        f"Running            : {deployment_result.status.running}"
+                    )
+
+                    logger.info(
+                        f"Healthy            : {deployment_result.status.healthy}"
+                    )
+
+                    logger.info(
+                        f"Version            : {deployment_result.status.version}"
+                    )
+
+                    logger.info(
+                        f"Environment        : {deployment_result.status.environment}"
+                    )
+
+                    logger.info(
+                        f"Reason             : {deployment_result.reason}"
+                    )                                                        
 
         # Shutdown Engines
         database_engine.shutdown()
@@ -2098,6 +2135,8 @@ def main():
         scheduler_engine.shutdown()        
 
         alert_engine.shutdown()
+
+        deployment_engine.shutdown()
 
         mt5_connection.shutdown()
 

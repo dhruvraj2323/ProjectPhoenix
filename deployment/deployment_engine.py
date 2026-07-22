@@ -43,8 +43,18 @@ class DeploymentEngine:
             approved=True,
             reason="Deployment initialized successfully.",
             status=status,
+            health_report=report,
         )
 
         DeploymentLogger.log(result)
 
         return result
+        
+    def shutdown(self):
+        """
+        Shutdown Deployment Engine.
+        """
+
+        self.runtime.stop()
+
+        return True        
