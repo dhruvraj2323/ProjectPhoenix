@@ -10,6 +10,8 @@ class TimeframeConverter:
         "H1": 60
         "H4": 240,
         "D1": 1440,
+        "H1": 60,
+        "H4": 240,
     }
 
     def __init__(self):
