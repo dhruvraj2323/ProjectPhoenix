@@ -43,3 +43,8 @@ class PaperTradingEngine:
         PaperLogger.log(result)
 
         return result
+    # -------------------------------------------------
+
+    def shutdown(self):
+
+        pass        

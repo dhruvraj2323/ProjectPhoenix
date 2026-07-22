@@ -15,7 +15,7 @@ from dataclasses import dataclass
 # -------------------------------------------------
 
 
-@dataclass
+@dataclass(slots=True)
 class PaperOrder:
 
     ticket: int
@@ -30,7 +30,7 @@ class PaperOrder:
 # -------------------------------------------------
 
 
-@dataclass
+@dataclass(slots=True)
 class PaperPosition:
 
     ticket: int
@@ -49,7 +49,7 @@ class PaperPosition:
 # -------------------------------------------------
 
 
-@dataclass
+@dataclass(slots=True)
 class PaperPortfolio:
 
     balance: float
@@ -64,7 +64,7 @@ class PaperPortfolio:
 # -------------------------------------------------
 
 
-@dataclass
+@dataclass(slots=True)
 class PaperTradingStatus:
 
     running: bool
@@ -77,7 +77,7 @@ class PaperTradingStatus:
 # -------------------------------------------------
 
 
-@dataclass
+@dataclass(slots=True)
 class PaperTradingResult:
 
     approved: bool

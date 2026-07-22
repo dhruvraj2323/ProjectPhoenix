@@ -91,6 +91,10 @@ from market_adapter.market_adapter_engine import (
     MarketAdapterEngine,
 )
 
+from paper_trading.paper_engine import (
+    PaperTradingEngine,
+)
+
 def main():
     """
     Application entry point.
@@ -1883,6 +1887,40 @@ def main():
                         f"Reason             : "
                         f"{market_adapter_result.reason}"
                     )
+                    # ==================================================
+                    # M24 - Paper Trading Engine
+                    # ==================================================
+
+                    paper_engine = PaperTradingEngine()
+
+                    paper_result = paper_engine.initialize()
+
+                    logger.info("Paper Trading Engine:")
+
+                    logger.info(
+                        f"Approved           : "
+                        f"{paper_result.approved}"
+                    )
+
+                    logger.info(
+                        f"Running            : "
+                        f"{paper_result.status.running}"
+                    )
+
+                    logger.info(
+                        f"Virtual Balance    : "
+                        f"{paper_result.status.virtual_balance}"
+                    )
+
+                    logger.info(
+                        f"Open Positions     : "
+                        f"{paper_result.status.total_positions}"
+                    )
+
+                    logger.info(
+                        f"Reason             : "
+                        f"{paper_result.reason}"
+                    )                    
 
         # Shutdown Engines
         database_engine.shutdown()
@@ -1890,6 +1928,8 @@ def main():
         broker_engine.shutdown()
 
         market_adapter_engine.shutdown()
+
+        paper_engine.shutdown()
 
         mt5_connection.shutdown()
 
