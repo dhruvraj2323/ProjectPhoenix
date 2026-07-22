@@ -15,7 +15,7 @@ from dataclasses import dataclass
 # -------------------------------------------------
 
 
-@dataclass
+@dataclass(slots=True)
 class ScheduledTask:
 
     name: str
@@ -29,7 +29,7 @@ class ScheduledTask:
 # -------------------------------------------------
 
 
-@dataclass
+@dataclass(slots=True)
 class SchedulerStatus:
 
     running: bool
@@ -42,9 +42,10 @@ class SchedulerStatus:
 # -------------------------------------------------
 
 
-@dataclass
+@dataclass(slots=True)
 class SchedulerResult:
 
     approved: bool
     reason: str
     status: SchedulerStatus
+    executed_tasks: list[str]

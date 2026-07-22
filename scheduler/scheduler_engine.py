@@ -48,8 +48,18 @@ class SchedulerEngine:
             approved=True,
             reason="Scheduler initialized successfully.",
             status=status,
+            executed_tasks=results,
         )
 
         SchedulerLogger.log(result)
 
         return result
+
+    def shutdown(self):
+        """
+        Shutdown scheduler.
+        """
+
+        self.queue.tasks.clear()
+
+        return True

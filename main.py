@@ -107,6 +107,10 @@ from alert_system.alert_engine import (
     AlertEngine,
 )
 
+from scheduler.scheduler_engine import (
+    SchedulerEngine,
+)
+
 def main():
     """
     Application entry point.
@@ -2039,7 +2043,46 @@ def main():
                     logger.info(
                         f"Reason             : "
                         f"{alert_result.reason}"
-                    )                    
+                    )
+                    # ==================================================
+                    # M28 - Scheduler
+                    # ==================================================
+
+                    scheduler_engine = SchedulerEngine()
+
+                    scheduler_result = scheduler_engine.initialize()
+
+                    logger.info("Scheduler Engine:")
+
+                    logger.info(
+                        f"Approved           : "
+                        f"{scheduler_result.approved}"
+                    )
+
+                    logger.info(
+                        f"Running            : "
+                        f"{scheduler_result.status.running}"
+                    )
+
+                    logger.info(
+                        f"Tasks Executed     : "
+                        f"{scheduler_result.status.tasks_executed}"
+                    )
+
+                    logger.info(
+                        f"Active Tasks       : "
+                        f"{scheduler_result.status.active_tasks}"
+                    )
+
+                    logger.info(
+                        f"Executed Tasks     : "
+                        f"{', '.join(scheduler_result.executed_tasks)}"
+                    )
+
+                    logger.info(
+                        f"Reason             : "
+                        f"{scheduler_result.reason}"
+                    )                                        
 
         # Shutdown Engines
         database_engine.shutdown()
@@ -2051,6 +2094,8 @@ def main():
         paper_engine.shutdown()
 
         live_engine.shutdown()
+
+        scheduler_engine.shutdown()        
 
         alert_engine.shutdown()
 
