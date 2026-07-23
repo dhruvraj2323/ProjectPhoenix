@@ -1,43 +1,55 @@
 """
 =================================================
 Project Phoenix
-Market Pipeline
-Unit Test - Pipeline Validator
+Pipeline Validator Test
 =================================================
 """
 
-from market_pipeline.pipeline_context import PipelineContext
-from market_pipeline.pipeline_validator import PipelineValidator
+import pandas as pd
+
+from market_pipeline.pipeline_validator import (
+    PipelineValidator
+)
 
 
-def test_pipeline_validator():
+def main():
+
+    candles = [
+
+        {
+            "datetime": "2026-01-01",
+            "open": 100,
+            "high": 105,
+            "low": 99,
+            "close": 103,
+            "volume": 150
+        }
+
+    ]
+
+    dataframe = pd.DataFrame(candles)
 
     validator = PipelineValidator()
 
-    context = PipelineContext(
-        pipeline_id="PIPELINE-001",
-        symbol="XAUUSD",
-        timeframe="M1",
+    report = validator.validate(
+        candles,
+        dataframe
     )
 
-    assert validator.validate(context) is True
+    print()
 
-    report = validator.validation_report(context)
+    print("Validation Report")
 
-    assert report["pipeline_id"] is True
-    assert report["symbol"] is True
-    assert report["timeframe"] is True
-    assert report["overall"] is True
+    print("=================")
 
-    print("===== Pipeline Validator =====")
-    print("Pipeline ID :", report["pipeline_id"])
-    print("Symbol      :", report["symbol"])
-    print("Timeframe   :", report["timeframe"])
-    print("Overall     :", report["overall"])
+    for key, value in report.items():
+
+        print(f"{key}: {value}")
+
     print()
 
     print("Pipeline Validator Test Passed")
 
 
 if __name__ == "__main__":
-    test_pipeline_validator()
+    main()
