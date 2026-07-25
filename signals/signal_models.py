@@ -48,6 +48,10 @@ class RuleResult:
     passed: bool
     reason: Optional[str] = None
 
+    def __post_init__(self) -> None:
+        if self.strength < 0:
+            raise ValueError("Rule strength cannot be negative.")
+
 
 @dataclass
 class TradingSignal:
@@ -65,6 +69,12 @@ class TradingSignal:
 
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+    def __post_init__(self) -> None:
+        if self.strength < 0:
+            raise ValueError("Signal strength cannot be negative.")
+
+        if not (0.0 <= self.confidence <= 100.0):
+            raise ValueError("Confidence must be between 0 and 100.")
 
 @dataclass
 class SignalContext:
@@ -81,6 +91,16 @@ class SignalContext:
 
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+    def __post_init__(self) -> None:
+        if not self.symbol.strip():
+            raise ValueError("Symbol cannot be empty.")
+
+        if not self.timeframe.strip():
+            raise ValueError("Timeframe cannot be empty.")
+
+        if self.price < 0:
+            raise ValueError("Price cannot be negative.")
+
 
 @dataclass
 class ValidationResult:
@@ -93,6 +113,10 @@ class ValidationResult:
     score: float = 0.0
 
     reason: Optional[str] = None
+
+    def __post_init__(self) -> None:
+        if self.score < 0:
+            raise ValueError("Validation score cannot be negative.")
 
 
 @dataclass
