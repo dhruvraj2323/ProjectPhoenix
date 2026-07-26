@@ -27,8 +27,19 @@ class SignalValidator:
     def __init__(
         self,
         min_strength: float = 0.50,
-        min_confidence: float = 0.50,
-    ):
+        min_confidence: float = 50.0,
+    ) -> None:
+
+        if not (0.0 <= min_strength <= 1.0):
+            raise ValueError(
+                "min_strength must be between 0.0 and 1.0."
+            )
+
+        if not (0.0 <= min_confidence <= 100.0):
+            raise ValueError(
+                "min_confidence must be between 0.0 and 100.0."
+            )
+
         self.min_strength = min_strength
         self.min_confidence = min_confidence
 
@@ -40,16 +51,19 @@ class SignalValidator:
         if signal.strength < self.min_strength:
             return ValidationResult(
                 valid=False,
-                reason="Signal strength below minimum threshold."
+                score=0.0,
+                reason="Signal strength below minimum threshold.",
             )
 
         if signal.confidence < self.min_confidence:
             return ValidationResult(
                 valid=False,
-                reason="Signal confidence below minimum threshold."
+                score=0.0,
+                reason="Signal confidence below minimum threshold.",
             )
 
         return ValidationResult(
             valid=True,
-            reason="Signal validation passed."
+            score=100.0,
+            reason="Signal validation passed.",
         )

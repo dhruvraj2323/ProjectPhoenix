@@ -15,7 +15,11 @@ Responsibilities:
 
 from __future__ import annotations
 
-from signals.signal_models import TradingSignal, FilterResult
+from signals.signal_models import (
+    TradingSignal,
+    FilterResult,
+    SignalType,
+)
 
 
 class SignalFilter:
@@ -31,13 +35,13 @@ class SignalFilter:
             FilterResult
         """
 
-        if signal.signal.name == "HOLD":
+        if signal.signal == SignalType.HOLD:
             return FilterResult(
                 accepted=False,
-                reason="HOLD signals are filtered."
+                reason="HOLD signals are filtered.",
             )
 
         return FilterResult(
             accepted=True,
-            reason="Signal accepted."
+            reason="Signal accepted.",
         )

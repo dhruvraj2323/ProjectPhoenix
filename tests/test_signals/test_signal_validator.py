@@ -9,7 +9,7 @@ from signals.signal_validator import SignalValidator
 signal = TradingSignal(
     signal=SignalType.BUY,
     strength=0.80,
-    confidence=0.90,
+    confidence=90.0,
 )
 
 validator = SignalValidator()

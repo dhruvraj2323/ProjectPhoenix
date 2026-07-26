@@ -41,8 +41,8 @@ class SignalGenerator:
         signal = TradingSignal(
             signal=SignalType.BUY,
             strength=0.80,
-            confidence=0.90,
-            reason="Initial M8 placeholder signal."
+            confidence=90.0,
+            reason="Initial M8 placeholder signal.",
         )
 
         validation = self.validator.validate(signal)

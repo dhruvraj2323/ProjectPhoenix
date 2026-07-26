@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from signals.signal_models import RuleResult, RuleDirection
+from signals.signal_models import RuleDirection, RuleResult
 
 
 class BaseRule(ABC):
@@ -25,8 +25,11 @@ class BaseRule(ABC):
     def evaluate(self) -> RuleResult:
         """
         Evaluate the trading rule.
+
+        Returns:
+            RuleResult
         """
-        pass
+        raise NotImplementedError("Subclasses must implement evaluate().")
 
 
 class AlwaysHoldRule(BaseRule):
@@ -42,5 +45,5 @@ class AlwaysHoldRule(BaseRule):
             direction=RuleDirection.NEUTRAL,
             strength=0.0,
             passed=True,
-            reason="Default placeholder rule."
+            reason="Default placeholder rule.",
         )
