@@ -25,6 +25,13 @@ def test_portfolio_allocator():
 
     assert allocation.allocation_percent == 10.0
 
+    print("===== Portfolio Allocator Test =====")
+    print(f"Capital Used      : {allocation.capital_used}")
+    print(f"Capital Available : {allocation.capital_available}")
+    print(f"Allocation %      : {allocation.allocation_percent}")
+    print(f"Risk Used         : {allocation.risk_used}")
+    print(f"Risk Available    : {allocation.risk_available}")
+    print()
     print("Portfolio Allocator Test Passed")
 
 

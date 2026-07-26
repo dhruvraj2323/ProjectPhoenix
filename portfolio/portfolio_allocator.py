@@ -34,9 +34,23 @@ class PortfolioAllocator:
         free_margin: Optional[float] = None,
     ) -> AllocationInfo:
         """
-        Allocate capital for a new position, respecting capital that
-        is already committed to existing open positions.
+        Allocate capital for a new position.
         """
+
+        if total_capital <= 0:
+            raise ValueError(
+                "Total capital must be greater than zero."
+            )
+
+        if not (0.0 < allocation_percent <= 100.0):
+            raise ValueError(
+                "Allocation percent must be between 0 and 100."
+            )
+
+        if not (0.0 <= risk_used <= 100.0):
+            raise ValueError(
+                "Risk used must be between 0 and 100."
+            )
 
         positions = positions or []
 
@@ -52,18 +66,20 @@ class PortfolioAllocator:
 
         requested_capital = (
             total_capital
-            * (allocation_percent / 100)
+            * (allocation_percent / 100.0)
         )
 
         limits = [
-
             requested_capital,
-
             remaining_capital,
-
         ]
 
         if free_margin is not None:
+
+            if free_margin < 0:
+                raise ValueError(
+                    "Free margin cannot be negative."
+                )
 
             limits.append(free_margin)
 
@@ -75,9 +91,9 @@ class PortfolioAllocator:
         )
 
         return AllocationInfo(
-            capital_used=capital_used,
-            capital_available=capital_available,
+            capital_used=round(capital_used, 2),
+            capital_available=round(capital_available, 2),
             allocation_percent=allocation_percent,
             risk_used=risk_used,
-            risk_available=100.0 - risk_used,
+            risk_available=round(100.0 - risk_used, 2),
         )

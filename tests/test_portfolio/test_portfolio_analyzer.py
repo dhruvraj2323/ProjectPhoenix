@@ -9,8 +9,8 @@ from portfolio.portfolio_analyzer import PortfolioAnalyzer
 
 from portfolio.portfolio_models import (
     PortfolioContext,
-    PositionInfo,
     PositionDirection,
+    PositionInfo,
 )
 
 
@@ -35,7 +35,6 @@ def test_portfolio_analyzer():
             current_price=3820.0,
             floating_profit=-100.0,
         ),
-
     ]
 
     context = PortfolioContext(
@@ -60,6 +59,10 @@ def test_portfolio_analyzer():
     print(f"Open Positions   : {metrics.open_positions}")
 
     assert metrics.balance == 100000.0
+    assert metrics.equity == 100150.0
+    assert metrics.floating_profit == 250.0
+    assert metrics.floating_loss == 100.0
+    assert metrics.used_margin == 150.0
     assert metrics.open_positions == 2
 
     print("\nPortfolio Analyzer Test Passed")

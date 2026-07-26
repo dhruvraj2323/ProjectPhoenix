@@ -11,9 +11,7 @@ Purpose:
 
 from __future__ import annotations
 
-from portfolio.portfolio_models import (
-    PortfolioDecision,
-)
+from portfolio.portfolio_models import PortfolioDecision
 
 
 class PortfolioLogger:
@@ -44,61 +42,69 @@ class PortfolioLogger:
         )
 
         print(
-            f"Open Positions    : "
-            f"{decision.metrics.open_positions}"
+            f"Open Positions    : {decision.metrics.open_positions}"
         )
 
         print(
-            f"Portfolio Heat    : "
-            f"{decision.metrics.portfolio_heat:.2f}%"
+            f"Portfolio Heat    : {decision.metrics.portfolio_heat:.2f}%"
         )
 
         print(
-            f"Margin Level      : "
-            f"{decision.metrics.margin_level:.2f}%"
+            f"Margin Level      : {decision.metrics.margin_level:.2f}%"
         )
 
         print(
-            f"Gross Exposure    : "
-            f"{decision.exposure.gross_exposure}"
+            f"Gross Exposure    : {decision.exposure.gross_exposure}"
         )
 
         print(
-            f"Net Exposure      : "
-            f"{decision.exposure.net_exposure}"
+            f"Net Exposure      : {decision.exposure.net_exposure}"
         )
 
         print(
-            f"Capital Used      : "
-            f"{decision.allocation.capital_used}"
+            f"Long Exposure     : {decision.exposure.long_exposure}"
         )
 
         print(
-            f"Capital Available : "
-            f"{decision.allocation.capital_available}"
+            f"Short Exposure    : {decision.exposure.short_exposure}"
         )
 
         print(
-            f"Allocation %      : "
-            f"{decision.allocation.allocation_percent:.2f}%"
+            f"Capital Used      : {decision.allocation.capital_used}"
         )
 
         print(
-            f"Risk Score       : "
-            f"{decision.risk.risk_score:.2f}"
+            f"Capital Available : {decision.allocation.capital_available}"
         )
 
         print(
-            f"Drawdown         : "
-            f"{decision.risk.drawdown:.2f}%"
+            f"Allocation %      : {decision.allocation.allocation_percent:.2f}%"
         )
 
         print(
-            f"Correlation Risk : "
-            f"{decision.risk.correlation_risk:.2f}%"
+            f"Risk Used         : {decision.allocation.risk_used:.2f}%"
         )
 
         print(
-            f"Concentration    : "
-            f"{decision.risk.concentration_risk:.2f}%"
-        )        
+            f"Risk Available    : {decision.allocation.risk_available:.2f}%"
+        )
+
+        print(
+            f"Risk Score        : {decision.risk.risk_score:.2f}"
+        )
+
+        print(
+            f"Drawdown          : {decision.risk.drawdown:.2f}%"
+        )
+
+        print(
+            f"Margin Risk       : {decision.risk.margin_risk:.2f}%"
+        )
+
+        print(
+            f"Correlation Risk  : {decision.risk.correlation_risk:.2f}%"
+        )
+
+        print(
+            f"Concentration     : {decision.risk.concentration_risk:.2f}%"
+        )

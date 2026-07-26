@@ -38,11 +38,7 @@ class PortfolioValidationResult:
 
 class PortfolioValidator:
     """
-    Validates portfolio state against configured limits and produces
-    the final portfolio decision.
-
-    Checks are ordered from most to least severe. The first violated
-    rule determines the resulting decision.
+    Validates portfolio state against configured limits.
     """
 
     def validate(
@@ -54,12 +50,14 @@ class PortfolioValidator:
         correlation_risk: float,
     ) -> PortfolioValidationResult:
         """
-        Validate the portfolio and return the resulting decision.
+        Validate the portfolio.
         """
 
         limits = context.limits
 
-        # ----- 1. Margin safety (most severe -> EMERGENCY_EXIT) -----
+        # --------------------------------------------------
+        # Margin Protection
+        # --------------------------------------------------
 
         if (
             metrics.margin_level > 0.0
@@ -69,16 +67,20 @@ class PortfolioValidator:
                 decision=PortfolioDecisionType.EMERGENCY_EXIT,
                 valid=False,
                 reason=(
-                    f"Margin level {metrics.margin_level:.2f}% is below "
-                    f"the minimum safe level of "
+                    f"Margin level {metrics.margin_level:.2f}% "
+                    f"is below minimum "
                     f"{limits.min_margin_level:.2f}%."
                 ),
             )
 
-        # ----- 2. Floating drawdown -> EMERGENCY_EXIT -----
+        # --------------------------------------------------
+        # Drawdown Protection
+        # --------------------------------------------------
 
         drawdown_percent = (
-            (abs(metrics.floating_loss) / metrics.balance * 100.0)
+            abs(metrics.floating_loss)
+            / metrics.balance
+            * 100.0
             if metrics.balance > 0
             else 0.0
         )
@@ -88,107 +90,98 @@ class PortfolioValidator:
                 decision=PortfolioDecisionType.EMERGENCY_EXIT,
                 valid=False,
                 reason=(
-                    f"Floating drawdown {drawdown_percent:.2f}% has "
-                    f"reached the maximum allowed "
-                    f"{limits.max_drawdown_percent:.2f}%."
+                    f"Drawdown {drawdown_percent:.2f}% "
+                    "exceeded allowed limit."
                 ),
             )
 
-        # ----- 3. Daily / Weekly / Monthly loss limits -> BLOCK_NEW_TRADE -----
+        # --------------------------------------------------
+        # Daily / Weekly / Monthly Loss
+        # --------------------------------------------------
 
-        daily_loss_percent = self._loss_percent(
-            metrics.daily_pnl, metrics.balance
+        daily_loss = self._loss_percent(
+            metrics.daily_pnl,
+            metrics.balance,
         )
 
-        if daily_loss_percent >= limits.daily_loss_limit_percent:
+        if daily_loss >= limits.daily_loss_limit_percent:
             return PortfolioValidationResult(
                 decision=PortfolioDecisionType.BLOCK_NEW_TRADE,
                 valid=False,
-                reason=(
-                    f"Daily loss {daily_loss_percent:.2f}% has reached "
-                    f"the daily loss limit of "
-                    f"{limits.daily_loss_limit_percent:.2f}%."
-                ),
+                reason="Daily loss limit reached.",
             )
 
-        weekly_loss_percent = self._loss_percent(
-            metrics.weekly_pnl, metrics.balance
+        weekly_loss = self._loss_percent(
+            metrics.weekly_pnl,
+            metrics.balance,
         )
 
-        if weekly_loss_percent >= limits.weekly_loss_limit_percent:
+        if weekly_loss >= limits.weekly_loss_limit_percent:
             return PortfolioValidationResult(
                 decision=PortfolioDecisionType.BLOCK_NEW_TRADE,
                 valid=False,
-                reason=(
-                    f"Weekly loss {weekly_loss_percent:.2f}% has reached "
-                    f"the weekly loss limit of "
-                    f"{limits.weekly_loss_limit_percent:.2f}%."
-                ),
+                reason="Weekly loss limit reached.",
             )
 
-        monthly_loss_percent = self._loss_percent(
-            metrics.monthly_pnl, metrics.balance
+        monthly_loss = self._loss_percent(
+            metrics.monthly_pnl,
+            metrics.balance,
         )
 
-        if monthly_loss_percent >= limits.monthly_loss_limit_percent:
+        if monthly_loss >= limits.monthly_loss_limit_percent:
             return PortfolioValidationResult(
                 decision=PortfolioDecisionType.BLOCK_NEW_TRADE,
                 valid=False,
-                reason=(
-                    f"Monthly loss {monthly_loss_percent:.2f}% has "
-                    f"reached the monthly loss limit of "
-                    f"{limits.monthly_loss_limit_percent:.2f}%."
-                ),
+                reason="Monthly loss limit reached.",
             )
 
-        # ----- 4. Open trade count / exposure -> REDUCE_POSITION -----
+        # --------------------------------------------------
+        # Open Positions
+        # --------------------------------------------------
 
         if metrics.open_positions > limits.max_open_trades:
             return PortfolioValidationResult(
                 decision=PortfolioDecisionType.REDUCE_POSITION,
                 valid=False,
-                reason=(
-                    f"Open positions ({metrics.open_positions}) exceed "
-                    f"the maximum allowed ({limits.max_open_trades})."
-                ),
+                reason="Too many open positions.",
             )
+
+        # --------------------------------------------------
+        # Portfolio Heat
+        # --------------------------------------------------
 
         if metrics.portfolio_heat > limits.max_exposure_percent:
             return PortfolioValidationResult(
                 decision=PortfolioDecisionType.REDUCE_POSITION,
                 valid=False,
-                reason=(
-                    f"Portfolio heat {metrics.portfolio_heat:.2f}% "
-                    f"exceeds the maximum allowed "
-                    f"{limits.max_exposure_percent:.2f}%."
-                ),
+                reason="Portfolio exposure too high.",
             )
 
-        # ----- 5. Correlation / capacity -> LIMIT_POSITION -----
+        # --------------------------------------------------
+        # Correlation
+        # --------------------------------------------------
 
         if correlation_risk >= limits.max_correlation_percent:
             return PortfolioValidationResult(
                 decision=PortfolioDecisionType.LIMIT_POSITION,
                 valid=False,
-                reason=(
-                    f"Correlation risk {correlation_risk:.2f}% has "
-                    f"reached the maximum allowed "
-                    f"{limits.max_correlation_percent:.2f}%. "
-                    f"New trades are limited."
-                ),
+                reason="Correlation risk too high.",
             )
+
+        # --------------------------------------------------
+        # Capacity
+        # --------------------------------------------------
 
         if metrics.open_positions == limits.max_open_trades:
             return PortfolioValidationResult(
                 decision=PortfolioDecisionType.LIMIT_POSITION,
                 valid=False,
-                reason=(
-                    "Portfolio is at maximum open trade capacity. "
-                    "New trades are limited."
-                ),
+                reason="Maximum open trades reached.",
             )
 
-        # ----- 6. All checks passed -----
+        # --------------------------------------------------
+        # Approved
+        # --------------------------------------------------
 
         return PortfolioValidationResult(
             decision=PortfolioDecisionType.APPROVE,
@@ -196,13 +189,19 @@ class PortfolioValidator:
             reason="Portfolio validation passed.",
         )
 
-    def _loss_percent(self, pnl: float, balance: float) -> float:
+    @staticmethod
+    def _loss_percent(
+        pnl: float,
+        balance: float,
+    ) -> float:
         """
-        Convert a negative P/L figure into a positive loss percentage
-        of account balance. Returns 0.0 when P/L is non-negative.
+        Convert negative P/L to percentage.
         """
 
-        if balance <= 0 or pnl >= 0:
+        if balance <= 0:
+            return 0.0
+
+        if pnl >= 0:
             return 0.0
 
         return abs(pnl) / balance * 100.0

@@ -11,8 +11,8 @@ from portfolio.portfolio_correlation import (
 
 from portfolio.portfolio_models import (
     PortfolioContext,
-    PositionInfo,
     PositionDirection,
+    PositionInfo,
 )
 
 
@@ -37,7 +37,6 @@ def test_portfolio_correlation():
             current_price=3490.0,
             floating_profit=100.0,
         ),
-
     ]
 
     context = PortfolioContext(
@@ -79,7 +78,6 @@ def test_portfolio_correlation_duplicate_exposure():
             current_price=3360.0,
             floating_profit=15.0,
         ),
-
     ]
 
     context = PortfolioContext(

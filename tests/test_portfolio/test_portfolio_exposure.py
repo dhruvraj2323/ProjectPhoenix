@@ -11,8 +11,8 @@ from portfolio.portfolio_exposure import (
 
 from portfolio.portfolio_models import (
     PortfolioContext,
-    PositionInfo,
     PositionDirection,
+    PositionInfo,
 )
 
 
@@ -46,7 +46,6 @@ def test_portfolio_exposure():
             current_price=2545.0,
             floating_profit=90.0,
         ),
-
     ]
 
     context = PortfolioContext(
@@ -65,6 +64,7 @@ def test_portfolio_exposure():
     print(f"Long Exposure  : {result.long_exposure}")
     print(f"Short Exposure : {result.short_exposure}")
     print(f"Symbol Exposure: {result.symbol_exposure}")
+    print(f"Currency Exposure: {result.currency_exposure}")
 
     assert result.gross_exposure == 200.0
     assert result.net_exposure == 120.0
@@ -72,6 +72,7 @@ def test_portfolio_exposure():
     assert result.short_exposure == 40.0
     assert result.symbol_exposure["RELIANCE"] == 160.0
     assert result.symbol_exposure["TCS"] == 40.0
+    assert result.currency_exposure["USD"] == 200.0
 
     print("\nPortfolio Exposure Test Passed")
 

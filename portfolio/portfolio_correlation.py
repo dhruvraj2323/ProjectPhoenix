@@ -30,13 +30,7 @@ class PortfolioCorrelation:
         Calculate correlation risk as a percentage (0-100).
 
         Positions in the same symbol AND same direction move together,
-        so they are treated as highly correlated. The risk score is the
-        percentage of total volume concentrated in the single largest
-        symbol+direction group.
-
-        Example:
-            2 positions, both XAUUSD BUY -> 100.0 (fully correlated)
-            2 positions, XAUUSD BUY + TCS SELL -> 50.0 (no overlap)
+        so they are treated as highly correlated.
         """
 
         if len(context.positions) <= 1:
@@ -48,23 +42,36 @@ class PortfolioCorrelation:
         )
 
         if total_volume <= 0:
-            return 0.0
+            raise ValueError(
+                "Total portfolio volume must be greater than zero."
+            )
 
         group_volume = {}
 
         for position in context.positions:
 
-            key = (position.symbol, position.direction)
+            if position.volume <= 0:
+                raise ValueError(
+                    "Position volume must be greater than zero."
+                )
+
+            key = (
+                position.symbol,
+                position.direction,
+            )
 
             group_volume[key] = (
                 group_volume.get(key, 0.0)
                 + position.volume
             )
 
-        largest_group_volume = max(group_volume.values())
+        largest_group_volume = max(
+            group_volume.values()
+        )
 
         correlation_risk = (
-            largest_group_volume / total_volume
+            largest_group_volume
+            / total_volume
         ) * 100.0
 
-        return correlation_risk
+        return round(correlation_risk, 2)

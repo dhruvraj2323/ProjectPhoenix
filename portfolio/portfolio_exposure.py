@@ -31,92 +31,55 @@ class PortfolioExposure:
         Calculate portfolio exposure.
         """
 
-        long_exposure = sum(
-
-            position.volume
-
-            for position in context.positions
-
-            if position.direction
-            == PositionDirection.BUY
-
-        )
-
-        short_exposure = sum(
-
-            position.volume
-
-            for position in context.positions
-
-            if position.direction
-            == PositionDirection.SELL
-
-        )
-
-        gross_exposure = (
-
-            long_exposure
-            +
-            short_exposure
-
-        )
-
-        net_exposure = (
-
-            long_exposure
-            -
-            short_exposure
-
-        )
+        long_exposure = 0.0
+        short_exposure = 0.0
 
         symbol_exposure = {}
-
         currency_exposure = {}
 
         for position in context.positions:
 
-            symbol_exposure[
-                position.symbol
-            ] = (
+            if position.volume <= 0:
+                raise ValueError(
+                    "Position volume must be greater than zero."
+                )
 
+            if position.direction == PositionDirection.BUY:
+                long_exposure += position.volume
+            else:
+                short_exposure += position.volume
+
+            symbol_exposure[position.symbol] = (
                 symbol_exposure.get(
                     position.symbol,
                     0.0,
                 )
-
-                +
-
-                position.volume
-
+                + position.volume
             )
 
-            currency_exposure[
-                position.currency
-            ] = (
-
+            currency_exposure[position.currency] = (
                 currency_exposure.get(
                     position.currency,
                     0.0,
                 )
-
-                +
-
-                position.volume
-
+                + position.volume
             )
 
+        gross_exposure = (
+            long_exposure
+            + short_exposure
+        )
+
+        net_exposure = (
+            long_exposure
+            - short_exposure
+        )
+
         return ExposureInfo(
-
-            gross_exposure=gross_exposure,
-
-            net_exposure=net_exposure,
-
-            long_exposure=long_exposure,
-
-            short_exposure=short_exposure,
-
+            gross_exposure=round(gross_exposure, 2),
+            net_exposure=round(net_exposure, 2),
+            long_exposure=round(long_exposure, 2),
+            short_exposure=round(short_exposure, 2),
             symbol_exposure=symbol_exposure,
-
             currency_exposure=currency_exposure,
-
         )
