@@ -8,7 +8,7 @@ from risk.risk_position import PositionSizer
 sizer = PositionSizer()
 
 position = sizer.calculate(
-    account_balance=100000,
+    account_balance=100000.0,
     risk_percent=1.0,
 )
 

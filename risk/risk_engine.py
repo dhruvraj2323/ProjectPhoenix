@@ -38,22 +38,36 @@ class RiskEngine:
     def evaluate(self, context: RiskContext) -> RiskDecision:
         """
         Execute the complete risk workflow.
+
+        Returns:
+            RiskDecision
         """
+
+        if context.account_balance <= 0:
+            raise ValueError("Account balance must be greater than zero.")
+
+        if not context.symbol.strip():
+            raise ValueError("Symbol cannot be empty.")
+
+        entry_price = context.signal.metadata.get("entry_price")
+
+        if entry_price is None:
+            raise ValueError("Entry price missing from signal metadata.")
 
         position = self.position_sizer.calculate(
             account_balance=context.account_balance,
             risk_percent=1.0,
         )
 
-        entry_price = context.signal.metadata.get("entry_price", 250.0)
-
         stop_loss = self.stoploss.calculate(
             entry_price=entry_price,
+            stop_loss_percent=2.0,
         )
 
         take_profit = self.takeprofit.calculate(
             entry_price=entry_price,
             stop_loss_price=stop_loss.price,
+            risk_reward_ratio=2.0,
         )
 
         decision = RiskDecision(
@@ -62,7 +76,7 @@ class RiskEngine:
             stop_loss=stop_loss,
             take_profit=take_profit,
             approved=True,
-            reason="Initial M9 placeholder decision.",
+            reason="Risk evaluation completed successfully.",
         )
 
         if not self.validator.validate(decision):

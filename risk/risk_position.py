@@ -23,16 +23,22 @@ class PositionSizer:
     def calculate(
         self,
         account_balance: float,
-        risk_percent: float = 1.0
+        risk_percent: float = 1.0,
     ) -> PositionSize:
         """
         Calculate position size.
 
-        Placeholder implementation:
-        Allocates the requested percentage of account balance.
+        Returns:
+            PositionSize
         """
 
-        capital = account_balance * (risk_percent / 100)
+        if account_balance <= 0:
+            raise ValueError("Account balance must be greater than zero.")
+
+        if not (0.0 < risk_percent <= 100.0):
+            raise ValueError("Risk percent must be between 0 and 100.")
+
+        capital = account_balance * (risk_percent / 100.0)
 
         quantity = round(capital, 2)
 

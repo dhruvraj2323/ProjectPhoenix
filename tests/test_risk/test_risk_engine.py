@@ -9,7 +9,7 @@ from signals.signal_models import SignalType, TradingSignal
 signal = TradingSignal(
     signal=SignalType.BUY,
     strength=0.8,
-    confidence=0.9,
+    confidence=90.0,
     reason="Test signal",
     metadata={
         "entry_price": 250.0,
@@ -18,7 +18,7 @@ signal = TradingSignal(
 
 context = RiskContext(
     signal=signal,
-    account_balance=100000,
+    account_balance=100000.0,
     symbol="RELIANCE",
 )
 

@@ -17,9 +17,6 @@ from risk.risk_models import StopLoss
 class StopLossCalculator:
     """
     Calculates the stop-loss level.
-
-    Current implementation uses a simple placeholder
-    percentage-based calculation.
     """
 
     def calculate(
@@ -30,11 +27,22 @@ class StopLossCalculator:
         """
         Calculate stop-loss price.
 
-        Placeholder:
-        Stop-loss = Entry Price - Percentage
+        Returns:
+            StopLoss
         """
 
-        stop_price = entry_price * (1 - stop_loss_percent / 100)
+        if entry_price <= 0:
+            raise ValueError("Entry price must be greater than zero.")
+
+        if not (0.0 < stop_loss_percent < 100.0):
+            raise ValueError(
+                "Stop-loss percent must be greater than 0 and less than 100."
+            )
+
+        stop_price = round(
+            entry_price * (1 - stop_loss_percent / 100.0),
+            5,
+        )
 
         return StopLoss(
             price=stop_price,

@@ -27,8 +27,26 @@ class RiskValidator:
         """
         Validate the supplied risk decision.
 
-        Current placeholder logic:
-        A trade is valid if it has been approved.
+        Returns:
+            bool
         """
 
-        return decision.approved
+        if not decision.approved:
+            return False
+
+        if decision.position.quantity <= 0:
+            return False
+
+        if decision.position.capital_allocated <= 0:
+            return False
+
+        if decision.stop_loss.price <= 0:
+            return False
+
+        if decision.take_profit.price <= 0:
+            return False
+
+        if decision.take_profit.price <= decision.stop_loss.price:
+            return False
+
+        return True
