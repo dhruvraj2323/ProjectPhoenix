@@ -30,13 +30,15 @@ class PatternEngine:
     Executes complete Pattern Engine workflow.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
 
         self.detector = PatternDetector()
 
         self.validator = PatternValidator()
 
         self.logger = PatternLogger()
+
+    # ---------------------------------------------------------
 
     def run(
         self,
@@ -49,11 +51,18 @@ class PatternEngine:
         self.logger.log_start(context)
 
         if not self.validator.validate(context):
+
+            context.mark_failed(
+                "Pattern validation failed."
+            )
+
             return context
 
         context = self.detector.detect(
             context
         )
+
+        context.mark_completed()
 
         self.logger.log_complete(context)
 

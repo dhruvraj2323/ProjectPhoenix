@@ -43,6 +43,8 @@ class IndicatorEngine:
 
         if not self.validator.validate(context):
 
+            context.failed = True
+
             self.logger.log_error(
                 "Indicator validation failed."
             )
@@ -58,6 +60,8 @@ class IndicatorEngine:
             self.logger.log_indicator(
                 indicator
             )
+
+        context.completed = True
 
         self.logger.log_finish(
             context

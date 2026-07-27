@@ -24,42 +24,51 @@ class IndicatorContext:
     # --------------------------------------------------
 
     engine_id: str
-    created_at: datetime = field(default_factory=datetime.utcnow)
+
+    created_at: datetime = field(
+        default_factory=datetime.utcnow
+    )
 
     # --------------------------------------------------
     # Market Information
     # --------------------------------------------------
 
     symbol: str = ""
+
     timeframe: str = ""
 
     # --------------------------------------------------
     # Input Data
     # --------------------------------------------------
 
-    candles: list = field(default_factory=list)
+    candles: list = field(
+        default_factory=list
+    )
 
     # --------------------------------------------------
-    # Indicator Storage
+    # Output Data
     # --------------------------------------------------
 
-    indicators: dict[str, Any] = field(default_factory=dict)
+    indicators: dict[str, Any] = field(
+        default_factory=dict
+    )
 
     # --------------------------------------------------
     # Runtime Metadata
     # --------------------------------------------------
 
-    metadata: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(
+        default_factory=dict
+    )
 
     # --------------------------------------------------
     # Execution State
     # --------------------------------------------------
 
-    approved: bool = False
     completed: bool = False
+
     failed: bool = False
 
-    decision: str = ""
     reason: str = ""
 
     # --------------------------------------------------
@@ -116,45 +125,40 @@ class IndicatorContext:
             default,
         )
 
-    def approve(
+    def mark_completed(
         self,
-        decision: str,
-        reason: str,
     ) -> None:
         """
-        Approve execution.
+        Mark execution completed.
         """
 
-        self.approved = True
         self.completed = True
-        self.decision = decision
-        self.reason = reason
 
-    def reject(
+    def mark_failed(
         self,
-        decision: str,
         reason: str,
     ) -> None:
         """
-        Reject execution.
+        Mark execution failed.
         """
 
-        self.approved = False
         self.failed = True
-        self.decision = decision
+
         self.reason = reason
 
-    def reset(self) -> None:
+    def reset(
+        self,
+    ) -> None:
         """
         Reset runtime state.
         """
 
         self.indicators.clear()
+
         self.metadata.clear()
 
-        self.approved = False
         self.completed = False
+
         self.failed = False
 
-        self.decision = ""
         self.reason = ""

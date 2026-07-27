@@ -34,10 +34,15 @@ class SignalEngine:
         self.validator = SignalValidator()
         self.logger = SignalLogger()
 
+    # ---------------------------------------------------------
+
     def run(
         self,
         context: SignalContext,
     ) -> SignalContext:
+        """
+        Execute complete Signal Engine.
+        """
 
         self.logger.log_start(
             context
@@ -46,9 +51,11 @@ class SignalEngine:
         if not self.validator.validate(
             context
         ):
+
             self.logger.log_failure(
                 context
             )
+
             return context
 
         context = self.processor.process(

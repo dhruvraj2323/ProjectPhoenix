@@ -19,13 +19,27 @@ class SignalContext:
     Runtime context for Signal Engine.
     """
 
+    # --------------------------------------------------
+    # Engine Information
+    # --------------------------------------------------
+
     engine_id: str
-    symbol: str
-    timeframe: str
 
     created_at: datetime = field(
         default_factory=datetime.utcnow
     )
+
+    # --------------------------------------------------
+    # Market Information
+    # --------------------------------------------------
+
+    symbol: str
+
+    timeframe: str
+
+    # --------------------------------------------------
+    # Input Data
+    # --------------------------------------------------
 
     indicators: dict[str, Any] = field(
         default_factory=dict
@@ -35,17 +49,35 @@ class SignalContext:
         default_factory=list
     )
 
+    # --------------------------------------------------
+    # Output Data
+    # --------------------------------------------------
+
     signals: list[dict[str, Any]] = field(
         default_factory=list
     )
+
+    # --------------------------------------------------
+    # Runtime Metadata
+    # --------------------------------------------------
 
     metadata: dict[str, Any] = field(
         default_factory=dict
     )
 
+    # --------------------------------------------------
+    # Execution State
+    # --------------------------------------------------
+
     completed: bool = False
+
     failed: bool = False
+
     reason: str = ""
+
+    # --------------------------------------------------
+    # Utility Methods
+    # --------------------------------------------------
 
     def add_signal(
         self,
@@ -60,6 +92,25 @@ class SignalContext:
 
         return len(self.signals)
 
+    def set_metadata(
+        self,
+        key: str,
+        value: Any,
+    ) -> None:
+
+        self.metadata[key] = value
+
+    def get_metadata(
+        self,
+        key: str,
+        default: Any = None,
+    ) -> Any:
+
+        return self.metadata.get(
+            key,
+            default,
+        )
+
     def mark_completed(
         self,
     ) -> None:
@@ -72,6 +123,7 @@ class SignalContext:
     ) -> None:
 
         self.failed = True
+
         self.reason = reason
 
     def reset(
@@ -79,6 +131,11 @@ class SignalContext:
     ) -> None:
 
         self.signals.clear()
+
+        self.metadata.clear()
+
         self.completed = False
+
         self.failed = False
+
         self.reason = ""

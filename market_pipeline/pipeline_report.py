@@ -9,7 +9,7 @@ M31
 from market_pipeline.pipeline_context import PipelineContext
 
 
-class ProcessingReport:
+class PipelineReport:
     """
     Generates a standardized pipeline report.
     """

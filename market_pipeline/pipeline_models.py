@@ -33,7 +33,7 @@ class PipelineStatus(Enum):
 
 
 @dataclass(slots=True)
-class PipelineResult:
+class PipelineExecutionResult:
     """
     Result returned by every pipeline stage.
     """

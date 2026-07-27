@@ -32,7 +32,7 @@ class PipelineStatus:
 # ==========================================================
 
 @dataclass(slots=True)
-class ProcessingStatistics:
+class PipelineStatistics:
     """
     Pipeline processing statistics.
     """
@@ -48,7 +48,7 @@ class ProcessingStatistics:
 # ==========================================================
 
 @dataclass(slots=True)
-class ValidationSummary:
+class PipelineValidationSummary:
     """
     Validation summary.
     """

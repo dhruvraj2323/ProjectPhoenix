@@ -14,19 +14,24 @@ from signal_engine.signal_engine import SignalEngine
 
 class SignalManager:
     """
-    High-level interface for the Signal Engine.
+    High-level manager for the Signal Engine.
+
+    Acts as the public interface used by
+    Pattern Engine and future Trading Engine.
     """
 
     def __init__(self) -> None:
 
         self.engine = SignalEngine()
 
-    def execute(
+    # ---------------------------------------------------------
+
+    def run(
         self,
         context: SignalContext,
     ) -> SignalContext:
         """
-        Execute complete signal generation workflow.
+        Execute the complete Signal Engine.
         """
 
         return self.engine.run(context)

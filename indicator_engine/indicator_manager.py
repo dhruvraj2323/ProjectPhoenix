@@ -35,15 +35,3 @@ class IndicatorManager:
         """
 
         return self.engine.run(context)
-
-    # ---------------------------------------------------------
-
-    def calculate(
-        self,
-        context: IndicatorContext,
-    ) -> IndicatorContext:
-        """
-        Alias for run().
-        """
-
-        return self.run(context)

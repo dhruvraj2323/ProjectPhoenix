@@ -7,7 +7,7 @@ Processing Report
 """
 
 from market_pipeline.pipeline_context import PipelineContext
-from market_pipeline.processing_report import ProcessingReport
+from market_pipeline.pipeline_report import PipelineReport
 
 
 def test_processing_report():
@@ -39,7 +39,7 @@ def test_processing_report():
         reason="Pipeline executed successfully."
     )
 
-    report = ProcessingReport()
+    report = PipelineReport()
 
     report.print_report(context)
 

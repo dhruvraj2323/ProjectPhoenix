@@ -16,7 +16,7 @@ from risk_engine.risk_validator import RiskValidator
 
 class RiskEngine:
     """
-    Executes the complete risk management pipeline.
+    Executes the complete Risk Engine pipeline.
     """
 
     def __init__(self) -> None:
@@ -26,6 +26,8 @@ class RiskEngine:
         self.validator = RiskValidator()
 
         self.logger = RiskLogger()
+
+    # ---------------------------------------------------------
 
     def run(
         self,
@@ -37,19 +39,25 @@ class RiskEngine:
 
         self.logger.log_start(context)
 
-        context = self.processor.process(
-            context,
-        )
-
         if not self.validator.validate(
             context,
         ):
+
+            context.fail(
+                "Risk validation failed.",
+            )
 
             self.logger.log_failure(
                 context,
             )
 
             return context
+
+        context = self.processor.process(
+            context,
+        )
+
+        context.complete()
 
         self.logger.log_finish(
             context,

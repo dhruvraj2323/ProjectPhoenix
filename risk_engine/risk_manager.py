@@ -14,19 +14,24 @@ from risk_engine.risk_engine import RiskEngine
 
 class RiskManager:
     """
-    High-level interface for Risk Engine.
+    High-level manager for the Risk Engine.
+
+    Acts as the public interface used by
+    Signal Engine and future Trading Engine.
     """
 
     def __init__(self) -> None:
 
         self.engine = RiskEngine()
 
-    def evaluate(
+    # ---------------------------------------------------------
+
+    def run(
         self,
         context: RiskContext,
     ) -> RiskContext:
         """
-        Evaluate account risk.
+        Execute the complete Risk Engine.
         """
 
         return self.engine.run(
