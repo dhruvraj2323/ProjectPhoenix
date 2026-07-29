@@ -1,109 +1,58 @@
+import shutil
+import tempfile
 import zipfile
-import csv
-import io
-from datetime import datetime
+from pathlib import Path
+
+from market_data.historical_parser import HistoricalParser
 
 
 class HistoricalLoader:
 
     def __init__(self):
-        pass
-
+        self.parser = HistoricalParser()
 
     def load_zip(self, zip_path):
 
         candles = []
 
-        with zipfile.ZipFile(zip_path, "r") as z:
+        zip_path = Path(zip_path)
 
-            csv_files = [
-                file
-                for file in z.namelist()
-                if file.lower().endswith(".csv")
-            ]
+        try:
+            with zipfile.ZipFile(zip_path, "r") as archive:
 
-
-            print("CSV Files Found:")
-            print(len(csv_files))
-
-
-            for csv_file in csv_files:
-
-                print(
-                    "Loading:",
-                    csv_file
+                csv_files = sorted(
+                    file
+                    for file in archive.namelist()
+                    if file.lower().endswith(".csv")
                 )
 
-                with z.open(csv_file) as f:
+                print("CSV Files Found:")
+                print(len(csv_files))
 
-                    content = (
-                        io.TextIOWrapper(
-                            f,
-                            encoding="utf-8"
-                        )
-                    )
+                for csv_file in csv_files:
 
+                    print("Loading:", csv_file)
 
-                    reader = csv.reader(
-                        content
-                    )
+                    with tempfile.TemporaryDirectory() as temp_dir:
 
+                        temp_file = Path(temp_dir) / Path(csv_file).name
 
-                    for row in reader:
+                        with archive.open(csv_file) as source:
+                            with open(temp_file, "wb") as target:
+                                shutil.copyfileobj(source, target)
 
-                        candle = (
-                            self._parse_csv_row(
-                                row
-                            )
-                        )
+                        parsed = self.parser.parse_file(temp_file)
+                        candles.extend(parsed)
 
-                        if candle:
-                            candles.append(
-                                candle
-                            )
+        except zipfile.BadZipFile:
+            print(f"Invalid ZIP file: {zip_path.name}")
+            return []
 
+        candles.sort(key=lambda candle: candle["datetime"])
 
         return candles
 
 
-
-    def _parse_csv_row(self, row):
-
-        try:
-
-            if len(row) < 6:
-                return None
-
-
-            date = row[0]
-            time = row[1]
-
-            candle_datetime = datetime.strptime(
-                f"{date} {time}",
-                "%Y.%m.%d %H:%M"
-            )
-
-
-            return {
-                "datetime": candle_datetime,
-                "open": float(row[2]),
-                "high": float(row[3]),
-                "low": float(row[4]),
-                "close": float(row[5]),
-                "volume": int(row[6])
-                if len(row) > 6
-                else 0
-            }
-
-
-        except Exception:
-
-            return None
-
-
-
 if __name__ == "__main__":
 
-    print(
-        "Historical Loader Module Loaded Successfully"
-    )
+    print("Historical Loader Module Loaded Successfully")

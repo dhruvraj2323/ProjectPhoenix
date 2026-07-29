@@ -1,5 +1,6 @@
-import zipfile
+import shutil
 import tempfile
+import zipfile
 from pathlib import Path
 
 from market_data.historical_parser import HistoricalParser
@@ -25,30 +26,35 @@ class FullHistoryLoader:
             print("\nProcessing ZIP:")
             print(zip_file.name)
 
-            with zipfile.ZipFile(zip_file, "r") as archive:
+            try:
+                with zipfile.ZipFile(zip_file, "r") as archive:
 
-                csv_files = sorted(
-                    f for f in archive.namelist()
-                    if f.lower().endswith(".csv")
-                )
+                    csv_files = sorted(
+                        f for f in archive.namelist()
+                        if f.lower().endswith(".csv")
+                    )
 
-                print(f"CSV Files Found: {len(csv_files)}")
+                    print(f"CSV Files Found: {len(csv_files)}")
 
-                for csv_file in csv_files:
+                    for csv_file in csv_files:
 
-                    print(f"Loading: {csv_file}")
+                        print(f"Loading: {csv_file}")
 
-                    with tempfile.TemporaryDirectory() as temp_dir:
+                        with tempfile.TemporaryDirectory() as temp_dir:
 
-                        temp_file = Path(temp_dir) / Path(csv_file).name
+                            temp_file = Path(temp_dir) / Path(csv_file).name
 
-                        with archive.open(csv_file) as source:
-                            with open(temp_file, "wb") as target:
-                                target.write(source.read())
+                            with archive.open(csv_file) as source:
+                                with open(temp_file, "wb") as target:
+                                    shutil.copyfileobj(source, target)
 
-                        candles = self.parser.parse_file(temp_file)
-                        all_candles.extend(candles)
+                            candles = self.parser.parse_file(temp_file)
+                            all_candles.extend(candles)
+
+            except zipfile.BadZipFile:
+                print(f"Skipping corrupt ZIP: {zip_file.name}")
+                continue
 
         all_candles.sort(key=lambda candle: candle["datetime"])
-        
+
         return all_candles

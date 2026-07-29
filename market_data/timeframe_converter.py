@@ -17,7 +17,7 @@ class TimeframeConverter:
 
     def convert(self, candles, timeframe):
         """
-        Convert M1 candles into higher timeframe candles
+        Convert M1 candles into higher timeframe candles.
         """
 
         if timeframe not in self.SUPPORTED_TIMEFRAMES:
@@ -25,22 +25,25 @@ class TimeframeConverter:
                 f"Unsupported timeframe: {timeframe}"
             )
 
+        if not candles:
+            return []
+
         interval = self.SUPPORTED_TIMEFRAMES[timeframe]
 
         converted = []
-
-        if not candles:
-            return converted
 
         bucket = []
         current_bucket = None
 
         for candle in candles:
 
-            minute = candle["datetime"].minute
-            hour = candle["datetime"].hour
+            dt = candle["datetime"]
 
-            total_minutes = hour * 60 + minute
+            total_minutes = (
+                dt.toordinal() * 1440
+                + dt.hour * 60
+                + dt.minute
+            )
 
             bucket_start = (
                 total_minutes // interval
@@ -67,7 +70,6 @@ class TimeframeConverter:
 
         return converted
 
-
     def _create_candle(self, candles):
 
         return {
@@ -82,7 +84,7 @@ class TimeframeConverter:
             "close": candles[-1]["close"],
             "volume": sum(
                 c["volume"] for c in candles
-            )
+            ),
         }
 
 
