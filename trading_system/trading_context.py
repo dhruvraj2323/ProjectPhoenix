@@ -55,6 +55,14 @@ class TradingContext:
     )
 
     # --------------------------------------------------
+    # Engine Results
+    # --------------------------------------------------
+
+    market_data: dict[str, Any] = field(
+        default_factory=dict
+    )
+
+    # --------------------------------------------------
     # Strategy
     # --------------------------------------------------
 
@@ -91,6 +99,14 @@ class TradingContext:
     execution_price: float = 0.0
 
     quantity: float = 0.0
+
+    # --------------------------------------------------
+    # Paper Trading
+    # --------------------------------------------------
+
+    paper_trade: dict[str, Any] = field(
+        default_factory=dict
+    )
 
     # --------------------------------------------------
     # Runtime Metadata
@@ -159,6 +175,40 @@ class TradingContext:
         )
 
     # --------------------------------------------------
+    # Market Pipeline Methods
+    # --------------------------------------------------
+
+    def set_market_data(
+        self,
+        data: dict[str, Any],
+    ) -> None:
+
+        self.market_data = data
+
+    def get_market_data(
+        self,
+    ) -> dict[str, Any]:
+
+        return self.market_data
+
+    # --------------------------------------------------
+    # Paper Trading Methods
+    # --------------------------------------------------
+
+    def set_paper_trade(
+        self,
+        trade: dict[str, Any],
+    ) -> None:
+
+        self.paper_trade = trade
+
+    def get_paper_trade(
+        self,
+    ) -> dict[str, Any]:
+
+        return self.paper_trade
+
+    # --------------------------------------------------
     # Metadata
     # --------------------------------------------------
 
@@ -217,11 +267,17 @@ class TradingContext:
     # Reset
     # --------------------------------------------------
 
-    def reset(self) -> None:
+    def reset(
+        self,
+    ) -> None:
 
         self.indicators.clear()
 
         self.patterns.clear()
+
+        self.market_data.clear()
+
+        self.paper_trade.clear()
 
         self.metadata.clear()
 
