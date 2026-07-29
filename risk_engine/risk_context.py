@@ -29,10 +29,6 @@ class RiskContext:
 
     engine_id: str
 
-    created_at: datetime = field(
-        default_factory=datetime.utcnow,
-    )
-
     # --------------------------------------------------
     # Account Information
     # --------------------------------------------------
@@ -44,6 +40,14 @@ class RiskContext:
     equity: float
 
     free_margin: float
+
+    # --------------------------------------------------
+    # Runtime Information
+    # --------------------------------------------------
+
+    created_at: datetime = field(
+        default_factory=datetime.utcnow,
+    )
 
     # --------------------------------------------------
     # Output Data
@@ -100,7 +104,9 @@ class RiskContext:
             default,
         )
 
-    def mark_completed(
+    # --------------------------------------------------
+
+    def complete(
         self,
     ) -> None:
         """
@@ -111,7 +117,11 @@ class RiskContext:
 
         self.failed = False
 
-    def mark_failed(
+        self.reason = ""
+
+    # --------------------------------------------------
+
+    def fail(
         self,
         reason: str,
     ) -> None:
@@ -124,6 +134,8 @@ class RiskContext:
         self.failed = True
 
         self.reason = reason
+
+    # --------------------------------------------------
 
     def reset(
         self,

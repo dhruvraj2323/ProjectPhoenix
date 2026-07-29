@@ -16,6 +16,8 @@ class RiskLogger:
     Logs Risk Engine activity.
     """
 
+    # ---------------------------------------------------------
+
     def log_start(
         self,
         context: RiskContext,
@@ -25,6 +27,8 @@ class RiskLogger:
         """
 
         context.metadata["started"] = True
+
+    # ---------------------------------------------------------
 
     def log_finish(
         self,
@@ -36,12 +40,14 @@ class RiskLogger:
 
         context.metadata["completed"] = True
 
+    # ---------------------------------------------------------
+
     def log_failure(
         self,
         context: RiskContext,
     ) -> None:
         """
-        Log failure.
+        Log failed execution.
         """
 
         context.metadata["failed"] = True

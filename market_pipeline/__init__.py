@@ -15,11 +15,8 @@ from .pipeline_logger import PipelineLogger
 from .pipeline_manager import PipelineManager
 from .pipeline_models import (
     PipelineStage,
-    PipelineStatus,
-    PipelineResult,
-    PipelineStatistics,
     PipelineState,
 )
 from .pipeline_router import PipelineRouter
 from .pipeline_validator import PipelineValidator
-from .processing_report import ProcessingReport
+from .pipeline_report import PipelineReport

@@ -14,22 +14,20 @@ from execution_engine.execution_context import (
 def test_execution_context():
 
     context = ExecutionContext(
+
         execution_id="EXEC-001",
+
         symbol="XAUUSD",
-        signal="BUY",
-        quantity=1.0,
-        price=3350.50,
+
+        timeframe="M15",
+
     )
 
     assert context.execution_id == "EXEC-001"
 
     assert context.symbol == "XAUUSD"
 
-    assert context.signal == "BUY"
-
-    assert context.quantity == 1.0
-
-    assert context.price == 3350.50
+    assert context.timeframe == "M15"
 
     assert context.order is None
 
@@ -40,3 +38,30 @@ def test_execution_context():
     assert context.reason == ""
 
     assert context.metadata == {}
+
+    context.complete()
+
+    assert context.completed is True
+
+    assert context.failed is False
+
+    context.fail(
+        "Execution Failed",
+    )
+
+    assert context.failed is True
+
+    assert (
+        context.reason
+        == "Execution Failed"
+    )
+
+    context.reset()
+
+    assert context.completed is False
+
+    assert context.failed is False
+
+    assert context.reason == ""
+
+    assert context.order is None

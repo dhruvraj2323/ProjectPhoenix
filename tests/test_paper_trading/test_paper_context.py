@@ -1,33 +1,33 @@
 """
 =================================================
 Project Phoenix
-Test Portfolio Context
-M35
+Test Paper Trading Context
+M24
 =================================================
 """
 
-from portfolio_engine.portfolio_context import (
-    PortfolioContext,
+from paper_trading.paper_context import (
+    PaperContext,
 )
 
 
-def test_portfolio_context():
+def test_paper_context():
 
-    context = PortfolioContext(
+    context = PaperContext(
 
-        portfolio_id="PF-001",
+        paper_id="PAPER-001",
 
         account_id="ACC-001",
 
     )
 
-    assert context.portfolio_id == "PF-001"
+    assert context.paper_id == "PAPER-001"
 
     assert context.account_id == "ACC-001"
 
-    assert context.positions == []
+    assert context.portfolio.balance == 10000.0
 
-    assert context.summary.balance == 10000.0
+    assert context.positions == []
 
     assert context.metadata == {}
 
@@ -44,11 +44,11 @@ def test_portfolio_context():
     assert context.failed is False
 
     context.fail(
-        "Portfolio validation failed.",
+        "Paper trading validation failed.",
     )
-
-    assert context.failed is True
 
     assert context.completed is False
 
-    assert context.reason == "Portfolio validation failed."
+    assert context.failed is True
+
+    assert context.reason == "Paper trading validation failed."

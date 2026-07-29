@@ -15,7 +15,8 @@ from execution_engine.execution_context import (
 
 class ExecutionValidator:
     """
-    Validates execution context.
+    Validates execution request
+    before trade execution.
     """
 
     def validate(
@@ -25,36 +26,41 @@ class ExecutionValidator:
 
         if not context.symbol:
 
-            context.failed = True
-
-            context.reason = "Missing symbol"
-
-            return False
-
-        if context.signal not in (
-            "BUY",
-            "SELL",
-        ):
-
-            context.failed = True
-
-            context.reason = "Invalid signal"
+            context.fail(
+                "Symbol is missing.",
+            )
 
             return False
 
-        if context.quantity <= 0:
+        if context.strategy_result is None:
 
-            context.failed = True
-
-            context.reason = "Invalid quantity"
+            context.fail(
+                "Strategy result missing.",
+            )
 
             return False
 
-        if context.price <= 0:
+        if context.signal_result is None:
 
-            context.failed = True
+            context.fail(
+                "Signal result missing.",
+            )
 
-            context.reason = "Invalid price"
+            return False
+
+        if context.risk_result is None:
+
+            context.fail(
+                "Risk result missing.",
+            )
+
+            return False
+
+        if context.ai_result is None:
+
+            context.fail(
+                "AI decision missing.",
+            )
 
             return False
 

@@ -2,10 +2,11 @@
 =================================================
 Project Phoenix
 Paper Order Manager
+M24
 =================================================
-
-Handles virtual order execution.
 """
+
+from __future__ import annotations
 
 from paper_trading.paper_models import (
     PaperOrder,
@@ -15,66 +16,90 @@ from paper_trading.paper_models import (
 
 class PaperOrderManager:
     """
-    Executes virtual paper orders.
+    Creates virtual paper orders
+    and positions.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
 
-        self.next_ticket = 1
-        self.positions = []
+        self._next_ticket = 1
 
-    def buy(self, symbol: str, volume: float, price: float):
+        self.positions: list[PaperPosition] = []
+
+    def create_order(
+
+        self,
+
+        strategy_id: str,
+
+        symbol: str,
+
+        side: str,
+
+        quantity: float,
+
+        entry_price: float,
+
+        stop_loss: float,
+
+        take_profit: float,
+
+        risk_percent: float,
+
+    ) -> PaperOrder:
 
         order = PaperOrder(
-            ticket=self.next_ticket,
+
+            strategy_id=strategy_id,
+
             symbol=symbol,
-            direction="BUY",
-            volume=volume,
-            entry_price=price,
+
+            side=side,
+
+            quantity=quantity,
+
+            entry_price=entry_price,
+
+            stop_loss=stop_loss,
+
+            take_profit=take_profit,
+
+            risk_percent=risk_percent,
+
         )
 
         position = PaperPosition(
-            ticket=self.next_ticket,
+
+            ticket=self._next_ticket,
+
+            strategy_id=strategy_id,
+
             symbol=symbol,
-            direction="BUY",
-            volume=volume,
-            entry_price=price,
-            current_price=price,
-            profit=0.0,
+
+            side=side,
+
+            quantity=quantity,
+
+            entry_price=entry_price,
+
+            current_price=entry_price,
+
+            stop_loss=stop_loss,
+
+            take_profit=take_profit,
+
         )
 
         self.positions.append(position)
 
-        self.next_ticket += 1
+        self._next_ticket += 1
 
         return order
 
-    def sell(self, symbol: str, volume: float, price: float):
+    def get_positions(
 
-        order = PaperOrder(
-            ticket=self.next_ticket,
-            symbol=symbol,
-            direction="SELL",
-            volume=volume,
-            entry_price=price,
-        )
+        self,
 
-        position = PaperPosition(
-            ticket=self.next_ticket,
-            symbol=symbol,
-            direction="SELL",
-            volume=volume,
-            entry_price=price,
-            current_price=price,
-            profit=0.0,
-        )
-
-        self.positions.append(position)
-
-        self.next_ticket += 1
-
-        return order
-
-    def get_positions(self):
+    ) -> list[PaperPosition]:
 
         return self.positions

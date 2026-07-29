@@ -11,6 +11,7 @@ from __future__ import annotations
 from execution_engine.execution_context import (
     ExecutionContext,
 )
+
 from execution_engine.execution_models import (
     ExecutionOrder,
 )
@@ -18,7 +19,8 @@ from execution_engine.execution_models import (
 
 class ExecutionProcessor:
     """
-    Builds executable orders from signals.
+    Creates execution orders from
+    approved trading decisions.
     """
 
     def process(
@@ -26,25 +28,38 @@ class ExecutionProcessor:
         context: ExecutionContext,
     ) -> ExecutionContext:
 
-        context.order = ExecutionOrder(
+        signal = context.strategy_result.signals[0]
+
+        order = ExecutionOrder(
+
+            strategy_id=signal.strategy_id,
+
             symbol=context.symbol,
-            side=context.signal,
-            quantity=context.quantity,
-            price=context.price,
+
+            side=signal.direction.value,
+
+            quantity=1.0,
+
+            entry_price=signal.entry_price,
+
+            stop_loss=signal.stop_loss,
+
+            take_profit=signal.take_profit,
+
+            risk_percent=signal.risk_percent,
+
         )
+
+        context.order = order
 
         context.execution_result.accepted = True
 
-        context.execution_result.status = "READY"
-
-        context.execution_result.order_id = (
-            context.execution_id
+        context.execution_result.status = (
+            context.execution_result.status.ACCEPTED
         )
 
         context.execution_result.executed_price = (
-            context.price
+            signal.entry_price
         )
-
-        context.completed = True
 
         return context

@@ -34,18 +34,18 @@ class RiskEngine:
         context: RiskContext,
     ) -> RiskContext:
         """
-        Execute Risk Engine.
+        Execute complete Risk Engine.
         """
 
-        self.logger.log_start(context)
+        self.logger.log_start(
+            context,
+        )
+
+        # Initial validation
 
         if not self.validator.validate(
             context,
         ):
-
-            context.fail(
-                "Risk validation failed.",
-            )
 
             self.logger.log_failure(
                 context,
@@ -53,11 +53,18 @@ class RiskEngine:
 
             return context
 
+        # Perform calculations
+
         context = self.processor.process(
             context,
         )
 
-        context.complete()
+        # Final validation updates final decision
+        # and marks context completed.
+
+        self.validator.validate(
+            context,
+        )
 
         self.logger.log_finish(
             context,

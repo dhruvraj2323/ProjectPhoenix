@@ -2,49 +2,70 @@
 =================================================
 Project Phoenix
 Paper Trading Engine
+M24
 =================================================
-
-Master controller of Paper Trading Layer.
 """
 
+from __future__ import annotations
+
+from paper_trading.paper_context import PaperContext
 from paper_trading.paper_logger import PaperLogger
-from paper_trading.paper_models import (
-    PaperTradingStatus,
-    PaperTradingResult,
-)
 from paper_trading.paper_portfolio import PaperPortfolioManager
+from paper_trading.paper_validator import PaperValidator
 
 
 class PaperTradingEngine:
     """
-    Master controller for Paper Trading.
+    Main Paper Trading Engine.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
+
+        self.validator = PaperValidator()
 
         self.portfolio = PaperPortfolioManager()
 
-    def initialize(self):
+        self.logger = PaperLogger()
 
-        portfolio = self.portfolio.portfolio()
+    def run(
+        self,
+        context: PaperContext,
+    ) -> PaperContext:
+        """
+        Execute complete Paper Trading workflow.
+        """
 
-        status = PaperTradingStatus(
-            running=True,
-            virtual_balance=portfolio.balance,
-            total_positions=0,
+        self.logger.log_start(context)
+
+        if not self.validator.validate(context):
+
+            self.logger.log_failure(context)
+
+            return context
+
+        # Synchronize virtual portfolio into PaperContext
+        context = self.portfolio.update_context(context)
+
+        context.result.approved = True
+
+        context.result.reason = (
+            "Paper trading completed successfully."
         )
 
-        result = PaperTradingResult(
-            approved=True,
-            reason="Paper trading engine initialized successfully.",
-            status=status,
+        context.result.status.running = True
+
+        context.result.status.virtual_balance = (
+            context.portfolio.balance
         )
 
-        PaperLogger.log(result)
+        context.result.status.total_positions = (
+            context.portfolio.total_positions
+        )
 
-        return result
-    # -------------------------------------------------
+        context.complete()
 
-    def shutdown(self):
+        self.logger.log_summary(context)
 
-        pass        
+        self.logger.log_finish(context)
+
+        return context

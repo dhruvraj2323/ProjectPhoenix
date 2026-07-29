@@ -17,7 +17,7 @@ class RiskManager:
     High-level manager for the Risk Engine.
 
     Acts as the public interface used by
-    Signal Engine and future Trading Engine.
+    Signal Engine and Orchestrator Engine.
     """
 
     def __init__(self) -> None:
@@ -26,7 +26,7 @@ class RiskManager:
 
     # ---------------------------------------------------------
 
-    def run(
+    def execute(
         self,
         context: RiskContext,
     ) -> RiskContext:
@@ -35,5 +35,21 @@ class RiskManager:
         """
 
         return self.engine.run(
+            context,
+        )
+
+    # ---------------------------------------------------------
+
+    # ---------------------------------------------------------
+
+    def evaluate(
+        self,
+        context: RiskContext,
+    ) -> RiskContext:
+        """
+        Evaluate risk.
+        """
+
+        return self.execute(
             context,
         )

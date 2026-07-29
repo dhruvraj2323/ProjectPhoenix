@@ -9,6 +9,7 @@ M37
 from execution_engine.execution_context import (
     ExecutionContext,
 )
+
 from execution_engine.execution_validator import (
     ExecutionValidator,
 )
@@ -19,29 +20,50 @@ def test_execution_validator():
     validator = ExecutionValidator()
 
     context = ExecutionContext(
+
         execution_id="EXEC-001",
+
         symbol="XAUUSD",
-        signal="BUY",
-        quantity=1.0,
-        price=3350.50,
+
+        timeframe="M15",
+
     )
 
-    assert validator.validate(
-        context,
-    ) is True
+    context.strategy_result = object()
 
-    bad_context = ExecutionContext(
+    context.signal_result = object()
+
+    context.risk_result = object()
+
+    context.ai_result = object()
+
+    assert (
+        validator.validate(
+            context,
+        )
+        is True
+    )
+
+    invalid = ExecutionContext(
+
         execution_id="EXEC-002",
+
         symbol="",
-        signal="BUY",
-        quantity=1.0,
-        price=3350.50,
+
+        timeframe="M15",
+
     )
 
-    assert validator.validate(
-        bad_context,
-    ) is False
+    assert (
+        validator.validate(
+            invalid,
+        )
+        is False
+    )
 
-    assert bad_context.failed is True
+    assert invalid.failed is True
 
-    assert bad_context.reason == "Missing symbol"
+    assert (
+        invalid.reason
+        == "Symbol is missing."
+    )

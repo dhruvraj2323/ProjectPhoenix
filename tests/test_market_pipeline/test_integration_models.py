@@ -13,7 +13,7 @@ from market_pipeline.integration_models import (
 )
 
 
-def run_test():
+def test_integration_models():
 
     status = PipelineStatus(
         completed=True,
@@ -42,31 +42,7 @@ def run_test():
         validation=validation,
     )
 
-    print("===== Integration Models =====")
-    print()
-
-    print(f"Completed            : {status.completed}")
-    print(f"Validation Passed    : {status.validation_passed}")
-    print(f"Current Stage        : {status.stage}")
-
-    print()
-
-    print(f"Total Candles        : {statistics.total_candles}")
-    print(f"Indicators           : {statistics.indicators_calculated}")
-    print(f"Patterns             : {statistics.patterns_detected}")
-    print(f"Processing Time      : {statistics.processing_time} sec")
-
-    print()
-
-    print(f"Validation Passed    : {validation.passed}")
-    print(f"Errors               : {validation.errors}")
-    print(f"Warnings             : {validation.warnings}")
-
     assert result.approved
-
-    print()
-    print("Integration Models Test Passed")
-
-
-if __name__ == "__main__":
-    run_test()
+    assert result.status.completed is True
+    assert result.validation.passed is True
+    assert result.statistics.total_candles == 6052588

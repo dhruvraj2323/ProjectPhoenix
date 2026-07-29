@@ -19,19 +19,19 @@ from portfolio_engine.portfolio_engine import (
 
 class PortfolioManager:
     """
-    Public entry point for Portfolio Engine.
+    High-level interface for Portfolio Engine.
     """
 
     def __init__(self) -> None:
 
         self.engine = PortfolioEngine()
 
-    def execute(
+    def update(
         self,
         context: PortfolioContext,
     ) -> PortfolioContext:
         """
-        Execute Portfolio Engine.
+        Execute complete portfolio workflow.
         """
 
         return self.engine.run(

@@ -7,39 +7,74 @@ M35
 """
 
 from portfolio_engine.portfolio_models import (
-    PortfolioSnapshot,
-    PortfolioStatistics,
-    PortfolioStatus,
-    Position,
+    PortfolioPosition,
+    PortfolioSummary,
+    PositionStatus,
 )
 
 
 def test_portfolio_models():
 
-    position = Position(
+    position = PortfolioPosition(
+
+        trade_id="TRD-001",
+
         symbol="XAUUSD",
+
         side="BUY",
-        volume=0.10,
-        entry_price=3300.0,
-        current_price=3310.0,
-        profit_loss=10.0,
+
+        quantity=1.0,
+
+        entry_price=3350.0,
+
+        stop_loss=3340.0,
+
+        take_profit=3370.0,
+
+        current_price=3352.0,
+
     )
 
-    statistics = PortfolioStatistics()
+    assert position.trade_id == "TRD-001"
 
-    snapshot = PortfolioSnapshot(
-        account_id="ACC-001",
-        balance=10000.0,
-        equity=10010.0,
-        margin=500.0,
-        free_margin=9510.0,
-        status=PortfolioStatus.COMPLETED,
-    )
+    assert position.symbol == "XAUUSD"
 
-    snapshot.positions.append(position)
+    assert position.side == "BUY"
 
-    assert snapshot.account_id == "ACC-001"
-    assert snapshot.balance == 10000.0
-    assert snapshot.positions[0].symbol == "XAUUSD"
-    assert statistics.total_positions == 0
-    assert snapshot.status == PortfolioStatus.COMPLETED
+    assert position.quantity == 1.0
+
+    assert position.entry_price == 3350.0
+
+    assert position.stop_loss == 3340.0
+
+    assert position.take_profit == 3370.0
+
+    assert position.current_price == 3352.0
+
+    assert position.unrealized_pnl == 0.0
+
+    assert position.realized_pnl == 0.0
+
+    assert position.status == PositionStatus.OPEN
+
+    summary = PortfolioSummary()
+
+    assert summary.balance == 10000.0
+
+    assert summary.equity == 10000.0
+
+    assert summary.free_margin == 10000.0
+
+    assert summary.used_margin == 0.0
+
+    assert summary.floating_pnl == 0.0
+
+    assert summary.realized_pnl == 0.0
+
+    assert summary.total_trades == 0
+
+    assert summary.winning_trades == 0
+
+    assert summary.losing_trades == 0
+
+    assert summary.win_rate == 0.0

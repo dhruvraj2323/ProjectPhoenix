@@ -17,7 +17,7 @@ class SignalManager:
     High-level manager for the Signal Engine.
 
     Acts as the public interface used by
-    Pattern Engine and future Trading Engine.
+    the Orchestrator Engine.
     """
 
     def __init__(self) -> None:
@@ -26,7 +26,7 @@ class SignalManager:
 
     # ---------------------------------------------------------
 
-    def run(
+    def execute(
         self,
         context: SignalContext,
     ) -> SignalContext:
@@ -34,4 +34,20 @@ class SignalManager:
         Execute the complete Signal Engine.
         """
 
-        return self.engine.run(context)
+        return self.engine.run(
+            context,
+        )
+
+    # ---------------------------------------------------------
+
+    def run(
+        self,
+        context: SignalContext,
+    ) -> SignalContext:
+        """
+        Backward compatibility wrapper.
+        """
+
+        return self.execute(
+            context,
+        )

@@ -1,8 +1,8 @@
 """
 =================================================
 Project Phoenix
-Portfolio Context
-M35
+Paper Trading Context
+M24
 =================================================
 """
 
@@ -11,19 +11,20 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
-from portfolio_engine.portfolio_models import (
-    PortfolioPosition,
-    PortfolioSummary,
+from paper_trading.paper_models import (
+    PaperPortfolio,
+    PaperPosition,
+    PaperTradingResult,
 )
 
 
 @dataclass(slots=True)
-class PortfolioContext:
+class PaperContext:
     """
-    Runtime context for Portfolio Engine.
+    Runtime context for Paper Trading Engine.
     """
 
-    portfolio_id: str
+    paper_id: str
 
     account_id: str
 
@@ -31,13 +32,19 @@ class PortfolioContext:
         default_factory=lambda: datetime.now(UTC),
     )
 
-    positions: list[PortfolioPosition] = field(
+    portfolio: PaperPortfolio = field(
+        default_factory=PaperPortfolio,
+    )
+
+    positions: list[PaperPosition] = field(
         default_factory=list,
     )
 
-    summary: PortfolioSummary = field(
-        default_factory=PortfolioSummary,
+    result: PaperTradingResult = field(
+        default_factory=PaperTradingResult,
     )
+
+    execution_result: object | None = None
 
     metadata: dict = field(
         default_factory=dict,
@@ -51,7 +58,7 @@ class PortfolioContext:
 
     def complete(self) -> None:
         """
-        Mark portfolio processing as completed.
+        Mark processing as completed.
         """
 
         self.completed = True
@@ -63,7 +70,7 @@ class PortfolioContext:
         reason: str,
     ) -> None:
         """
-        Mark portfolio processing as failed.
+        Mark processing as failed.
         """
 
         self.completed = False

@@ -1,7 +1,8 @@
 """
 =================================================
 Project Phoenix
-Paper Trading Models Test
+Test Paper Trading Models
+M24
 =================================================
 """
 
@@ -11,62 +12,80 @@ from paper_trading.paper_models import (
     PaperPortfolio,
     PaperTradingStatus,
     PaperTradingResult,
+    PaperPositionStatus,
 )
 
 
-def run_test():
+def test_paper_models():
 
     order = PaperOrder(
-        ticket=1,
-        symbol="EURUSD",
-        direction="BUY",
-        volume=0.10,
-        entry_price=1.1065,
+
+        strategy_id="S01",
+
+        symbol="XAUUSD",
+
+        side="BUY",
+
+        quantity=1.0,
+
+        entry_price=3350.0,
+
+        stop_loss=3340.0,
+
+        take_profit=3370.0,
+
+        risk_percent=1.0,
+
     )
+
+    assert order.symbol == "XAUUSD"
+
+    assert order.side == "BUY"
+
+    assert order.quantity == 1.0
 
     position = PaperPosition(
+
         ticket=1,
-        symbol="EURUSD",
-        direction="BUY",
-        volume=0.10,
-        entry_price=1.1065,
-        current_price=1.1075,
-        profit=10.0,
+
+        strategy_id="S01",
+
+        symbol="XAUUSD",
+
+        side="BUY",
+
+        quantity=1.0,
+
+        entry_price=3350.0,
+
+        current_price=3355.0,
+
+        stop_loss=3340.0,
+
+        take_profit=3370.0,
+
+        unrealized_pnl=50.0,
+
     )
 
-    portfolio = PaperPortfolio(
-        balance=10000.0,
-        equity=10010.0,
-        floating_profit=10.0,
-        closed_profit=0.0,
+    assert position.ticket == 1
+
+    assert position.status == (
+        PaperPositionStatus.OPEN
     )
 
-    status = PaperTradingStatus(
-        running=True,
-        virtual_balance=10000.0,
-        total_positions=1,
-    )
+    portfolio = PaperPortfolio()
 
-    result = PaperTradingResult(
-        approved=True,
-        reason="Paper trading initialized successfully.",
-        status=status,
-    )
+    assert portfolio.balance == 10000.0
 
-    print("===== Paper Trading Models =====")
+    assert portfolio.equity == 10000.0
 
-    print(f"Ticket          : {order.ticket}")
-    print(f"Symbol          : {order.symbol}")
-    print(f"Direction       : {order.direction}")
-    print(f"Profit          : {position.profit}")
-    print(f"Balance         : {portfolio.balance}")
+    status = PaperTradingStatus()
 
-    assert result.approved
+    assert status.running is False
 
-    print()
-    print("Paper Trading Models Test Passed")
+    result = PaperTradingResult()
 
+    assert result.approved is False
 
-if __name__ == "__main__":
-
-    run_test()
+    assert result.reason == ""

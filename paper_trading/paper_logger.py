@@ -2,28 +2,89 @@
 =================================================
 Project Phoenix
 Paper Trading Logger
+M24
 =================================================
-
-Logs paper trading operations.
 """
 
-from paper_trading.paper_models import PaperTradingResult
+from __future__ import annotations
+
+import logging
+
+from paper_trading.paper_context import (
+    PaperContext,
+)
 
 
 class PaperLogger:
     """
-    Logs paper trading events.
+    Logger for Paper Trading Engine.
     """
 
-    @staticmethod
-    def log(result: PaperTradingResult):
+    def __init__(self) -> None:
 
-        print("===== Paper Trading =====")
+        self.logger = logging.getLogger(
+            "PaperTrading",
+        )
 
-        print(f"Approved          : {result.approved}")
-        print(f"Reason            : {result.reason}")
-        print()
+    def log_start(
+        self,
+        context: PaperContext,
+    ) -> None:
 
-        print(f"Running           : {result.status.running}")
-        print(f"Virtual Balance   : {result.status.virtual_balance}")
-        print(f"Open Positions    : {result.status.total_positions}")
+        self.logger.info(
+
+            "Paper trading started | %s",
+
+            context.paper_id,
+
+        )
+
+    def log_summary(
+        self,
+        context: PaperContext,
+    ) -> None:
+
+        portfolio = context.portfolio
+
+        self.logger.info(
+
+            (
+                "Paper Summary | "
+                "Balance=%.2f | "
+                "Equity=%.2f | "
+                "OpenPositions=%d"
+            ),
+
+            portfolio.balance,
+
+            portfolio.equity,
+
+            portfolio.total_positions,
+
+        )
+
+    def log_finish(
+        self,
+        context: PaperContext,
+    ) -> None:
+
+        self.logger.info(
+
+            "Paper trading completed | %s",
+
+            context.paper_id,
+
+        )
+
+    def log_failure(
+        self,
+        context: PaperContext,
+    ) -> None:
+
+        self.logger.error(
+
+            "Paper trading failed | %s",
+
+            context.reason,
+
+        )

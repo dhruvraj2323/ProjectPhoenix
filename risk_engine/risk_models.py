@@ -14,6 +14,11 @@ from enum import Enum
 from typing import Any
 
 
+# --------------------------------------------------
+# Risk Decision
+# --------------------------------------------------
+
+
 class RiskDecision(str, Enum):
     """
     Final risk decision.
@@ -23,26 +28,42 @@ class RiskDecision(str, Enum):
     REJECTED = "REJECTED"
 
 
+# --------------------------------------------------
+# Risk Metrics
+# --------------------------------------------------
+
+
 @dataclass(slots=True)
 class RiskMetrics:
     """
-    Risk calculation results.
+    Risk calculation metrics.
     """
 
     risk_percent: float = 0.0
+
     position_size: float = 0.0
+
     exposure: float = 0.0
+
     margin_required: float = 0.0
+
     drawdown: float = 0.0
+
+
+# --------------------------------------------------
+# Risk Result
+# --------------------------------------------------
 
 
 @dataclass(slots=True)
 class RiskResult:
     """
-    Final risk evaluation.
+    Final output of Risk Engine.
     """
 
-    decision: RiskDecision = RiskDecision.REJECTED
+    decision: RiskDecision = (
+        RiskDecision.REJECTED
+    )
 
     reason: str = ""
 
@@ -56,4 +77,4 @@ class RiskResult:
 
     metadata: dict[str, Any] = field(
         default_factory=dict,
-    )
+    )   

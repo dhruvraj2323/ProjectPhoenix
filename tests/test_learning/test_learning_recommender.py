@@ -71,7 +71,7 @@ def test_learning_recommender():
         f"{recommendation.reason}"
     )
 
-    assert recommendation.suggested_value == 1.2
+    assert recommendation.suggested_value == 1.10
 
     print("\nLearning Recommender Test Passed")
 

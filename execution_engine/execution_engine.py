@@ -11,12 +11,15 @@ from __future__ import annotations
 from execution_engine.execution_context import (
     ExecutionContext,
 )
+
 from execution_engine.execution_logger import (
     ExecutionLogger,
 )
+
 from execution_engine.execution_processor import (
     ExecutionProcessor,
 )
+
 from execution_engine.execution_validator import (
     ExecutionValidator,
 )
@@ -24,16 +27,14 @@ from execution_engine.execution_validator import (
 
 class ExecutionEngine:
     """
-    Main execution pipeline.
+    Main Execution Engine.
     """
 
-    def __init__(
-        self,
-    ) -> None:
-
-        self.processor = ExecutionProcessor()
+    def __init__(self) -> None:
 
         self.validator = ExecutionValidator()
+
+        self.processor = ExecutionProcessor()
 
         self.logger = ExecutionLogger()
 
@@ -57,6 +58,12 @@ class ExecutionEngine:
             return context
 
         context = self.processor.process(
+            context,
+        )
+
+        context.complete()
+
+        self.logger.log_order(
             context,
         )
 

@@ -11,7 +11,7 @@ from portfolio_engine.portfolio_context import (
 )
 
 from portfolio_engine.portfolio_models import (
-    Position,
+    PortfolioPosition,
 )
 
 from portfolio_engine.portfolio_processor import (
@@ -24,35 +24,85 @@ def test_portfolio_processor():
     processor = PortfolioProcessor()
 
     context = PortfolioContext(
-        engine_id="PORTFOLIO-001",
+
+        portfolio_id="PF-001",
+
         account_id="ACC-001",
-        balance=10000.0,
-        margin=500.0,
+
     )
 
-    context.add_position(
+    context.positions.append(
 
-        Position(
+        PortfolioPosition(
+
+            trade_id="T1",
+
             symbol="XAUUSD",
+
             side="BUY",
-            volume=0.10,
-            entry_price=3300.0,
-            current_price=3310.0,
-            profit_loss=100.0,
+
+            quantity=1.0,
+
+            entry_price=3350,
+
+            stop_loss=3340,
+
+            take_profit=3370,
+
+            current_price=3355,
+
+            unrealized_pnl=50,
+
+            realized_pnl=0,
+
         )
 
     )
 
-    result = processor.process(context)
+    context.positions.append(
 
-    assert result.completed is True
+        PortfolioPosition(
 
-    assert result.statistics.total_positions == 1
+            trade_id="T2",
 
-    assert result.statistics.winning_positions == 1
+            symbol="EURUSD",
 
-    assert result.statistics.losing_positions == 0
+            side="SELL",
 
-    assert result.equity == 10100.0
+            quantity=1.0,
 
-    assert result.free_margin == 9600.0
+            entry_price=1.1700,
+
+            stop_loss=1.1750,
+
+            take_profit=1.1600,
+
+            current_price=1.1680,
+
+            unrealized_pnl=0,
+
+            realized_pnl=100,
+
+        )
+
+    )
+
+    output = processor.process(
+        context,
+    )
+
+    assert output.summary.total_trades == 2
+
+    assert output.summary.floating_pnl == 50
+
+    assert output.summary.realized_pnl == 100
+
+    assert output.summary.equity == 10050
+
+    assert output.summary.free_margin == 10050
+
+    assert output.summary.winning_trades == 1
+
+    assert output.summary.losing_trades == 0
+
+    assert output.summary.win_rate == 50.0

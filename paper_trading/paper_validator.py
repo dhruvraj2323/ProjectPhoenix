@@ -1,32 +1,32 @@
 """
 =================================================
 Project Phoenix
-Portfolio Validator
-M35
+Paper Trading Validator
+M24
 =================================================
 """
 
 from __future__ import annotations
 
-from portfolio_engine.portfolio_context import (
-    PortfolioContext,
+from paper_trading.paper_context import (
+    PaperContext,
 )
 
 
-class PortfolioValidator:
+class PaperValidator:
     """
-    Validates Portfolio Engine input.
+    Validates Paper Trading input.
     """
 
     def validate(
         self,
-        context: PortfolioContext,
+        context: PaperContext,
     ) -> bool:
 
-        if not context.portfolio_id:
+        if not context.paper_id:
 
             context.fail(
-                "Portfolio ID is missing.",
+                "Paper ID is missing.",
             )
 
             return False
@@ -39,18 +39,18 @@ class PortfolioValidator:
 
             return False
 
-        if context.summary.balance < 0:
+        if context.portfolio.balance < 0:
 
             context.fail(
-                "Invalid account balance.",
+                "Invalid virtual balance.",
             )
 
             return False
 
-        if context.summary.equity < 0:
+        if context.execution_result is None:
 
             context.fail(
-                "Invalid account equity.",
+                "Execution result not available.",
             )
 
             return False

@@ -5,51 +5,28 @@ Pipeline Validator Test
 =================================================
 """
 
-import pandas as pd
-
-from market_pipeline.pipeline_validator import (
-    PipelineValidator
-)
+from market_pipeline.pipeline_context import PipelineContext
+from market_pipeline.pipeline_validator import PipelineValidator
 
 
-def main():
+def test_pipeline_validator():
 
-    candles = [
-
-        {
-            "datetime": "2026-01-01",
-            "open": 100,
-            "high": 105,
-            "low": 99,
-            "close": 103,
-            "volume": 150
-        }
-
-    ]
-
-    dataframe = pd.DataFrame(candles)
+    context = PipelineContext(
+        pipeline_id="PIPE-001",
+        symbol="EURUSD",
+        timeframe="M5",
+    )
 
     validator = PipelineValidator()
 
-    report = validator.validate(
-        candles,
-        dataframe
-    )
+    result = validator.validate(context)
 
     print()
+    print("Pipeline Validator Result")
+    print("=========================")
+    print(f"Validation Passed : {result}")
 
-    print("Validation Report")
-
-    print("=================")
-
-    for key, value in report.items():
-
-        print(f"{key}: {value}")
+    assert result is True
 
     print()
-
     print("Pipeline Validator Test Passed")
-
-
-if __name__ == "__main__":
-    main()

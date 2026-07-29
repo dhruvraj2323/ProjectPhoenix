@@ -9,8 +9,16 @@ M37
 from execution_engine.execution_context import (
     ExecutionContext,
 )
+
 from execution_engine.execution_engine import (
     ExecutionEngine,
+)
+
+from strategy.strategy_models import (
+    StrategyResult,
+    StrategySignal,
+    StrategyType,
+    TradeDirection,
 )
 
 
@@ -19,27 +27,55 @@ def test_execution_engine():
     engine = ExecutionEngine()
 
     context = ExecutionContext(
+
         execution_id="EXEC-001",
+
         symbol="XAUUSD",
-        signal="BUY",
-        quantity=1.0,
-        price=3350.50,
+
+        timeframe="M15",
+
     )
 
-    result = engine.run(
+    signal = StrategySignal(
+
+        strategy_id="S01",
+
+        strategy_name=StrategyType.S01_EMA_TREND,
+
+        direction=TradeDirection.BUY,
+
+        confidence=90,
+
+        entry_price=3350,
+
+        stop_loss=3340,
+
+        take_profit=3370,
+
+        risk_percent=1,
+
+        reason="BUY",
+
+    )
+
+    result = StrategyResult()
+
+    result.signals.append(signal)
+
+    context.strategy_result = result
+
+    context.signal_result = object()
+
+    context.risk_result = object()
+
+    context.ai_result = object()
+
+    output = engine.run(
         context,
     )
 
-    assert result.completed is True
+    assert output.completed is True
 
-    assert result.failed is False
+    assert output.order is not None
 
-    assert result.order is not None
-
-    assert result.execution_result.accepted is True
-
-    assert result.execution_result.status == "READY"
-
-    assert result.metadata["started"] is True
-
-    assert result.metadata["finished"] is True
+    assert output.execution_result.accepted is True

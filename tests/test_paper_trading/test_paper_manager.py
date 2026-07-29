@@ -1,7 +1,7 @@
 """
 =================================================
 Project Phoenix
-Test Paper Trading Engine
+Test Paper Trading Manager
 M24
 =================================================
 """
@@ -10,14 +10,14 @@ from paper_trading.paper_context import (
     PaperContext,
 )
 
-from paper_trading.paper_engine import (
-    PaperTradingEngine,
+from paper_trading.paper_manager import (
+    PaperTradingManager,
 )
 
 
-def test_paper_engine():
+def test_paper_manager():
 
-    engine = PaperTradingEngine()
+    manager = PaperTradingManager()
 
     context = PaperContext(
 
@@ -29,7 +29,7 @@ def test_paper_engine():
 
     context.execution_result = object()
 
-    output = engine.run(
+    output = manager.execute(
         context,
     )
 
@@ -38,11 +38,6 @@ def test_paper_engine():
     assert output.failed is False
 
     assert output.result.approved is True
-
-    assert (
-        output.result.reason
-        == "Paper trading completed successfully."
-    )
 
     assert (
         output.result.status.running

@@ -1,36 +1,60 @@
 """
 =================================================
 Project Phoenix
-Paper Portfolio Test
+Test Paper Portfolio
+M24
 =================================================
 """
 
-from paper_trading.paper_portfolio import PaperPortfolioManager
+from paper_trading.paper_portfolio import (
+    PaperPortfolioManager,
+)
 
 
-def run_test():
+def test_paper_portfolio():
 
-    portfolio = PaperPortfolioManager()
+    manager = PaperPortfolioManager()
 
-    portfolio.update_floating_profit(25.0)
-    portfolio.close_trade(50.0)
+    portfolio = manager.portfolio()
 
-    result = portfolio.portfolio()
+    assert portfolio.balance == 10000.0
 
-    print("===== Paper Portfolio =====")
+    assert portfolio.equity == 10000.0
 
-    print(f"Balance           : {result.balance}")
-    print(f"Equity            : {result.equity}")
-    print(f"Floating Profit   : {result.floating_profit}")
-    print(f"Closed Profit     : {result.closed_profit}")
+    assert portfolio.floating_pnl == 0.0
 
-    assert result.balance == 10050.0
-    assert result.equity == 10075.0
+    assert portfolio.realized_pnl == 0.0
 
-    print()
-    print("Paper Portfolio Test Passed")
+    assert portfolio.total_positions == 0
 
+    manager.update_floating_profit(125.50)
 
-if __name__ == "__main__":
+    portfolio = manager.portfolio()
 
-    run_test()
+    assert portfolio.floating_pnl == 125.50
+
+    assert portfolio.equity == 10125.50
+
+    manager.close_trade(50.0)
+
+    portfolio = manager.portfolio()
+
+    assert portfolio.balance == 10050.0
+
+    assert portfolio.realized_pnl == 50.0
+
+    assert portfolio.equity == 10175.50
+
+    manager.add_position()
+
+    manager.add_position()
+
+    portfolio = manager.portfolio()
+
+    assert portfolio.total_positions == 2
+
+    manager.remove_position()
+
+    portfolio = manager.portfolio()
+
+    assert portfolio.total_positions == 1

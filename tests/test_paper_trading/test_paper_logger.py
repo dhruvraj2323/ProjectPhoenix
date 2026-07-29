@@ -1,39 +1,50 @@
 """
 =================================================
 Project Phoenix
-Paper Trading Logger Test
+Test Paper Trading Logger
+M24
 =================================================
 """
 
-from paper_trading.paper_logger import PaperLogger
-from paper_trading.paper_models import (
-    PaperTradingStatus,
-    PaperTradingResult,
+from paper_trading.paper_context import (
+    PaperContext,
+)
+
+from paper_trading.paper_logger import (
+    PaperLogger,
 )
 
 
-def run_test():
+def test_paper_logger():
 
-    status = PaperTradingStatus(
-        running=True,
-        virtual_balance=10000.0,
-        total_positions=2,
+    logger = PaperLogger()
+
+    context = PaperContext(
+
+        paper_id="PAPER-001",
+
+        account_id="ACC-001",
+
     )
 
-    result = PaperTradingResult(
-        approved=True,
-        reason="Paper trading initialized successfully.",
-        status=status,
+    logger.log_start(
+        context,
     )
 
-    PaperLogger.log(result)
+    logger.log_summary(
+        context,
+    )
 
-    assert result.approved
+    logger.log_finish(
+        context,
+    )
 
-    print()
-    print("Paper Trading Logger Test Passed")
+    context.fail(
+        "Paper trading validation failed.",
+    )
 
+    logger.log_failure(
+        context,
+    )
 
-if __name__ == "__main__":
-
-    run_test()
+    assert True

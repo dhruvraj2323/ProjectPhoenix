@@ -15,7 +15,7 @@ from portfolio_engine.portfolio_manager import (
 )
 
 from portfolio_engine.portfolio_models import (
-    Position,
+    PortfolioPosition,
 )
 
 
@@ -24,35 +24,53 @@ def test_portfolio_manager():
     manager = PortfolioManager()
 
     context = PortfolioContext(
-        engine_id="PORTFOLIO-001",
+
+        portfolio_id="PF-001",
+
         account_id="ACC-001",
-        balance=10000.0,
-        margin=500.0,
+
     )
 
-    context.add_position(
+    context.positions.append(
 
-        Position(
+        PortfolioPosition(
+
+            trade_id="TRD-001",
+
             symbol="XAUUSD",
+
             side="BUY",
-            volume=0.10,
-            entry_price=3300.0,
-            current_price=3310.0,
-            profit_loss=100.0,
+
+            quantity=1.0,
+
+            entry_price=3350.0,
+
+            stop_loss=3340.0,
+
+            take_profit=3370.0,
+
+            current_price=3355.0,
+
+            unrealized_pnl=50.0,
+
+            realized_pnl=100.0,
+
         )
 
     )
 
-    result = manager.execute(context)
+    output = manager.update(
+        context,
+    )
 
-    assert result.completed is True
+    assert output.completed is True
 
-    assert result.failed is False
+    assert output.failed is False
 
-    assert result.statistics.total_positions == 1
+    assert output.summary.total_trades == 1
 
-    assert result.statistics.winning_positions == 1
+    assert output.summary.equity == 10050.0
 
-    assert result.equity == 10100.0
+    assert output.summary.realized_pnl == 100.0
 
-    assert result.free_margin == 9600.0
+    assert output.summary.floating_pnl == 50.0

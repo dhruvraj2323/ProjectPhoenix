@@ -2,39 +2,93 @@
 =================================================
 Project Phoenix
 Paper Portfolio
+M24
 =================================================
-
-Maintains virtual portfolio.
 """
 
-from paper_trading.paper_models import PaperPortfolio
+from __future__ import annotations
+
+from paper_trading.paper_models import (
+    PaperPortfolio,
+)
 
 
 class PaperPortfolioManager:
     """
-    Maintains paper trading portfolio.
+    Maintains virtual paper trading account.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
 
-        self.balance = 10000.0
-        self.closed_profit = 0.0
-        self.floating_profit = 0.0
+        self._portfolio = PaperPortfolio()
 
-    def update_floating_profit(self, profit: float):
+    def update_floating_profit(
+        self,
+        profit: float,
+    ) -> None:
+        """
+        Update unrealized PnL.
+        """
 
-        self.floating_profit = profit
+        self._portfolio.floating_pnl = profit
 
-    def close_trade(self, profit: float):
+        self._portfolio.equity = (
 
-        self.closed_profit += profit
-        self.balance += profit
+            self._portfolio.balance
 
-    def portfolio(self):
+            + self._portfolio.floating_pnl
 
-        return PaperPortfolio(
-            balance=self.balance,
-            equity=self.balance + self.floating_profit,
-            floating_profit=self.floating_profit,
-            closed_profit=self.closed_profit,
         )
+
+    def close_trade(
+        self,
+        profit: float,
+    ) -> None:
+        """
+        Close virtual trade.
+        """
+
+        self._portfolio.realized_pnl += profit
+
+        self._portfolio.balance += profit
+
+        self._portfolio.equity = (
+
+            self._portfolio.balance
+
+            + self._portfolio.floating_pnl
+
+        )
+
+        self._portfolio.total_closed_positions += 1
+
+    def add_position(self) -> None:
+
+        self._portfolio.total_positions += 1
+
+    def remove_position(self) -> None:
+
+        if self._portfolio.total_positions > 0:
+
+            self._portfolio.total_positions -= 1
+
+    def portfolio(
+        self,
+    ) -> PaperPortfolio:
+        """
+        Return current virtual portfolio.
+        """
+
+        return self._portfolio
+
+    def update_context(
+        self,
+        context,
+    ):
+        """
+        Synchronize portfolio into PaperContext.
+        """
+
+        context.portfolio = self._portfolio
+
+        return context

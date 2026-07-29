@@ -6,10 +6,12 @@ M31
 =================================================
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class PipelineStage(Enum):
@@ -39,16 +41,16 @@ class PipelineExecutionResult:
     """
 
     stage: PipelineStage
-
     status: PipelineStatus
-
     approved: bool
 
     reason: str = ""
 
-    data: Dict[str, Any] = field(default_factory=dict)
+    data: dict[str, Any] = field(default_factory=dict)
 
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(
+        default_factory=datetime.utcnow,
+    )
 
 
 @dataclass(slots=True)
@@ -57,15 +59,36 @@ class PipelineStatistics:
     Runtime statistics.
     """
 
-    started_at: datetime = field(default_factory=datetime.utcnow)
+    started_at: datetime = field(
+        default_factory=datetime.utcnow,
+    )
 
-    finished_at: Optional[datetime] = None
+    finished_at: datetime | None = None
 
     stages_completed: int = 0
 
     stages_failed: int = 0
 
     execution_time_ms: float = 0.0
+
+
+@dataclass(slots=True)
+class PipelineResult:
+    """
+    Final pipeline result.
+    """
+
+    approved: bool = False
+
+    reason: str = ""
+
+    stage: PipelineStage = PipelineStage.INITIALIZED
+
+    status: PipelineStatus = PipelineStatus.SUCCESS
+
+    data: dict[str, Any] = field(
+        default_factory=dict,
+    )
 
 
 @dataclass(slots=True)
@@ -88,8 +111,14 @@ class PipelineState:
 
     reason: str = ""
 
-    statistics: PipelineStatistics = field(default_factory=PipelineStatistics)
+    statistics: PipelineStatistics = field(
+        default_factory=PipelineStatistics,
+    )
 
-    context: Dict[str, Any] = field(default_factory=dict)
+    context: dict[str, Any] = field(
+        default_factory=dict,
+    )
 
-    results: List[PipelineResult] = field(default_factory=list)
+    results: list[PipelineResult] = field(
+        default_factory=list,
+    )

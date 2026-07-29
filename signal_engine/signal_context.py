@@ -9,7 +9,7 @@ M34
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 
@@ -25,10 +25,6 @@ class SignalContext:
 
     engine_id: str
 
-    created_at: datetime = field(
-        default_factory=datetime.utcnow
-    )
-
     # --------------------------------------------------
     # Market Information
     # --------------------------------------------------
@@ -36,6 +32,14 @@ class SignalContext:
     symbol: str
 
     timeframe: str
+
+    # --------------------------------------------------
+    # Runtime Information
+    # --------------------------------------------------
+
+    created_at: datetime = field(
+        default_factory=lambda: datetime.now(UTC)
+    )
 
     # --------------------------------------------------
     # Input Data
@@ -123,7 +127,6 @@ class SignalContext:
     ) -> None:
 
         self.failed = True
-
         self.reason = reason
 
     def reset(
@@ -131,11 +134,8 @@ class SignalContext:
     ) -> None:
 
         self.signals.clear()
-
         self.metadata.clear()
 
         self.completed = False
-
         self.failed = False
-
         self.reason = ""

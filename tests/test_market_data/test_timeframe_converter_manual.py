@@ -2,7 +2,7 @@ from market_data.historical_parser import HistoricalParser
 from market_data.timeframe_converter import TimeframeConverter
 
 
-def main():
+def test_timeframe_converter():
 
     parser = HistoricalParser()
 
@@ -10,29 +10,21 @@ def main():
         "data/raw/historical/test_sample.txt"
     )
 
-    print("\nInput M1 Candles:")
-    print(len(candles))
-
-
     converter = TimeframeConverter()
 
     result = converter.convert(
         candles,
-        "M5"
+        "M5",
     )
 
+    assert len(candles) > 0
+    assert len(result) > 0
 
-    print("\nM5 Candles:")
-    print(len(result))
+    first = result[0]
 
-
-    if result:
-        print("\nFirst M5 Candle:")
-        print(result[0])
-
-
-    print("\nStatus: PASS")
-
-
-if __name__ == "__main__":
-    main()
+    assert "datetime" in first
+    assert "open" in first
+    assert "high" in first
+    assert "low" in first
+    assert "close" in first
+    assert "volume" in first

@@ -17,13 +17,13 @@ from portfolio_engine.portfolio_context import (
 
 class PortfolioLogger:
     """
-    Portfolio Engine logger.
+    Logger for Portfolio Engine.
     """
 
     def __init__(self) -> None:
 
         self.logger = logging.getLogger(
-            "PortfolioEngine"
+            "PortfolioEngine",
         )
 
     def log_start(
@@ -33,24 +33,55 @@ class PortfolioLogger:
 
         self.logger.info(
 
-            "Portfolio Engine Started | "
-            "Account=%s",
+            "Portfolio processing started | %s",
 
-            context.account_id,
+            context.portfolio_id,
 
         )
 
-    def log_success(
+    def log_summary(
+        self,
+        context: PortfolioContext,
+    ) -> None:
+
+        summary = context.summary
+
+        self.logger.info(
+
+            (
+                "Portfolio Summary | "
+                "Trades=%d | "
+                "Balance=%.2f | "
+                "Equity=%.2f | "
+                "FloatingPnL=%.2f | "
+                "RealizedPnL=%.2f | "
+                "WinRate=%.2f%%"
+            ),
+
+            summary.total_trades,
+
+            summary.balance,
+
+            summary.equity,
+
+            summary.floating_pnl,
+
+            summary.realized_pnl,
+
+            summary.win_rate,
+
+        )
+
+    def log_finish(
         self,
         context: PortfolioContext,
     ) -> None:
 
         self.logger.info(
 
-            "Portfolio Engine Completed | "
-            "Positions=%d",
+            "Portfolio processing completed | %s",
 
-            len(context.positions),
+            context.portfolio_id,
 
         )
 
@@ -61,7 +92,7 @@ class PortfolioLogger:
 
         self.logger.error(
 
-            "Portfolio Engine Failed | %s",
+            "Portfolio processing failed | %s",
 
             context.reason,
 

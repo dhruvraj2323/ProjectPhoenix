@@ -15,65 +15,85 @@ from portfolio_engine.portfolio_context import (
 
 class PortfolioProcessor:
     """
-    Portfolio processing engine.
+    Processes portfolio state and
+    updates portfolio statistics.
     """
 
     def process(
         self,
         context: PortfolioContext,
     ) -> PortfolioContext:
-        """
-        Process portfolio positions.
-        """
 
-        total_profit = 0.0
+        summary = context.summary
 
-        winning = 0
-
-        losing = 0
-
-        for position in context.positions:
-
-            total_profit += position.profit_loss
-
-            if position.profit_loss > 0:
-
-                winning += 1
-
-            elif position.profit_loss < 0:
-
-                losing += 1
-
-        context.statistics.total_positions = (
-            len(context.positions)
+        summary.total_trades = len(
+            context.positions
         )
 
-        context.statistics.winning_positions = (
-            winning
+        summary.floating_pnl = sum(
+
+            position.unrealized_pnl
+
+            for position in context.positions
+
         )
 
-        context.statistics.losing_positions = (
-            losing
+        summary.realized_pnl = sum(
+
+            position.realized_pnl
+
+            for position in context.positions
+
         )
 
-        context.statistics.total_profit = max(
-            total_profit,
-            0.0,
+        summary.equity = (
+
+            summary.balance
+
+            + summary.floating_pnl
+
         )
 
-        context.statistics.total_loss = min(
-            total_profit,
-            0.0,
+        summary.free_margin = (
+
+            summary.equity
+
+            - summary.used_margin
+
         )
 
-        context.equity = (
-            context.balance + total_profit
+        summary.winning_trades = sum(
+
+            1
+
+            for position in context.positions
+
+            if position.realized_pnl > 0
+
         )
 
-        context.free_margin = (
-            context.equity - context.margin
+        summary.losing_trades = sum(
+
+            1
+
+            for position in context.positions
+
+            if position.realized_pnl < 0
+
         )
 
-        context.completed = True
+        if summary.total_trades > 0:
+
+            summary.win_rate = (
+
+                summary.winning_trades
+
+                / summary.total_trades
+
+            ) * 100.0
+
+        else:
+
+            summary.win_rate = 0.0
 
         return context

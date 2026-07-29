@@ -9,66 +9,82 @@ M35
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any
 
 
-class PortfolioStatus(Enum):
+class PositionStatus(Enum):
     """
-    Portfolio processing status.
+    Position lifecycle.
     """
 
-    PENDING = "PENDING"
-    RUNNING = "RUNNING"
-    COMPLETED = "COMPLETED"
-    FAILED = "FAILED"
+    OPEN = "OPEN"
+    CLOSED = "CLOSED"
 
 
 @dataclass(slots=True)
-class Position:
+class PortfolioPosition:
     """
-    Single portfolio position.
+    Represents a single portfolio position.
     """
+
+    trade_id: str
 
     symbol: str
+
     side: str
-    volume: float
+
+    quantity: float
+
     entry_price: float
+
+    stop_loss: float
+
+    take_profit: float
+
     current_price: float
-    profit_loss: float = 0.0
 
+    unrealized_pnl: float = 0.0
 
-@dataclass(slots=True)
-class PortfolioStatistics:
-    """
-    Portfolio statistics.
-    """
+    realized_pnl: float = 0.0
 
-    total_positions: int = 0
-    winning_positions: int = 0
-    losing_positions: int = 0
-    total_profit: float = 0.0
-    total_loss: float = 0.0
+    status: PositionStatus = PositionStatus.OPEN
 
-
-@dataclass(slots=True)
-class PortfolioSnapshot:
-    """
-    Portfolio snapshot.
-    """
-
-    account_id: str
-    balance: float
-    equity: float
-    margin: float
-    free_margin: float
-    status: PortfolioStatus
-    positions: list[Position] = field(default_factory=list)
-    statistics: PortfolioStatistics = field(
-        default_factory=PortfolioStatistics
+    opened_at: datetime = field(
+        default_factory=lambda: datetime.now(UTC),
     )
-    metadata: dict[str, Any] = field(default_factory=dict)
-    created_at: datetime = field(
-        default_factory=datetime.utcnow
+
+    closed_at: datetime | None = None
+
+
+@dataclass(slots=True)
+class PortfolioSummary:
+    """
+    Portfolio account summary.
+    """
+
+    balance: float = 10000.0
+
+    equity: float = 10000.0
+
+    free_margin: float = 10000.0
+
+    used_margin: float = 0.0
+
+    margin_level: float = 0.0
+
+    floating_pnl: float = 0.0
+
+    realized_pnl: float = 0.0
+
+    total_trades: int = 0
+
+    winning_trades: int = 0
+
+    losing_trades: int = 0
+
+    win_rate: float = 0.0
+
+    updated_at: datetime = field(
+        default_factory=lambda: datetime.now(UTC),
     )

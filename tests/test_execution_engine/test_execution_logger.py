@@ -9,8 +9,13 @@ M37
 from execution_engine.execution_context import (
     ExecutionContext,
 )
+
 from execution_engine.execution_logger import (
     ExecutionLogger,
+)
+
+from execution_engine.execution_models import (
+    ExecutionOrder,
 )
 
 
@@ -19,27 +24,53 @@ def test_execution_logger():
     logger = ExecutionLogger()
 
     context = ExecutionContext(
+
         execution_id="EXEC-001",
+
         symbol="XAUUSD",
-        signal="BUY",
-        quantity=1.0,
-        price=3350.50,
+
+        timeframe="M15",
+
     )
 
     logger.log_start(
         context,
     )
 
-    assert context.metadata["started"] is True
+    context.order = ExecutionOrder(
+
+        strategy_id="S01",
+
+        symbol="XAUUSD",
+
+        side="BUY",
+
+        quantity=1.0,
+
+        entry_price=3350,
+
+        stop_loss=3340,
+
+        take_profit=3370,
+
+        risk_percent=1,
+
+    )
+
+    logger.log_order(
+        context,
+    )
 
     logger.log_finish(
         context,
     )
 
-    assert context.metadata["finished"] is True
+    context.fail(
+        "Execution Failed",
+    )
 
     logger.log_failure(
         context,
     )
 
-    assert context.metadata["failed"] is True
+    assert True

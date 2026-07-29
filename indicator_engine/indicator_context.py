@@ -62,6 +62,14 @@ class IndicatorContext:
     )
 
     # --------------------------------------------------
+    # Decision State
+    # --------------------------------------------------
+
+    approved: bool = False
+
+    decision: str = ""
+
+    # --------------------------------------------------
     # Execution State
     # --------------------------------------------------
 
@@ -125,6 +133,44 @@ class IndicatorContext:
             default,
         )
 
+    # --------------------------------------------------
+    # Decision Methods
+    # --------------------------------------------------
+
+    def approve(
+        self,
+        decision: str,
+        reason: str = "",
+    ) -> None:
+        """
+        Approve indicator processing.
+        """
+
+        self.approved = True
+        self.completed = True
+        self.failed = False
+        self.decision = decision
+        self.reason = reason
+
+    def reject(
+        self,
+        decision: str,
+        reason: str,
+    ) -> None:
+        """
+        Reject indicator processing.
+        """
+
+        self.approved = False
+        self.completed = True
+        self.failed = True
+        self.decision = decision
+        self.reason = reason
+
+    # --------------------------------------------------
+    # Execution Methods
+    # --------------------------------------------------
+
     def mark_completed(
         self,
     ) -> None:
@@ -143,8 +189,11 @@ class IndicatorContext:
         """
 
         self.failed = True
-
         self.reason = reason
+
+    # --------------------------------------------------
+    # Reset
+    # --------------------------------------------------
 
     def reset(
         self,
@@ -156,6 +205,10 @@ class IndicatorContext:
         self.indicators.clear()
 
         self.metadata.clear()
+
+        self.approved = False
+
+        self.decision = ""
 
         self.completed = False
 

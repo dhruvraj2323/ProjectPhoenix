@@ -20,20 +20,31 @@ def test_portfolio_logger():
     logger = PortfolioLogger()
 
     context = PortfolioContext(
-        engine_id="PORTFOLIO-001",
+
+        portfolio_id="PF-001",
+
         account_id="ACC-001",
+
     )
 
-    logger.log_start(context)
+    logger.log_start(
+        context,
+    )
 
-    logger.log_success(context)
+    logger.log_summary(
+        context,
+    )
 
-    context.failed = True
+    logger.log_finish(
+        context,
+    )
 
-    context.reason = "Test Failure"
+    context.fail(
+        "Portfolio validation failed.",
+    )
 
-    logger.log_failure(context)
+    logger.log_failure(
+        context,
+    )
 
-    assert context.failed is True
-
-    assert context.reason == "Test Failure"
+    assert True

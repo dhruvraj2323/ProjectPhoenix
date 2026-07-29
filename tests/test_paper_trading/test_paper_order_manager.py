@@ -1,43 +1,52 @@
 """
 =================================================
 Project Phoenix
-Paper Order Manager Test
+Test Paper Order Manager
+M24
 =================================================
 """
 
-from paper_trading.paper_order_manager import PaperOrderManager
+from paper_trading.paper_order_manager import (
+    PaperOrderManager,
+)
 
 
-def run_test():
+def test_paper_order_manager():
 
     manager = PaperOrderManager()
 
-    buy_order = manager.buy(
-        symbol="EURUSD",
-        volume=0.10,
-        price=1.1065,
-    )
+    order = manager.create_order(
 
-    sell_order = manager.sell(
-        symbol="GBPUSD",
-        volume=0.20,
-        price=1.2560,
+        strategy_id="S01",
+
+        symbol="XAUUSD",
+
+        side="BUY",
+
+        quantity=1.0,
+
+        entry_price=3350.0,
+
+        stop_loss=3340.0,
+
+        take_profit=3370.0,
+
+        risk_percent=1.0,
+
     )
 
     positions = manager.get_positions()
 
-    print("===== Paper Order Manager =====")
+    assert order.symbol == "XAUUSD"
 
-    print(f"BUY Ticket      : {buy_order.ticket}")
-    print(f"SELL Ticket     : {sell_order.ticket}")
-    print(f"Positions       : {len(positions)}")
+    assert order.side == "BUY"
 
-    assert len(positions) == 2
+    assert order.quantity == 1.0
 
-    print()
-    print("Paper Order Manager Test Passed")
+    assert len(positions) == 1
 
+    assert positions[0].ticket == 1
 
-if __name__ == "__main__":
+    assert positions[0].strategy_id == "S01"
 
-    run_test()
+    assert positions[0].side == "BUY"

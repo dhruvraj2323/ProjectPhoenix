@@ -10,18 +10,41 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from enum import Enum
+
+
+class ExecutionStatus(Enum):
+    """
+    Execution status.
+    """
+
+    PENDING = "PENDING"
+    ACCEPTED = "ACCEPTED"
+    REJECTED = "REJECTED"
+    EXECUTED = "EXECUTED"
 
 
 @dataclass(slots=True)
 class ExecutionOrder:
     """
-    Execution order.
+    Trade execution request.
     """
 
+    strategy_id: str
+
     symbol: str
+
     side: str
+
     quantity: float
-    price: float
+
+    entry_price: float
+
+    stop_loss: float
+
+    take_profit: float
+
+    risk_percent: float
 
     order_type: str = "MARKET"
 
@@ -33,12 +56,14 @@ class ExecutionOrder:
 @dataclass(slots=True)
 class ExecutionResult:
     """
-    Execution result.
+    Final execution result.
     """
 
     accepted: bool = False
 
-    status: str = "PENDING"
+    status: ExecutionStatus = (
+        ExecutionStatus.PENDING
+    )
 
     order_id: str = ""
 
