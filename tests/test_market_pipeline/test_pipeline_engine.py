@@ -3,7 +3,7 @@
 Project Phoenix
 Market Pipeline
 Unit Test - Pipeline Executor
-M40.X.1
+M40.X.2
 =================================================
 """
 
@@ -61,14 +61,27 @@ def test_pipeline_executor():
     assert result.candles == market_data.candles
 
     # -------------------------------------------------
-    # Indicators
+    # Indicator Engine
     # -------------------------------------------------
+
+    indicator_context = result.get_metadata(
+        "indicator_context"
+    )
+
+    assert indicator_context is not None
+    assert indicator_context.completed is True
+    assert indicator_context.approved is True
 
     assert isinstance(result.indicators, dict)
 
-    assert "ema" in result.indicators
-    assert "rsi" in result.indicators
-    assert "atr" in result.indicators
+    assert "EMA_20" in result.indicators
+    assert "SMA_20" in result.indicators
+    assert "RSI_14" in result.indicators
+    assert "ATR_14" in result.indicators
+    assert "MACD" in result.indicators
+    assert "BOLLINGER_BANDS" in result.indicators
+    assert "VWAP" in result.indicators
+    assert "SUPERTREND" in result.indicators
 
     # -------------------------------------------------
     # Patterns
@@ -106,6 +119,7 @@ def test_pipeline_executor():
     print("Symbol           :", result.symbol)
     print("Timeframe        :", result.timeframe)
     print("Candles Loaded   :", len(result.candles))
+    print("Indicators       :", len(result.indicators))
     print("Current Stage    :", result.current_stage.value)
     print("Approved         :", result.approved)
     print("Completed        :", result.completed)

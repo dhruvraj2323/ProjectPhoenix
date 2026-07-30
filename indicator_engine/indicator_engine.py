@@ -8,10 +8,10 @@ M32
 
 from __future__ import annotations
 
-from indicator_engine.indicator_context import IndicatorContext
 from indicator_engine.indicator_calculator import IndicatorCalculator
-from indicator_engine.indicator_validator import IndicatorValidator
+from indicator_engine.indicator_context import IndicatorContext
 from indicator_engine.indicator_logger import IndicatorLogger
+from indicator_engine.indicator_validator import IndicatorValidator
 
 
 class IndicatorEngine:
@@ -41,15 +41,26 @@ class IndicatorEngine:
 
         self.logger.log_start(context)
 
+        # -----------------------------------------------------
+        # Validation
+        # -----------------------------------------------------
+
         if not self.validator.validate(context):
 
-            context.failed = True
+            context.reject(
+                decision="INDICATOR_VALIDATION_FAILED",
+                reason="Indicator validation failed.",
+            )
 
             self.logger.log_error(
-                "Indicator validation failed."
+                context.reason,
             )
 
             return context
+
+        # -----------------------------------------------------
+        # Indicator Calculation
+        # -----------------------------------------------------
 
         context.indicators = self.calculator.calculate_all(
             context.candles
@@ -61,7 +72,14 @@ class IndicatorEngine:
                 indicator
             )
 
-        context.completed = True
+        # -----------------------------------------------------
+        # Success
+        # -----------------------------------------------------
+
+        context.approve(
+            decision="INDICATORS_CALCULATED",
+            reason="Indicators calculated successfully.",
+        )
 
         self.logger.log_finish(
             context

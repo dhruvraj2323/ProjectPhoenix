@@ -8,7 +8,7 @@ M32
 
 from __future__ import annotations
 
-from typing import Dict, Any
+from typing import Any, Dict
 
 
 class IndicatorCalculator:
@@ -144,6 +144,9 @@ class IndicatorCalculator:
         """
         Execute every supported indicator.
         """
+
+        # Start every execution with a clean result set.
+        self._results.clear()
 
         self.calculate_ema(candles)
         self.calculate_sma(candles)
