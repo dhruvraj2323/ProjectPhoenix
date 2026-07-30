@@ -31,6 +31,11 @@ def test_risk_logger():
         is True
     )
 
+    context.approve(
+        decision="RISK_APPROVED",
+        reason="Risk Accepted",
+    )
+
     logger.log_finish(
         context,
     )
@@ -40,8 +45,14 @@ def test_risk_logger():
         is True
     )
 
-    context.fail(
-        "Risk limit exceeded",
+    assert context.completed is True
+    assert context.approved is True
+    assert context.failed is False
+    assert context.decision == "RISK_APPROVED"
+
+    context.reject(
+        decision="RISK_VALIDATION_FAILED",
+        reason="Risk limit exceeded",
     )
 
     logger.log_failure(
@@ -57,3 +68,19 @@ def test_risk_logger():
         context.metadata["reason"]
         == "Risk limit exceeded"
     )
+
+    assert context.completed is True
+    assert context.approved is False
+    assert context.failed is True
+    assert (
+        context.decision
+        == "RISK_VALIDATION_FAILED"
+    )
+    assert (
+        context.reason
+        == "Risk limit exceeded"
+    )
+
+
+if __name__ == "__main__":
+    test_risk_logger()

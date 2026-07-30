@@ -9,7 +9,7 @@ M36
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from risk_engine.risk_models import (
@@ -46,7 +46,7 @@ class RiskContext:
     # --------------------------------------------------
 
     created_at: datetime = field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
     )
 
     # --------------------------------------------------
@@ -69,9 +69,13 @@ class RiskContext:
     # Execution State
     # --------------------------------------------------
 
+    approved: bool = False
+
     completed: bool = False
 
     failed: bool = False
+
+    decision: str = ""
 
     reason: str = ""
 
@@ -105,36 +109,43 @@ class RiskContext:
         )
 
     # --------------------------------------------------
-
-    def complete(
-        self,
-    ) -> None:
-        """
-        Mark execution completed.
-        """
-
-        self.completed = True
-
-        self.failed = False
-
-        self.reason = ""
-
+    # Execution Status
     # --------------------------------------------------
 
-    def fail(
+    def approve(
         self,
+        decision: str,
         reason: str,
     ) -> None:
         """
-        Mark execution failed.
+        Mark successful execution.
         """
 
-        self.completed = False
+        self.approved = True
+        self.completed = True
+        self.failed = False
 
-        self.failed = True
-
+        self.decision = decision
         self.reason = reason
 
+    def reject(
+        self,
+        decision: str,
+        reason: str,
+    ) -> None:
+        """
+        Mark failed execution.
+        """
+
+        self.approved = False
+        self.completed = True
+        self.failed = True
+
+        self.decision = decision
+        self.reason = reason
+
+    # --------------------------------------------------
+    # Reset
     # --------------------------------------------------
 
     def reset(
@@ -148,8 +159,12 @@ class RiskContext:
 
         self.metadata.clear()
 
+        self.approved = False
+
         self.completed = False
 
         self.failed = False
+
+        self.decision = ""
 
         self.reason = ""

@@ -7,9 +7,9 @@ M36
 """
 
 from risk_engine.risk_context import RiskContext
+from risk_engine.risk_models import RiskDecision
 from risk_engine.risk_processor import RiskProcessor
 from risk_engine.risk_validator import RiskValidator
-from risk_engine.risk_models import RiskDecision
 
 
 def test_risk_validator():
@@ -37,8 +37,18 @@ def test_risk_validator():
     assert result is True
 
     assert context.completed is True
-
+    assert context.approved is True
     assert context.failed is False
+
+    assert (
+        context.decision
+        == "RISK_APPROVED"
+    )
+
+    assert (
+        context.reason
+        == "Risk Accepted"
+    )
 
     assert (
         context.risk_result.decision
@@ -49,3 +59,7 @@ def test_risk_validator():
         context.risk_result.reason
         == "Risk Accepted"
     )
+
+
+if __name__ == "__main__":
+    test_risk_validator()

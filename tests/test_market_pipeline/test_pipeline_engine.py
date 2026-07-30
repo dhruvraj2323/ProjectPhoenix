@@ -90,10 +90,28 @@ def test_pipeline_executor():
     assert isinstance(result.patterns, list)
 
     # -------------------------------------------------
-    # Risk
+    # Risk Engine
     # -------------------------------------------------
 
-    assert result.risk_result["approved"] is True
+    from risk_engine.risk_models import RiskResult
+
+    risk_context = result.get_metadata(
+        "risk_context"
+    )
+
+    assert risk_context is not None
+    assert risk_context.completed is True
+    assert risk_context.approved is True
+
+    assert isinstance(
+        result.risk_result,
+        RiskResult,
+    )
+
+    assert (
+        result.risk_result
+        == risk_context.risk_result
+    )
 
     # -------------------------------------------------
     # Portfolio

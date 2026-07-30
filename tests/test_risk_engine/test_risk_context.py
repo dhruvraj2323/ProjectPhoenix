@@ -17,32 +17,55 @@ def test_risk_context():
         engine_id="RISK-001",
         account_id="ACC-001",
         balance=10000.0,
-        equity=10150.0,
-        free_margin=9600.0,
+        equity=9800.0,
+        free_margin=9500.0,
     )
-
-    assert context.engine_id == "RISK-001"
 
     assert context.account_id == "ACC-001"
-
     assert context.balance == 10000.0
+    assert context.equity == 9800.0
+    assert context.free_margin == 9500.0
 
-    assert context.equity == 10150.0
-
-    assert context.free_margin == 9600.0
-
-    context.complete()
-
-    assert context.completed is True
-
-    assert context.failed is False
-
-    context.fail(
-        "Margin exceeded",
+    context.set_metadata(
+        "broker",
+        "Paper",
     )
 
-    assert context.failed is True
+    assert (
+        context.get_metadata("broker")
+        == "Paper"
+    )
+
+    context.approve(
+        decision="RISK_APPROVED",
+        reason="Risk Accepted",
+    )
+
+    assert context.completed is True
+    assert context.approved is True
+    assert context.failed is False
+    assert context.decision == "RISK_APPROVED"
+    assert context.reason == "Risk Accepted"
+
+    context.reset()
 
     assert context.completed is False
+    assert context.approved is False
+    assert context.failed is False
+    assert context.decision == ""
+    assert context.reason == ""
 
-    assert context.reason == "Margin exceeded"
+    context.reject(
+        decision="RISK_VALIDATION_FAILED",
+        reason="Maximum risk exceeded.",
+    )
+
+    assert context.completed is True
+    assert context.approved is False
+    assert context.failed is True
+    assert context.decision == "RISK_VALIDATION_FAILED"
+    assert context.reason == "Maximum risk exceeded."
+
+
+if __name__ == "__main__":
+    test_risk_context()

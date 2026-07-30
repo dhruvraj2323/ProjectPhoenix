@@ -39,8 +39,9 @@ class RiskValidator:
 
         if metrics.risk_percent > self.MAX_RISK_PERCENT:
 
-            context.fail(
-                "Maximum risk exceeded.",
+            context.reject(
+                decision="RISK_VALIDATION_FAILED",
+                reason="Maximum risk exceeded.",
             )
 
             context.risk_result.decision = (
@@ -57,7 +58,10 @@ class RiskValidator:
         # Validation Passed
         # ---------------------------------------------
 
-        context.complete()
+        context.approve(
+            decision="RISK_APPROVED",
+            reason="Risk Accepted",
+        )
 
         context.risk_result.decision = (
             RiskDecision.APPROVED

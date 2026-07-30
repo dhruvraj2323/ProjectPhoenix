@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Market Pipeline Executor
-M40.X.4 - Signal Engine Integration
+M40.X.5 - Risk Engine Integration
 =================================================
 """
 
@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from indicator_engine.indicator_context import IndicatorContext
 from indicator_engine.indicator_manager import IndicatorManager
+
 from market_data.market_data_manager import MarketDataManager
 
 from market_pipeline.pipeline_context import PipelineContext
@@ -22,6 +23,9 @@ from pattern_engine.pattern_manager import PatternManager
 
 from signal_engine.signal_context import SignalContext
 from signal_engine.signal_manager import SignalManager
+
+from risk_engine.risk_context import RiskContext
+from risk_engine.risk_manager import RiskManager
 
 
 class PipelineExecutor:
@@ -43,13 +47,18 @@ class PipelineExecutor:
     def __init__(self) -> None:
 
         self.router = PipelineRouter()
+
         self.logger = PipelineLogger()
 
-        # Integrated Managers
         self.market_data_manager = MarketDataManager()
+
         self.indicator_manager = IndicatorManager()
+
         self.pattern_manager = PatternManager()
+
         self.signal_manager = SignalManager()
+
+        self.risk_manager = RiskManager()
 
     # ---------------------------------------------------------
 
@@ -57,16 +66,15 @@ class PipelineExecutor:
         self,
         context: PipelineContext,
     ) -> PipelineContext:
-        """
-        Execute the complete market pipeline.
-        """
 
         current_stage = PipelineStage.INITIALIZED
 
-        while self.router.has_next_stage(current_stage):
+        while self.router.has_next_stage(
+            current_stage,
+        ):
 
             next_stage = self.router.get_next_stage(
-                current_stage
+                current_stage,
             )
 
             if next_stage is None:
@@ -83,12 +91,13 @@ class PipelineExecutor:
                 break
 
             self.logger.log_stage(
-                context
+                context,
             )
 
             current_stage = next_stage
 
         if not context.failed:
+
             context.completed = True
 
         return context
@@ -152,7 +161,7 @@ class PipelineExecutor:
             context.reject(
                 decision="MARKET_DATA_FAILED",
                 reason="; ".join(
-                    market_data.errors
+                    market_data.errors,
                 ),
             )
 
@@ -182,7 +191,7 @@ class PipelineExecutor:
         )
 
         indicator_context = self.indicator_manager.run(
-            indicator_context
+            indicator_context,
         )
 
         if indicator_context.failed:
@@ -220,7 +229,7 @@ class PipelineExecutor:
         )
 
         pattern_context = self.pattern_manager.run(
-            pattern_context
+            pattern_context,
         )
 
         if pattern_context.failed:
@@ -259,7 +268,7 @@ class PipelineExecutor:
         )
 
         signal_context = self.signal_manager.run(
-            signal_context
+            signal_context,
         )
 
         if signal_context.failed:
@@ -289,9 +298,35 @@ class PipelineExecutor:
         context: PipelineContext,
     ) -> None:
 
-        context.risk_result = {
-            "approved": True,
-        }
+        risk_context = RiskContext(
+            engine_id=context.pipeline_id,
+            account_id="SIM-001",
+            balance=10000.0,
+            equity=10000.0,
+            free_margin=9800.0,
+        )
+
+        risk_context = self.risk_manager.execute(
+            risk_context,
+        )
+
+        if risk_context.failed:
+
+            context.reject(
+                decision="RISK_ENGINE_FAILED",
+                reason=risk_context.reason,
+            )
+
+            return
+
+        context.risk_result = (
+            risk_context.risk_result
+        )
+
+        context.set_metadata(
+            "risk_context",
+            risk_context,
+        )
 
     # =========================================================
     # Portfolio Engine

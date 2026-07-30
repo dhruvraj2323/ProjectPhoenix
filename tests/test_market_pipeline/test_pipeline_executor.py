@@ -3,7 +3,7 @@
 Project Phoenix
 Market Pipeline
 Unit Test - Pipeline Executor
-M40.X.4 - Signal Engine Integration
+M40.X.5 - Risk Engine Integration
 =================================================
 """
 
@@ -12,6 +12,8 @@ from market_data.market_data_models import MarketDataResult
 from market_pipeline.pipeline_context import PipelineContext
 from market_pipeline.pipeline_executor import PipelineExecutor
 from market_pipeline.pipeline_models import PipelineStage
+
+from risk_engine.risk_models import RiskResult
 
 
 TEST_DATA = "tests/test_data/sample_xauusd.zip"
@@ -139,10 +141,26 @@ def test_pipeline_executor():
     assert "reason" in signal
 
     # -------------------------------------------------
-    # Risk
+    # Risk Engine
     # -------------------------------------------------
 
-    assert result.risk_result["approved"] is True
+    risk_context = result.get_metadata(
+        "risk_context"
+    )
+
+    assert risk_context is not None
+    assert risk_context.completed is True
+    assert risk_context.approved is True
+
+    assert isinstance(
+        result.risk_result,
+        RiskResult,
+    )
+
+    assert (
+        result.risk_result
+        == risk_context.risk_result
+    )
 
     # -------------------------------------------------
     # Portfolio
