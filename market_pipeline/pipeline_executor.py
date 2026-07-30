@@ -2,16 +2,18 @@
 =================================================
 Project Phoenix
 Market Pipeline Executor
-M31
+M40.X.1 - Market Data Integration
 =================================================
 """
 
 from __future__ import annotations
 
+from market_data.market_data_manager import MarketDataManager
+
 from market_pipeline.pipeline_context import PipelineContext
+from market_pipeline.pipeline_logger import PipelineLogger
 from market_pipeline.pipeline_models import PipelineStage
 from market_pipeline.pipeline_router import PipelineRouter
-from market_pipeline.pipeline_logger import PipelineLogger
 
 
 class PipelineExecutor:
@@ -27,9 +29,10 @@ class PipelineExecutor:
     def __init__(self) -> None:
 
         self.router = PipelineRouter()
-
-        # Added Logger
         self.logger = PipelineLogger()
+
+        # Market Data Manager
+        self.market_data_manager = MarketDataManager()
 
     # ---------------------------------------------------------
 
@@ -51,12 +54,17 @@ class PipelineExecutor:
 
             self._execute_stage(next_stage, context)
 
-            # Log every completed stage
+            # Stop pipeline immediately on failure
+            if context.failed:
+                break
+
+            # Log completed stage
             self.logger.log_stage(context)
 
             current_stage = next_stage
 
-        context.completed = True
+        if not context.failed:
+            context.completed = True
 
         return context
 
@@ -104,12 +112,26 @@ class PipelineExecutor:
         context: PipelineContext,
     ) -> None:
         """
-        Market Data Stage
+        Market Data Stage.
         """
+
+        market_data = self.market_data_manager.process(
+            context.market_data_source,
+            context.timeframe,
+        )
+
+        if not market_data.success:
+            context.reject(
+                decision="MARKET_DATA_FAILED",
+                reason="; ".join(market_data.errors),
+            )
+            return
+
+        context.candles = market_data.candles
 
         context.set_metadata(
             "market_data",
-            "Loaded"
+            market_data,
         )
 
     # ---------------------------------------------------------
@@ -119,7 +141,7 @@ class PipelineExecutor:
         context: PipelineContext,
     ) -> None:
         """
-        Indicator Stage
+        Indicator Stage.
         """
 
         context.indicators = {
@@ -135,7 +157,7 @@ class PipelineExecutor:
         context: PipelineContext,
     ) -> None:
         """
-        Pattern Recognition Stage
+        Pattern Recognition Stage.
         """
 
         context.patterns = []
@@ -147,7 +169,7 @@ class PipelineExecutor:
         context: PipelineContext,
     ) -> None:
         """
-        Signal Generation Stage
+        Signal Generation Stage.
         """
 
         context.signal = None
@@ -159,11 +181,11 @@ class PipelineExecutor:
         context: PipelineContext,
     ) -> None:
         """
-        Risk Engine Stage
+        Risk Engine Stage.
         """
 
         context.risk_result = {
-            "approved": True
+            "approved": True,
         }
 
     # ---------------------------------------------------------
@@ -173,11 +195,11 @@ class PipelineExecutor:
         context: PipelineContext,
     ) -> None:
         """
-        Portfolio Stage
+        Portfolio Stage.
         """
 
         context.portfolio_result = {
-            "approved": True
+            "approved": True,
         }
 
     # ---------------------------------------------------------
@@ -187,11 +209,11 @@ class PipelineExecutor:
         context: PipelineContext,
     ) -> None:
         """
-        AI Validation Stage
+        AI Validation Stage.
         """
 
         context.ai_result = {
-            "approved": True
+            "approved": True,
         }
 
     # ---------------------------------------------------------
@@ -201,14 +223,14 @@ class PipelineExecutor:
         context: PipelineContext,
     ) -> None:
         """
-        Execution Stage
+        Execution Stage.
         """
 
         context.execution_result = {
-            "executed": False
+            "executed": False,
         }
 
         context.approve(
             decision="PIPELINE_COMPLETED",
-            reason="Pipeline executed successfully."
+            reason="Pipeline executed successfully.",
         )

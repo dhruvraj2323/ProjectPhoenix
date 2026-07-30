@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Market Pipeline Context
-M31 — Integration Pipeline
+M40.X.1 — Integration Pipeline
 =================================================
 """
 
@@ -34,6 +34,12 @@ class PipelineContext:
 
     symbol: str = ""
     timeframe: str = ""
+
+    # --------------------------------------------------
+    # Market Data Source
+    # --------------------------------------------------
+
+    market_data_source: str = ""
 
     # --------------------------------------------------
     # Raw Market Data

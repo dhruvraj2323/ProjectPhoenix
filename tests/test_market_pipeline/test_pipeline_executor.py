@@ -3,12 +3,18 @@
 Project Phoenix
 Market Pipeline
 Unit Test - Pipeline Executor
+M40.X.1
 =================================================
 """
+
+from market_data.market_data_models import MarketDataResult
 
 from market_pipeline.pipeline_context import PipelineContext
 from market_pipeline.pipeline_executor import PipelineExecutor
 from market_pipeline.pipeline_models import PipelineStage
+
+
+TEST_DATA = "tests/test_data/sample_xauusd.zip"
 
 
 def test_pipeline_executor():
@@ -17,6 +23,7 @@ def test_pipeline_executor():
         pipeline_id="PIPELINE-001",
         symbol="XAUUSD",
         timeframe="M1",
+        market_data_source=TEST_DATA,
     )
 
     executor = PipelineExecutor()
@@ -38,16 +45,27 @@ def test_pipeline_executor():
     assert result.current_stage == PipelineStage.COMPLETED
 
     # -------------------------------------------------
-    # Metadata
+    # Market Data
     # -------------------------------------------------
 
-    assert result.get_metadata("market_data") == "Loaded"
+    market_data = result.get_metadata("market_data")
+
+    assert isinstance(
+        market_data,
+        MarketDataResult,
+    )
+
+    assert market_data.success is True
+    assert len(market_data.candles) > 0
+
+    assert result.candles == market_data.candles
 
     # -------------------------------------------------
     # Indicators
     # -------------------------------------------------
 
     assert isinstance(result.indicators, dict)
+
     assert "ema" in result.indicators
     assert "rsi" in result.indicators
     assert "atr" in result.indicators
@@ -82,15 +100,17 @@ def test_pipeline_executor():
 
     assert result.execution_result["executed"] is False
 
+    print()
     print("===== Pipeline Executor =====")
-    print("Pipeline ID   :", result.pipeline_id)
-    print("Symbol        :", result.symbol)
-    print("Timeframe     :", result.timeframe)
-    print("Current Stage :", result.current_stage.value)
-    print("Approved      :", result.approved)
-    print("Completed     :", result.completed)
-    print("Decision      :", result.decision)
-    print("Reason        :", result.reason)
+    print("Pipeline ID      :", result.pipeline_id)
+    print("Symbol           :", result.symbol)
+    print("Timeframe        :", result.timeframe)
+    print("Candles Loaded   :", len(result.candles))
+    print("Current Stage    :", result.current_stage.value)
+    print("Approved         :", result.approved)
+    print("Completed        :", result.completed)
+    print("Decision         :", result.decision)
+    print("Reason           :", result.reason)
     print()
 
     print("Pipeline Executor Test Passed")
