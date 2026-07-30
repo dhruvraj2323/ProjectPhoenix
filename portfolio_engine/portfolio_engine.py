@@ -64,7 +64,10 @@ class PortfolioEngine:
             context,
         )
 
-        context.complete()
+        context.approve(
+            decision="PORTFOLIO_APPROVED",
+            reason="Portfolio Accepted",
+        )
 
         self.logger.log_summary(
             context,

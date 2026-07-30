@@ -43,31 +43,65 @@ class PortfolioContext:
         default_factory=dict,
     )
 
+    approved: bool = False
+
     completed: bool = False
 
     failed: bool = False
 
+    decision: str = ""
+
     reason: str = ""
 
-    def complete(self) -> None:
+    def approve(
+        self,
+        decision: str,
+        reason: str,
+    ) -> None:
         """
-        Mark portfolio processing as completed.
+        Mark portfolio processing as approved.
         """
+
+        self.approved = True
 
         self.completed = True
 
         self.failed = False
 
-    def fail(
+        self.decision = decision
+
+        self.reason = reason
+
+    def reject(
         self,
+        decision: str,
         reason: str,
     ) -> None:
         """
-        Mark portfolio processing as failed.
+        Mark portfolio processing as rejected.
         """
 
-        self.completed = False
+        self.approved = False
+
+        self.completed = True
 
         self.failed = True
 
+        self.decision = decision
+
         self.reason = reason
+
+    def reset(self) -> None:
+        """
+        Reset execution state.
+        """
+
+        self.approved = False
+
+        self.completed = False
+
+        self.failed = False
+
+        self.decision = ""
+
+        self.reason = ""

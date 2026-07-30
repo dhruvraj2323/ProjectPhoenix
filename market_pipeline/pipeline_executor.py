@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Market Pipeline Executor
-M40.X.5 - Risk Engine Integration
+M40.X.6 - Portfolio Engine Integration
 =================================================
 """
 
@@ -20,6 +20,9 @@ from market_pipeline.pipeline_router import PipelineRouter
 
 from pattern_engine.pattern_context import PatternContext
 from pattern_engine.pattern_manager import PatternManager
+
+from portfolio_engine.portfolio_context import PortfolioContext
+from portfolio_engine.portfolio_manager import PortfolioManager
 
 from signal_engine.signal_context import SignalContext
 from signal_engine.signal_manager import SignalManager
@@ -59,6 +62,8 @@ class PipelineExecutor:
         self.signal_manager = SignalManager()
 
         self.risk_manager = RiskManager()
+
+        self.portfolio_manager = PortfolioManager()
 
     # ---------------------------------------------------------
 
@@ -337,9 +342,32 @@ class PipelineExecutor:
         context: PipelineContext,
     ) -> None:
 
-        context.portfolio_result = {
-            "approved": True,
-        }
+        portfolio_context = PortfolioContext(
+            portfolio_id=context.pipeline_id,
+            account_id="SIM-001",
+        )
+
+        portfolio_context = self.portfolio_manager.update(
+            portfolio_context,
+        )
+
+        if portfolio_context.failed:
+
+            context.reject(
+                decision="PORTFOLIO_ENGINE_FAILED",
+                reason=portfolio_context.reason,
+            )
+
+            return
+
+        context.portfolio_result = (
+            portfolio_context.summary
+        )
+
+        context.set_metadata(
+            "portfolio_context",
+            portfolio_context,
+        )
 
     # =========================================================
     # AI Engine

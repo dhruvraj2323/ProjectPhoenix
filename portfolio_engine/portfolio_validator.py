@@ -25,34 +25,43 @@ class PortfolioValidator:
 
         if not context.portfolio_id:
 
-            context.fail(
-                "Portfolio ID is missing.",
+            context.reject(
+                decision="PORTFOLIO_VALIDATION_FAILED",
+                reason="Portfolio ID is missing.",
             )
 
             return False
 
         if not context.account_id:
 
-            context.fail(
-                "Account ID is missing.",
+            context.reject(
+                decision="PORTFOLIO_VALIDATION_FAILED",
+                reason="Account ID is missing.",
             )
 
             return False
 
         if context.summary.balance < 0:
 
-            context.fail(
-                "Invalid account balance.",
+            context.reject(
+                decision="PORTFOLIO_VALIDATION_FAILED",
+                reason="Invalid account balance.",
             )
 
             return False
 
         if context.summary.equity < 0:
 
-            context.fail(
-                "Invalid account equity.",
+            context.reject(
+                decision="PORTFOLIO_VALIDATION_FAILED",
+                reason="Invalid account equity.",
             )
 
             return False
+
+        context.approve(
+            decision="PORTFOLIO_APPROVED",
+            reason="Portfolio Accepted",
+        )
 
         return True

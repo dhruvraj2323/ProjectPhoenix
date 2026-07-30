@@ -114,10 +114,32 @@ def test_pipeline_executor():
     )
 
     # -------------------------------------------------
-    # Portfolio
+    # Portfolio Engine
     # -------------------------------------------------
 
-    assert result.portfolio_result["approved"] is True
+    from portfolio_engine.portfolio_models import (
+        PortfolioSummary,
+    )
+
+    portfolio_context = result.get_metadata(
+        "portfolio_context"
+    )
+
+    assert portfolio_context is not None
+
+    assert portfolio_context.completed is True
+
+    assert portfolio_context.approved is True
+
+    assert isinstance(
+        result.portfolio_result,
+        PortfolioSummary,
+    )
+
+    assert (
+        result.portfolio_result
+        == portfolio_context.summary
+    )
 
     # -------------------------------------------------
     # AI

@@ -39,12 +39,20 @@ def test_portfolio_logger():
         context,
     )
 
-    context.fail(
-        "Portfolio validation failed.",
+    context.reject(
+        decision="PORTFOLIO_VALIDATION_FAILED",
+        reason="Portfolio validation failed.",
     )
 
     logger.log_failure(
         context,
     )
 
-    assert True
+    assert context.failed is True
+
+    assert context.decision == "PORTFOLIO_VALIDATION_FAILED"
+
+    assert (
+        context.reason
+        == "Portfolio validation failed."
+    )

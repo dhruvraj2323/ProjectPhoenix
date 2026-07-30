@@ -34,6 +34,22 @@ def test_portfolio_validator():
         is True
     )
 
+    assert context.approved is True
+
+    assert context.completed is True
+
+    assert context.failed is False
+
+    assert (
+        context.decision
+        == "PORTFOLIO_APPROVED"
+    )
+
+    assert (
+        context.reason
+        == "Portfolio Accepted"
+    )
+
     invalid = PortfolioContext(
 
         portfolio_id="",
@@ -49,7 +65,16 @@ def test_portfolio_validator():
         is False
     )
 
+    assert invalid.approved is False
+
+    assert invalid.completed is True
+
     assert invalid.failed is True
+
+    assert (
+        invalid.decision
+        == "PORTFOLIO_VALIDATION_FAILED"
+    )
 
     assert (
         invalid.reason
@@ -71,6 +96,17 @@ def test_portfolio_validator():
             invalid,
         )
         is False
+    )
+
+    assert invalid.approved is False
+
+    assert invalid.completed is True
+
+    assert invalid.failed is True
+
+    assert (
+        invalid.decision
+        == "PORTFOLIO_VALIDATION_FAILED"
     )
 
     assert (
