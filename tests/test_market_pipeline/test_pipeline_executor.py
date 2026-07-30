@@ -194,7 +194,21 @@ def test_pipeline_executor():
     # AI
     # -------------------------------------------------
 
-    assert result.ai_result["approved"] is True
+    from ai_decision.ai_models import AIDecision
+
+    ai_decision = result.ai_result
+
+    assert isinstance(
+        ai_decision,
+        AIDecision,
+    )
+
+    assert ai_decision.approved is True
+
+    assert (
+        result.get_metadata("ai_decision")
+        == ai_decision
+    )
 
     # -------------------------------------------------
     # Execution

@@ -2,11 +2,16 @@
 =================================================
 Project Phoenix
 Market Pipeline Executor
-M40.X.6 - Portfolio Engine Integration
+M40.X.7 - AI Engine Integration
 =================================================
 """
 
 from __future__ import annotations
+
+from ai_decision.ai_engine import AIEngine
+from ai_decision.ai_models import (
+    AIContext,
+)
 
 from indicator_engine.indicator_context import IndicatorContext
 from indicator_engine.indicator_manager import IndicatorManager
@@ -24,11 +29,11 @@ from pattern_engine.pattern_manager import PatternManager
 from portfolio_engine.portfolio_context import PortfolioContext
 from portfolio_engine.portfolio_manager import PortfolioManager
 
-from signal_engine.signal_context import SignalContext
-from signal_engine.signal_manager import SignalManager
-
 from risk_engine.risk_context import RiskContext
 from risk_engine.risk_manager import RiskManager
+
+from signal_engine.signal_context import SignalContext
+from signal_engine.signal_manager import SignalManager
 
 
 class PipelineExecutor:
@@ -64,6 +69,8 @@ class PipelineExecutor:
         self.risk_manager = RiskManager()
 
         self.portfolio_manager = PortfolioManager()
+
+        self.ai_engine = AIEngine()
 
     # ---------------------------------------------------------
 
@@ -255,7 +262,7 @@ class PipelineExecutor:
             pattern_context,
         )
 
-    # =========================================================
+        # =========================================================
     # Signal Engine
     # =========================================================
 
@@ -378,9 +385,39 @@ class PipelineExecutor:
         context: PipelineContext,
     ) -> None:
 
-        context.ai_result = {
-            "approved": True,
-        }
+        ai_context = AIContext(
+
+            signal_strength=1.0,
+
+            risk_score=0.20,
+
+            performance_score=0.80,
+
+            portfolio_score=0.90,
+
+            optimization_score=0.75,
+
+        )
+
+        ai_decision = self.ai_engine.evaluate(
+            ai_context,
+        )
+
+        if not ai_decision.approved:
+
+            context.reject(
+                decision="AI_ENGINE_FAILED",
+                reason=ai_decision.reason,
+            )
+
+            return
+
+        context.ai_result = ai_decision
+
+        context.set_metadata(
+            "ai_decision",
+            ai_decision,
+        )
 
     # =========================================================
     # Execution Engine
@@ -398,4 +435,4 @@ class PipelineExecutor:
         context.approve(
             decision="PIPELINE_COMPLETED",
             reason="Pipeline executed successfully.",
-        )
+        )        
