@@ -19,6 +19,10 @@ def test_pattern_context():
         timeframe="M1",
     )
 
+    # -------------------------------------------------
+    # Pattern Management
+    # -------------------------------------------------
+
     context.add_pattern(
         {
             "name": "DOJI",
@@ -29,6 +33,10 @@ def test_pattern_context():
     assert len(
         context.get_patterns()
     ) == 1
+
+    # -------------------------------------------------
+    # Metadata
+    # -------------------------------------------------
 
     context.set_metadata(
         "version",
@@ -42,17 +50,42 @@ def test_pattern_context():
         == "2.0"
     )
 
-    context.mark_completed()
+    # -------------------------------------------------
+    # Approval
+    # -------------------------------------------------
 
+    context.approve(
+        decision="PATTERNS_DETECTED",
+        reason="Pattern detection completed successfully.",
+    )
+
+    assert context.approved is True
     assert context.completed is True
+    assert context.failed is False
+
+    assert (
+        context.decision
+        == "PATTERNS_DETECTED"
+    )
+
+    assert (
+        context.reason
+        == "Pattern detection completed successfully."
+    )
+
+    # -------------------------------------------------
+    # Reset
+    # -------------------------------------------------
 
     context.reset()
 
-    assert (
-        len(
-            context.patterns
-        )
-        == 0
-    )
+    assert len(
+        context.patterns
+    ) == 0
 
+    assert context.approved is False
     assert context.completed is False
+    assert context.failed is False
+
+    assert context.decision == ""
+    assert context.reason == ""

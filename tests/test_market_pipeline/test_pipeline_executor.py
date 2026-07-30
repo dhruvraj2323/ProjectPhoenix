@@ -3,7 +3,7 @@
 Project Phoenix
 Market Pipeline
 Unit Test - Pipeline Executor
-M40.X.2
+M40.X.3 - Pattern Engine Integration
 =================================================
 """
 
@@ -84,10 +84,20 @@ def test_pipeline_executor():
     assert "SUPERTREND" in result.indicators
 
     # -------------------------------------------------
-    # Patterns
+    # Pattern Engine
     # -------------------------------------------------
 
+    pattern_context = result.get_metadata(
+        "pattern_context"
+    )
+
+    assert pattern_context is not None
+    assert pattern_context.completed is True
+    assert pattern_context.approved is True
+
     assert isinstance(result.patterns, list)
+
+    assert result.patterns == pattern_context.patterns
 
     # -------------------------------------------------
     # Risk
@@ -120,6 +130,7 @@ def test_pipeline_executor():
     print("Timeframe        :", result.timeframe)
     print("Candles Loaded   :", len(result.candles))
     print("Indicators       :", len(result.indicators))
+    print("Patterns         :", len(result.patterns))
     print("Current Stage    :", result.current_stage.value)
     print("Approved         :", result.approved)
     print("Completed        :", result.completed)

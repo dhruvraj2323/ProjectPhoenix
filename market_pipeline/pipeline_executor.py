@@ -17,6 +17,9 @@ from market_pipeline.pipeline_logger import PipelineLogger
 from market_pipeline.pipeline_models import PipelineStage
 from market_pipeline.pipeline_router import PipelineRouter
 
+from pattern_engine.pattern_context import PatternContext
+from pattern_engine.pattern_manager import PatternManager
+
 
 class PipelineExecutor:
     """
@@ -42,6 +45,7 @@ class PipelineExecutor:
         # Integrated Managers
         self.market_data_manager = MarketDataManager()
         self.indicator_manager = IndicatorManager()
+        self.pattern_manager = PatternManager()
 
     # ---------------------------------------------------------
 
@@ -204,7 +208,34 @@ class PipelineExecutor:
         context: PipelineContext,
     ) -> None:
 
-        context.patterns = []
+        pattern_context = PatternContext(
+            engine_id=context.pipeline_id,
+            symbol=context.symbol,
+            timeframe=context.timeframe,
+            candles=context.candles,
+        )
+
+        pattern_context = self.pattern_manager.run(
+            pattern_context
+        )
+
+        if pattern_context.failed:
+
+            context.reject(
+                decision="PATTERN_ENGINE_FAILED",
+                reason=pattern_context.reason,
+            )
+
+            return
+
+        context.patterns = (
+            pattern_context.patterns
+        )
+
+        context.set_metadata(
+            "pattern_context",
+            pattern_context,
+        )
 
     # =========================================================
     # Signal Engine

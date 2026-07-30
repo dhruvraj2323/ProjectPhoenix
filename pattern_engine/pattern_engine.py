@@ -52,8 +52,9 @@ class PatternEngine:
 
         if not self.validator.validate(context):
 
-            context.mark_failed(
-                "Pattern validation failed."
+            context.reject(
+                decision="PATTERN_VALIDATION_FAILED",
+                reason="Pattern validation failed.",
             )
 
             return context
@@ -62,7 +63,10 @@ class PatternEngine:
             context
         )
 
-        context.mark_completed()
+        context.approve(
+            decision="PATTERNS_DETECTED",
+            reason="Pattern detection completed successfully.",
+        )
 
         self.logger.log_complete(context)
 
