@@ -26,8 +26,8 @@ def test_signal_processor():
     )
 
     context.indicators = {
-        "SMA": 100,
-        "EMA": 105,
+        "SMA_20": 100,
+        "EMA_20": 105,
     }
 
     context.patterns = [

@@ -3,7 +3,7 @@
 Project Phoenix
 Market Pipeline
 Unit Test - Pipeline Executor
-M40.X.3 - Pattern Engine Integration
+M40.X.4 - Signal Engine Integration
 =================================================
 """
 
@@ -48,7 +48,9 @@ def test_pipeline_executor():
     # Market Data
     # -------------------------------------------------
 
-    market_data = result.get_metadata("market_data")
+    market_data = result.get_metadata(
+        "market_data"
+    )
 
     assert isinstance(
         market_data,
@@ -56,7 +58,9 @@ def test_pipeline_executor():
     )
 
     assert market_data.success is True
-    assert len(market_data.candles) > 0
+    assert len(
+        market_data.candles
+    ) > 0
 
     assert result.candles == market_data.candles
 
@@ -72,7 +76,10 @@ def test_pipeline_executor():
     assert indicator_context.completed is True
     assert indicator_context.approved is True
 
-    assert isinstance(result.indicators, dict)
+    assert isinstance(
+        result.indicators,
+        dict,
+    )
 
     assert "EMA_20" in result.indicators
     assert "SMA_20" in result.indicators
@@ -95,9 +102,41 @@ def test_pipeline_executor():
     assert pattern_context.completed is True
     assert pattern_context.approved is True
 
-    assert isinstance(result.patterns, list)
+    assert isinstance(
+        result.patterns,
+        list,
+    )
 
     assert result.patterns == pattern_context.patterns
+
+    # -------------------------------------------------
+    # Signal Engine
+    # -------------------------------------------------
+
+    signal_context = result.get_metadata(
+        "signal_context"
+    )
+
+    assert signal_context is not None
+    assert signal_context.completed is True
+    assert signal_context.approved is True
+
+    assert isinstance(
+        result.signals,
+        list,
+    )
+
+    assert result.signals == signal_context.signals
+
+    assert len(
+        result.signals
+    ) > 0
+
+    signal = result.signals[0]
+
+    assert "direction" in signal
+    assert "strength" in signal
+    assert "reason" in signal
 
     # -------------------------------------------------
     # Risk
@@ -131,6 +170,7 @@ def test_pipeline_executor():
     print("Candles Loaded   :", len(result.candles))
     print("Indicators       :", len(result.indicators))
     print("Patterns         :", len(result.patterns))
+    print("Signals          :", len(result.signals))
     print("Current Stage    :", result.current_stage.value)
     print("Approved         :", result.approved)
     print("Completed        :", result.completed)

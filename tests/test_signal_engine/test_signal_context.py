@@ -31,18 +31,37 @@ def test_signal_context():
 
     assert context.get_signal_count() == 1
 
-    context.mark_completed()
+    context.approve(
+        decision="SIGNALS_GENERATED",
+        reason="Signal generation completed successfully.",
+    )
 
     assert context.completed is True
+    assert context.approved is True
+    assert context.failed is False
+    assert context.decision == "SIGNALS_GENERATED"
+    assert context.reason == "Signal generation completed successfully."
 
     context.reset()
 
     assert context.get_signal_count() == 0
     assert context.completed is False
+    assert context.approved is False
+    assert context.failed is False
+    assert context.decision == ""
+    assert context.reason == ""
 
-    context.mark_failed(
-        "Validation Failed"
+    context.reject(
+        decision="SIGNAL_VALIDATION_FAILED",
+        reason="Validation Failed",
     )
 
     assert context.failed is True
+    assert context.completed is True
+    assert context.approved is False
+    assert context.decision == "SIGNAL_VALIDATION_FAILED"
     assert context.reason == "Validation Failed"
+
+
+if __name__ == "__main__":
+    test_signal_context()

@@ -9,7 +9,7 @@ M34
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import Any
 
 
@@ -73,9 +73,13 @@ class SignalContext:
     # Execution State
     # --------------------------------------------------
 
+    approved: bool = False
+
     completed: bool = False
 
     failed: bool = False
+
+    decision: str = ""
 
     reason: str = ""
 
@@ -115,27 +119,60 @@ class SignalContext:
             default,
         )
 
-    def mark_completed(
-        self,
-    ) -> None:
+    # --------------------------------------------------
+    # Execution Status
+    # --------------------------------------------------
 
-        self.completed = True
-
-    def mark_failed(
+    def approve(
         self,
+        decision: str,
         reason: str,
     ) -> None:
+        """
+        Mark successful execution.
+        """
 
-        self.failed = True
+        self.approved = True
+        self.completed = True
+        self.failed = False
+
+        self.decision = decision
         self.reason = reason
+
+    def reject(
+        self,
+        decision: str,
+        reason: str,
+    ) -> None:
+        """
+        Mark failed execution.
+        """
+
+        self.approved = False
+        self.completed = True
+        self.failed = True
+
+        self.decision = decision
+        self.reason = reason
+
+    # --------------------------------------------------
+    # Reset
+    # --------------------------------------------------
 
     def reset(
         self,
     ) -> None:
 
         self.signals.clear()
+
         self.metadata.clear()
 
+        self.approved = False
+
         self.completed = False
+
         self.failed = False
+
+        self.decision = ""
+
         self.reason = ""

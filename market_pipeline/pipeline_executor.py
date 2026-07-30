@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Market Pipeline Executor
-M40.X.2 - Indicator Engine Integration
+M40.X.4 - Signal Engine Integration
 =================================================
 """
 
@@ -19,6 +19,9 @@ from market_pipeline.pipeline_router import PipelineRouter
 
 from pattern_engine.pattern_context import PatternContext
 from pattern_engine.pattern_manager import PatternManager
+
+from signal_engine.signal_context import SignalContext
+from signal_engine.signal_manager import SignalManager
 
 
 class PipelineExecutor:
@@ -46,6 +49,7 @@ class PipelineExecutor:
         self.market_data_manager = MarketDataManager()
         self.indicator_manager = IndicatorManager()
         self.pattern_manager = PatternManager()
+        self.signal_manager = SignalManager()
 
     # ---------------------------------------------------------
 
@@ -246,7 +250,35 @@ class PipelineExecutor:
         context: PipelineContext,
     ) -> None:
 
-        context.signal = None
+        signal_context = SignalContext(
+            engine_id=context.pipeline_id,
+            symbol=context.symbol,
+            timeframe=context.timeframe,
+            indicators=context.indicators,
+            patterns=context.patterns,
+        )
+
+        signal_context = self.signal_manager.run(
+            signal_context
+        )
+
+        if signal_context.failed:
+
+            context.reject(
+                decision="SIGNAL_ENGINE_FAILED",
+                reason=signal_context.reason,
+            )
+
+            return
+
+        context.signals = (
+            signal_context.signals
+        )
+
+        context.set_metadata(
+            "signal_context",
+            signal_context,
+        )
 
     # =========================================================
     # Risk Engine

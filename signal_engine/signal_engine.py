@@ -52,6 +52,11 @@ class SignalEngine:
             context
         ):
 
+            context.reject(
+                decision="SIGNAL_VALIDATION_FAILED",
+                reason="Signal validation failed.",
+            )
+
             self.logger.log_failure(
                 context
             )
@@ -62,7 +67,10 @@ class SignalEngine:
             context
         )
 
-        context.mark_completed()
+        context.approve(
+            decision="SIGNALS_GENERATED",
+            reason="Signal generation completed successfully.",
+        )
 
         self.logger.log_finish(
             context

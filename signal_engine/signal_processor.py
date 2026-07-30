@@ -28,20 +28,30 @@ class SignalProcessor:
         indicators and candlestick patterns.
         """
 
+        # -------------------------------------------------
+        # Indicator Values
+        # -------------------------------------------------
+
         sma = context.indicators.get(
-            "SMA",
-            0.0,
-        )
+            "SMA_20"
+        ) or 0.0
 
         ema = context.indicators.get(
-            "EMA",
-            0.0,
-        )
+            "EMA_20"
+        ) or 0.0
+
+        # -------------------------------------------------
+        # Pattern Confirmation
+        # -------------------------------------------------
 
         has_doji = any(
             pattern.get("name") == "DOJI"
             for pattern in context.patterns
         )
+
+        # -------------------------------------------------
+        # Signal Generation
+        # -------------------------------------------------
 
         if ema > sma and has_doji:
 
@@ -49,7 +59,10 @@ class SignalProcessor:
                 {
                     "direction": "BUY",
                     "strength": "STRONG",
-                    "reason": "EMA above SMA with DOJI confirmation",
+                    "reason": (
+                        "EMA_20 above SMA_20 "
+                        "with DOJI confirmation"
+                    ),
                 }
             )
 
@@ -59,7 +72,10 @@ class SignalProcessor:
                 {
                     "direction": "SELL",
                     "strength": "STRONG",
-                    "reason": "EMA below SMA with DOJI confirmation",
+                    "reason": (
+                        "EMA_20 below SMA_20 "
+                        "with DOJI confirmation"
+                    ),
                 }
             )
 
@@ -69,7 +85,9 @@ class SignalProcessor:
                 {
                     "direction": "NEUTRAL",
                     "strength": "WEAK",
-                    "reason": "No confirmed setup",
+                    "reason": (
+                        "No confirmed setup"
+                    ),
                 }
             )
 

@@ -34,15 +34,31 @@ def test_signal_logger():
 
     logger.log_start(context)
 
-    context.mark_completed()
+    context.approve(
+        decision="SIGNALS_GENERATED",
+        reason="Signal generation completed successfully.",
+    )
 
     logger.log_finish(context)
 
-    context.mark_failed(
-        "Validation Failed"
+    assert context.completed is True
+    assert context.approved is True
+    assert context.failed is False
+    assert context.decision == "SIGNALS_GENERATED"
+
+    context.reject(
+        decision="SIGNAL_VALIDATION_FAILED",
+        reason="Validation Failed",
     )
 
     logger.log_failure(context)
 
     assert context.failed is True
+    assert context.completed is True
+    assert context.approved is False
+    assert context.decision == "SIGNAL_VALIDATION_FAILED"
     assert context.reason == "Validation Failed"
+
+
+if __name__ == "__main__":
+    test_signal_logger()

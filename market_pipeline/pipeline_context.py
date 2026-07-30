@@ -69,7 +69,7 @@ class PipelineContext:
     # Generated Signal
     # --------------------------------------------------
 
-    signal: Any = None
+    signals: list = field(default_factory=list)
 
     # --------------------------------------------------
     # Risk Engine
@@ -158,7 +158,7 @@ class PipelineContext:
         self.candles.clear()
         self.indicators.clear()
         self.patterns.clear()
-        self.signal = None
+        self.signals.clear()
         self.risk_result = None
         self.portfolio_result = None
         self.ai_result = None

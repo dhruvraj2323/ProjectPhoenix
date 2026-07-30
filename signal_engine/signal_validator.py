@@ -28,8 +28,9 @@ class SignalValidator:
         """
 
         if not context.symbol:
-            context.mark_failed(
-                "Symbol is missing."
+            context.reject(
+                decision="SIGNAL_VALIDATION_FAILED",
+                reason="...",
             )
             return False
 
