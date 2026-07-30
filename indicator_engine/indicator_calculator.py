@@ -26,6 +26,27 @@ class IndicatorCalculator:
         self._results: Dict[str, Any] = {}
 
     # ---------------------------------------------------------
+    # Internal Helpers
+    # ---------------------------------------------------------
+
+    def _get_close(
+        self,
+        candle,
+    ) -> float:
+        """
+        Extract close price from a candle.
+
+        Supports dictionary candles and
+        future object-based candle models.
+        """
+
+        if isinstance(candle, dict):
+
+            return float(candle.get("close", 0.0))
+
+        return float(getattr(candle, "close", 0.0))
+
+    # ---------------------------------------------------------
     # EMA
     # ---------------------------------------------------------
 
@@ -35,7 +56,35 @@ class IndicatorCalculator:
         period: int,
     ):
 
-        value = 0.0
+        if candles is None or len(candles) < period:
+
+            value = 0.0
+
+        else:
+
+            closes = [
+                self._get_close(candle)
+                for candle in candles
+            ]
+
+            multiplier = 2.0 / (period + 1)
+
+            ema = (
+                sum(closes[:period])
+                / period
+            )
+
+            for close in closes[period:]:
+
+                ema = (
+                    (close - ema)
+                    * multiplier
+                ) + ema
+
+            value = round(
+                ema,
+                5,
+            )
 
         self._results[f"EMA_{period}"] = value
         self._results[f"EMA{period}"] = value

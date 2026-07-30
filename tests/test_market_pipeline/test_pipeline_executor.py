@@ -32,6 +32,8 @@ def test_pipeline_executor():
 
     result = executor.execute(context)
 
+    print(result.candles[-1])
+
     # -------------------------------------------------
     # Basic Validation
     # -------------------------------------------------
