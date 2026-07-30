@@ -165,7 +165,25 @@ def test_pipeline_executor():
     # Execution
     # -------------------------------------------------
 
-    assert result.execution_result["executed"] is False
+    from execution_engine.execution_models import (
+        ExecutionResult,
+        ExecutionStatus,
+    )
+
+    assert isinstance(
+        result.execution_result,
+        ExecutionResult,
+    )
+
+    assert (
+        result.execution_result.status
+        == ExecutionStatus.PENDING
+    )
+
+    assert (
+        result.execution_result.accepted
+        is False
+    )
 
     print()
     print("===== Pipeline Executor =====")

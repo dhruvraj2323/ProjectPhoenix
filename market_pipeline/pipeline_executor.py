@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Market Pipeline Executor
-M40.X.7 - AI Engine Integration
+M40.X.8 - Execution Engine Integration
 =================================================
 """
 
@@ -11,6 +11,13 @@ from __future__ import annotations
 from ai_decision.ai_engine import AIEngine
 from ai_decision.ai_models import (
     AIContext,
+)
+
+from execution_engine.execution_context import (
+    ExecutionContext,
+)
+from execution_engine.execution_manager import (
+    ExecutionManager,
 )
 
 from indicator_engine.indicator_context import IndicatorContext
@@ -35,6 +42,9 @@ from risk_engine.risk_manager import RiskManager
 from signal_engine.signal_context import SignalContext
 from signal_engine.signal_manager import SignalManager
 
+from strategy.strategy_context import StrategyContext
+from strategy.strategy_manager import StrategyManager
+
 
 class PipelineExecutor:
     """
@@ -45,6 +55,7 @@ class PipelineExecutor:
     - Market Data
     - Indicator Engine
     - Pattern Engine
+    - Strategy Engine
     - Signal Engine
     - Risk Engine
     - Portfolio Engine
@@ -64,6 +75,8 @@ class PipelineExecutor:
 
         self.pattern_manager = PatternManager()
 
+        self.strategy_manager = StrategyManager()
+
         self.signal_manager = SignalManager()
 
         self.risk_manager = RiskManager()
@@ -71,6 +84,8 @@ class PipelineExecutor:
         self.portfolio_manager = PortfolioManager()
 
         self.ai_engine = AIEngine()
+
+        self.execution_manager = ExecutionManager()
 
     # ---------------------------------------------------------
 
@@ -133,6 +148,10 @@ class PipelineExecutor:
         elif stage == PipelineStage.PATTERNS:
 
             self._patterns(context)
+
+        elif stage == PipelineStage.STRATEGY:
+
+            self._strategy(context)        
 
         elif stage == PipelineStage.SIGNAL:
 
@@ -262,7 +281,81 @@ class PipelineExecutor:
             pattern_context,
         )
 
-        # =========================================================
+    # =========================================================
+    # Strategy Engine
+    # =========================================================
+
+    def _strategy(
+        self,
+        context: PipelineContext,
+    ) -> None:
+
+        market_data = {}
+
+        if context.candles:
+
+            last_candle = context.candles[-1]
+
+            if isinstance(last_candle, dict):
+
+                market_data["price"] = (
+                    last_candle.get(
+                        "close",
+                        0.0,
+                    )
+                )
+
+        strategy_context = StrategyContext(
+
+            engine_id=context.pipeline_id,
+
+            symbol=context.symbol,
+
+            timeframe=context.timeframe,
+
+            indicators=context.indicators,
+
+            patterns=context.patterns,
+
+            market_data=market_data,
+
+        )
+
+        strategy_context = (
+            self.strategy_manager.execute(
+                strategy_context,
+            )
+        )
+
+        if not strategy_context.completed:
+
+            context.reject(
+
+                decision="STRATEGY_ENGINE_FAILED",
+
+                reason=(
+                    strategy_context.reason
+                    or
+                    "Strategy evaluation failed."
+                ),
+
+            )
+
+            return
+
+        context.strategy_result = (
+            strategy_context.strategy_result
+        )
+
+        context.set_metadata(
+
+            "strategy_context",
+
+            strategy_context,
+
+        )        
+
+    # =========================================================
     # Signal Engine
     # =========================================================
 
@@ -428,11 +521,52 @@ class PipelineExecutor:
         context: PipelineContext,
     ) -> None:
 
-        context.execution_result = {
-            "executed": False,
-        }
+        execution_context = ExecutionContext(
 
+            execution_id=context.pipeline_id,
+
+            symbol=context.symbol,
+
+            timeframe=context.timeframe,
+
+            strategy_result=context.strategy_result,
+
+            signal_result=context.signals,
+
+            risk_result=context.risk_result,
+
+            ai_result=context.ai_result,
+
+        )
+
+        execution_context = self.execution_manager.execute(
+            execution_context,
+        )
+
+        if execution_context.failed:
+
+            context.reject(
+                decision="EXECUTION_ENGINE_FAILED",
+                reason=execution_context.reason,
+            )
+
+            return
+
+        context.execution_result = (
+            execution_context.execution_result
+        )
+
+        context.set_metadata(
+            "execution_context",
+            execution_context,
+        )
+
+        context.set_metadata(
+            "strategy_result",
+            context.strategy_result,
+        )
+        
         context.approve(
             decision="PIPELINE_COMPLETED",
             reason="Pipeline executed successfully.",
-        )        
+        )    

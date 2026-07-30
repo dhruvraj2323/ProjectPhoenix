@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Market Pipeline Router
-M31
+M40.X.8A
 =================================================
 """
 
@@ -21,25 +21,40 @@ class PipelineRouter:
 
     def __init__(self) -> None:
 
-        self._routes: Dict[PipelineStage, PipelineStage] = {
+        self._routes: Dict[
+            PipelineStage,
+            PipelineStage,
+        ] = {
 
-            PipelineStage.INITIALIZED: PipelineStage.MARKET_DATA,
+            PipelineStage.INITIALIZED:
+                PipelineStage.MARKET_DATA,
 
-            PipelineStage.MARKET_DATA: PipelineStage.INDICATORS,
+            PipelineStage.MARKET_DATA:
+                PipelineStage.INDICATORS,
 
-            PipelineStage.INDICATORS: PipelineStage.PATTERNS,
+            PipelineStage.INDICATORS:
+                PipelineStage.PATTERNS,
 
-            PipelineStage.PATTERNS: PipelineStage.SIGNAL,
+            PipelineStage.PATTERNS:
+                PipelineStage.STRATEGY,
 
-            PipelineStage.SIGNAL: PipelineStage.RISK,
+            PipelineStage.STRATEGY:
+                PipelineStage.SIGNAL,
 
-            PipelineStage.RISK: PipelineStage.PORTFOLIO,
+            PipelineStage.SIGNAL:
+                PipelineStage.RISK,
 
-            PipelineStage.PORTFOLIO: PipelineStage.AI,
+            PipelineStage.RISK:
+                PipelineStage.PORTFOLIO,
 
-            PipelineStage.AI: PipelineStage.EXECUTION,
+            PipelineStage.PORTFOLIO:
+                PipelineStage.AI,
 
-            PipelineStage.EXECUTION: PipelineStage.COMPLETED,
+            PipelineStage.AI:
+                PipelineStage.EXECUTION,
+
+            PipelineStage.EXECUTION:
+                PipelineStage.COMPLETED,
 
         }
 
@@ -53,7 +68,9 @@ class PipelineRouter:
         Return the next pipeline stage.
         """
 
-        return self._routes.get(current_stage)
+        return self._routes.get(
+            current_stage,
+        )
 
     # ---------------------------------------------------------
 
@@ -77,11 +94,16 @@ class PipelineRouter:
         True if pipeline reached COMPLETED stage.
         """
 
-        return current_stage == PipelineStage.COMPLETED
+        return (
+            current_stage
+            == PipelineStage.COMPLETED
+        )
 
     # ---------------------------------------------------------
 
-    def reset(self) -> PipelineStage:
+    def reset(
+        self,
+    ) -> PipelineStage:
         """
         Reset pipeline to initial stage.
         """
@@ -91,7 +113,12 @@ class PipelineRouter:
     # ---------------------------------------------------------
 
     @property
-    def routes(self) -> Dict[PipelineStage, PipelineStage]:
+    def routes(
+        self,
+    ) -> Dict[
+        PipelineStage,
+        PipelineStage,
+    ]:
         """
         Return pipeline routing table.
         """

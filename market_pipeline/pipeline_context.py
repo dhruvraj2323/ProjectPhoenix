@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Market Pipeline Context
-M40.X.1 — Integration Pipeline
+M40.X.8A — Strategy Integration
 =================================================
 """
 
@@ -25,7 +25,11 @@ class PipelineContext:
     # --------------------------------------------------
 
     pipeline_id: str
-    created_at: datetime = field(default_factory=datetime.utcnow)
+
+    created_at: datetime = field(
+        default_factory=datetime.utcnow,
+    )
+
     current_stage: Any = None
 
     # --------------------------------------------------
@@ -33,6 +37,7 @@ class PipelineContext:
     # --------------------------------------------------
 
     symbol: str = ""
+
     timeframe: str = ""
 
     # --------------------------------------------------
@@ -51,25 +56,39 @@ class PipelineContext:
     # Historical Data
     # --------------------------------------------------
 
-    candles: list = field(default_factory=list)
+    candles: list = field(
+        default_factory=list,
+    )
 
     # --------------------------------------------------
     # Indicator Results
     # --------------------------------------------------
 
-    indicators: dict = field(default_factory=dict)
+    indicators: dict = field(
+        default_factory=dict,
+    )
 
     # --------------------------------------------------
     # Pattern Recognition
     # --------------------------------------------------
 
-    patterns: list = field(default_factory=list)
+    patterns: list = field(
+        default_factory=list,
+    )
 
     # --------------------------------------------------
-    # Generated Signal
+    # Strategy Engine
     # --------------------------------------------------
 
-    signals: list = field(default_factory=list)
+    strategy_result: Any = None
+
+    # --------------------------------------------------
+    # Signal Engine
+    # --------------------------------------------------
+
+    signals: list = field(
+        default_factory=list,
+    )
 
     # --------------------------------------------------
     # Risk Engine
@@ -90,7 +109,7 @@ class PipelineContext:
     ai_result: Any = None
 
     # --------------------------------------------------
-    # Execution Decision
+    # Execution Result
     # --------------------------------------------------
 
     execution_result: Any = None
@@ -100,73 +119,129 @@ class PipelineContext:
     # --------------------------------------------------
 
     approved: bool = False
+
     decision: str = ""
+
     reason: str = ""
 
     # --------------------------------------------------
     # Runtime Metadata
     # --------------------------------------------------
 
-    metadata: dict = field(default_factory=dict)
+    metadata: dict = field(
+        default_factory=dict,
+    )
 
     # --------------------------------------------------
     # Pipeline Flags
     # --------------------------------------------------
 
     completed: bool = False
+
     failed: bool = False
 
     # --------------------------------------------------
     # Utility Functions
     # --------------------------------------------------
 
-    def set_metadata(self, key: str, value: Any) -> None:
+    def set_metadata(
+        self,
+        key: str,
+        value: Any,
+    ) -> None:
         """
         Store runtime metadata.
         """
+
         self.metadata[key] = value
 
-    def get_metadata(self, key: str, default: Any = None) -> Any:
+    def get_metadata(
+        self,
+        key: str,
+        default: Any = None,
+    ) -> Any:
         """
         Retrieve runtime metadata.
         """
-        return self.metadata.get(key, default)
 
-    def approve(self, decision: str, reason: str) -> None:
+        return self.metadata.get(
+            key,
+            default,
+        )
+
+    def approve(
+        self,
+        decision: str,
+        reason: str,
+    ) -> None:
         """
         Approve pipeline execution.
         """
+
         self.approved = True
+
         self.completed = True
+
+        self.failed = False
+
         self.decision = decision
+
         self.reason = reason
 
-    def reject(self, decision: str, reason: str) -> None:
+    def reject(
+        self,
+        decision: str,
+        reason: str,
+    ) -> None:
         """
         Reject pipeline execution.
         """
+
         self.approved = False
+
+        self.completed = False
+
         self.failed = True
+
         self.decision = decision
+
         self.reason = reason
 
-    def reset(self) -> None:
+    def reset(
+        self,
+    ) -> None:
         """
         Reset pipeline state while preserving identity.
         """
+
         self.raw_data = None
+
         self.candles.clear()
+
         self.indicators.clear()
+
         self.patterns.clear()
+
+        self.strategy_result = None
+
         self.signals.clear()
+
         self.risk_result = None
+
         self.portfolio_result = None
+
         self.ai_result = None
+
         self.execution_result = None
+
         self.metadata.clear()
 
         self.approved = False
+
         self.completed = False
+
         self.failed = False
+
         self.decision = ""
+
         self.reason = ""

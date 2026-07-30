@@ -2,7 +2,8 @@
 =================================================
 Project Phoenix
 Indicator Calculator
-M32
+M32.1
+Strategy Alignment
 =================================================
 """
 
@@ -25,58 +26,70 @@ class IndicatorCalculator:
         self._results: Dict[str, Any] = {}
 
     # ---------------------------------------------------------
+    # EMA
+    # ---------------------------------------------------------
 
     def calculate_ema(
         self,
         candles,
-        period: int = 20,
+        period: int,
     ):
 
-        value = None
+        value = 0.0
 
         self._results[f"EMA_{period}"] = value
+        self._results[f"EMA{period}"] = value
 
         return value
 
+    # ---------------------------------------------------------
+    # SMA
     # ---------------------------------------------------------
 
     def calculate_sma(
         self,
         candles,
-        period: int = 20,
+        period: int,
     ):
 
-        value = None
+        value = 0.0
 
         self._results[f"SMA_{period}"] = value
+        self._results[f"SMA{period}"] = value
 
         return value
 
+    # ---------------------------------------------------------
+    # RSI
     # ---------------------------------------------------------
 
     def calculate_rsi(
         self,
         candles,
-        period: int = 14,
+        period: int,
     ):
 
-        value = None
+        value = 0.0
 
         self._results[f"RSI_{period}"] = value
+        self._results[f"RSI{period}"] = value
 
         return value
 
+    # ---------------------------------------------------------
+    # ATR
     # ---------------------------------------------------------
 
     def calculate_atr(
         self,
         candles,
-        period: int = 14,
+        period: int,
     ):
 
-        value = None
+        value = 0.0
 
         self._results[f"ATR_{period}"] = value
+        self._results[f"ATR{period}"] = value
 
         return value
 
@@ -87,7 +100,7 @@ class IndicatorCalculator:
         candles,
     ):
 
-        value = None
+        value = 0.0
 
         self._results["MACD"] = value
 
@@ -101,7 +114,7 @@ class IndicatorCalculator:
         period: int = 20,
     ):
 
-        value = None
+        value = 0.0
 
         self._results["BOLLINGER_BANDS"] = value
 
@@ -114,7 +127,7 @@ class IndicatorCalculator:
         candles,
     ):
 
-        value = None
+        value = 0.0
 
         self._results["VWAP"] = value
 
@@ -129,7 +142,7 @@ class IndicatorCalculator:
         multiplier: float = 3.0,
     ):
 
-        value = None
+        value = 0.0
 
         self._results["SUPERTREND"] = value
 
@@ -145,13 +158,24 @@ class IndicatorCalculator:
         Execute every supported indicator.
         """
 
-        # Start every execution with a clean result set.
         self._results.clear()
 
-        self.calculate_ema(candles)
-        self.calculate_sma(candles)
-        self.calculate_rsi(candles)
-        self.calculate_atr(candles)
+        # Strategy-required EMA values
+        self.calculate_ema(candles, 9)
+        self.calculate_ema(candles, 21)
+        self.calculate_ema(candles, 200)
+
+        # Existing EMA
+        self.calculate_ema(candles, 20)
+
+        # Existing SMA
+        self.calculate_sma(candles, 20)
+
+        # Strategy-required RSI
+        self.calculate_rsi(candles, 14)
+
+        # Existing indicators
+        self.calculate_atr(candles, 14)
         self.calculate_macd(candles)
         self.calculate_bollinger_bands(candles)
         self.calculate_vwap(candles)

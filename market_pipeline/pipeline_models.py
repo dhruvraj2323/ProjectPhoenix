@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Market Pipeline Models
-M31
+M40.X.8A
 =================================================
 """
 
@@ -16,15 +16,27 @@ from typing import Any
 
 class PipelineStage(Enum):
     INITIALIZED = "INITIALIZED"
+
     MARKET_DATA = "MARKET_DATA"
+
     INDICATORS = "INDICATORS"
+
     PATTERNS = "PATTERNS"
+
+    STRATEGY = "STRATEGY"
+
     SIGNAL = "SIGNAL"
+
     RISK = "RISK"
+
     PORTFOLIO = "PORTFOLIO"
+
     AI = "AI"
+
     EXECUTION = "EXECUTION"
+
     COMPLETED = "COMPLETED"
+
     FAILED = "FAILED"
 
 
@@ -41,12 +53,16 @@ class PipelineExecutionResult:
     """
 
     stage: PipelineStage
+
     status: PipelineStatus
+
     approved: bool
 
     reason: str = ""
 
-    data: dict[str, Any] = field(default_factory=dict)
+    data: dict[str, Any] = field(
+        default_factory=dict,
+    )
 
     timestamp: datetime = field(
         default_factory=datetime.utcnow,
@@ -82,9 +98,13 @@ class PipelineResult:
 
     reason: str = ""
 
-    stage: PipelineStage = PipelineStage.INITIALIZED
+    stage: PipelineStage = (
+        PipelineStage.INITIALIZED
+    )
 
-    status: PipelineStatus = PipelineStatus.SUCCESS
+    status: PipelineStatus = (
+        PipelineStatus.SUCCESS
+    )
 
     data: dict[str, Any] = field(
         default_factory=dict,
@@ -103,7 +123,9 @@ class PipelineState:
 
     mode: str
 
-    current_stage: PipelineStage = PipelineStage.INITIALIZED
+    current_stage: PipelineStage = (
+        PipelineStage.INITIALIZED
+    )
 
     approved: bool = True
 

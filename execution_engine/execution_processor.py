@@ -28,6 +28,22 @@ class ExecutionProcessor:
         context: ExecutionContext,
     ) -> ExecutionContext:
 
+        # -------------------------------------------------
+        # Defensive Validation
+        # -------------------------------------------------
+
+        if (
+            context.strategy_result is None
+            or
+            not context.strategy_result.signals
+        ):
+
+            context.fail(
+                reason="No executable strategy signals."
+            )
+
+            return context
+
         signal = context.strategy_result.signals[0]
 
         order = ExecutionOrder(

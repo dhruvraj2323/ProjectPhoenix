@@ -34,6 +34,8 @@ def test_pipeline_router():
 
         PipelineStage.PATTERNS,
 
+        PipelineStage.STRATEGY,
+
         PipelineStage.SIGNAL,
 
         PipelineStage.RISK,
