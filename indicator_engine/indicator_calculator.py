@@ -342,7 +342,105 @@ class IndicatorCalculator:
         candles,
     ):
 
-        value = 0.0
+        if candles is None or len(candles) < 35:
+
+            value = {
+                "macd": 0.0,
+                "signal": 0.0,
+                "histogram": 0.0,
+            }
+
+        else:
+
+            closes = [
+                self._get_close(candle)
+                for candle in candles
+            ]
+
+            def ema_series(
+                values,
+                period,
+            ):
+
+                multiplier = 2.0 / (
+                    period + 1
+                )
+
+                ema = (
+                    sum(values[:period])
+                    / period
+                )
+
+                series = [ema]
+
+                for current in values[period:]:
+
+                    ema = (
+                        (
+                            current
+                            - ema
+                        )
+                        * multiplier
+                    ) + ema
+
+                    series.append(ema)
+
+                return series
+
+            ema12 = ema_series(
+                closes,
+                12,
+            )
+
+            ema26 = ema_series(
+                closes,
+                26,
+            )
+
+            macd_values = []
+
+            offset = (
+                len(ema12)
+                - len(ema26)
+            )
+
+            for index in range(
+                len(ema26)
+            ):
+
+                macd_values.append(
+                    ema12[
+                        index + offset
+                    ]
+                    - ema26[index]
+                )
+
+            signal_values = ema_series(
+                macd_values,
+                9,
+            )
+
+            macd_line = round(
+                macd_values[-1],
+                5,
+            )
+
+            signal_line = round(
+                signal_values[-1],
+                5,
+            )
+
+            histogram = round(
+                macd_line
+                - signal_line,
+                5,
+            )
+
+            value = {
+                "macd": macd_line,
+                "signal": signal_line,
+                "histogram": histogram,
+            }
 
         self._results["MACD"] = value
 
