@@ -901,4 +901,136 @@ class PatternDetector:
 
                     }
 
-                )                                                                                                                                          
+                )
+
+        # ---------------------------------------------
+        # Retest Detection
+        # ---------------------------------------------
+
+        RETEST_TOLERANCE = 0.002
+
+        if index >= 1:
+
+            previous = context.candles[index - 1]
+
+            previous_high = previous.get(
+                "high",
+                0.0,
+            )
+
+            previous_low = previous.get(
+                "low",
+                0.0,
+            )
+
+            bullish_retest = (
+
+                low
+                <= previous_high
+
+                and
+
+                low
+                >= previous_high
+                * (
+                    1.0
+                    - RETEST_TOLERANCE
+                )
+
+            )
+
+            bearish_retest = (
+
+                high
+                >= previous_low
+
+                and
+
+                high
+                <= previous_low
+                * (
+                    1.0
+                    + RETEST_TOLERANCE
+                )
+
+            )
+
+            if bullish_retest:
+
+                distance = abs(
+                    low
+                    - previous_high
+                )
+
+                strength = round(
+
+                    1.0
+                    - (
+                        distance
+                        / max(
+                            previous_high,
+                            1.0,
+                        )
+                    ),
+
+                    5,
+
+                )
+
+                context.add_pattern(
+
+                    {
+
+                        "name": "BULLISH_RETEST",
+
+                        "index": index,
+
+                        "strength": strength,
+
+                        "reference_level": previous_high,
+
+                        "price": low,
+
+                    }
+
+                )
+
+            elif bearish_retest:
+
+                distance = abs(
+                    high
+                    - previous_low
+                )
+
+                strength = round(
+
+                    1.0
+                    - (
+                        distance
+                        / max(
+                            previous_low,
+                            1.0,
+                        )
+                    ),
+
+                    5,
+
+                )
+
+                context.add_pattern(
+
+                    {
+
+                        "name": "BEARISH_RETEST",
+
+                        "index": index,
+
+                        "strength": strength,
+
+                        "reference_level": previous_low,
+
+                        "price": high,
+
+                    }
+
+                )                                                                                                                                                             
