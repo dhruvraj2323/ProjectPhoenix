@@ -832,4 +832,73 @@ class PatternDetector:
 
                     }
 
-                )                                                                                                                          
+                )
+
+        # ---------------------------------------------
+        # Breakdown Detection
+        # ---------------------------------------------
+
+        LOOKBACK = 5
+
+        if index >= LOOKBACK:
+
+            previous_candles = (
+                context.candles[
+                    index - LOOKBACK:index
+                ]
+            )
+
+            lowest_low = min(
+
+                candle.get(
+                    "low",
+                    0.0,
+                )
+
+                for candle in previous_candles
+
+            )
+
+            if low < lowest_low:
+
+                breakdown_size = round(
+
+                    lowest_low - low,
+
+                    5,
+
+                )
+
+                strength = round(
+
+                    breakdown_size
+                    / max(
+                        lowest_low,
+                        1.0,
+                    ),
+
+                    5,
+
+                )
+
+                context.add_pattern(
+
+                    {
+
+                        "name": "BREAKDOWN",
+
+                        "index": index,
+
+                        "strength": strength,
+
+                        "breakdown_size": breakdown_size,
+
+                        "lowest_low": lowest_low,
+
+                        "current_low": low,
+
+                        "lookback": LOOKBACK,
+
+                    }
+
+                )                                                                                                                                          
