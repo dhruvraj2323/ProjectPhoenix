@@ -135,7 +135,21 @@ class IndicatorCalculator:
         period: int,
     ):
 
-        value = 0.0
+        if candles is None or len(candles) < period:
+
+            value = 0.0
+
+        else:
+
+            closes = [
+                self._get_close(candle)
+                for candle in candles[-period:]
+            ]
+
+            value = round(
+                sum(closes) / period,
+                5,
+            )
 
         self._results[f"SMA_{period}"] = value
         self._results[f"SMA{period}"] = value
