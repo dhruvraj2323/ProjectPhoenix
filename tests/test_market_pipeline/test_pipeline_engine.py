@@ -177,12 +177,12 @@ def test_pipeline_executor():
 
     assert (
         result.execution_result.status
-        == ExecutionStatus.PENDING
+        == ExecutionStatus.ACCEPTED
     )
 
     assert (
         result.execution_result.accepted
-        is False
+        is True
     )
 
     print()

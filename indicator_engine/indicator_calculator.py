@@ -118,7 +118,106 @@ class IndicatorCalculator:
         period: int,
     ):
 
-        value = 0.0
+        if candles is None or len(candles) < (period + 1):
+
+            value = 0.0
+
+        else:
+
+            closes = [
+                self._get_close(candle)
+                for candle in candles
+            ]
+
+            gains = []
+            losses = []
+
+            for index in range(1, len(closes)):
+
+                change = (
+                    closes[index]
+                    - closes[index - 1]
+                )
+
+                if change > 0:
+
+                    gains.append(change)
+                    losses.append(0.0)
+
+                elif change < 0:
+
+                    gains.append(0.0)
+                    losses.append(abs(change))
+
+                else:
+
+                    gains.append(0.0)
+                    losses.append(0.0)
+
+            average_gain = (
+                sum(gains[:period])
+                / period
+            )
+
+            average_loss = (
+                sum(losses[:period])
+                / period
+            )
+
+            for index in range(
+                period,
+                len(gains),
+            ):
+
+                average_gain = (
+                    (
+                        average_gain
+                        * (period - 1)
+                    )
+                    + gains[index]
+                ) / period
+
+                average_loss = (
+                    (
+                        average_loss
+                        * (period - 1)
+                    )
+                    + losses[index]
+                ) / period
+
+            if (
+                average_gain == 0.0
+                and average_loss == 0.0
+            ):
+
+                value = 50.0
+
+            elif average_loss == 0.0:
+
+                value = 100.0
+
+            else:
+
+                relative_strength = (
+                    average_gain
+                    / average_loss
+                )
+
+                value = (
+                    100.0
+                    - (
+                        100.0
+                        / (
+                            1.0
+                            + relative_strength
+                        )
+                    )
+                )
+
+                value = round(
+                    value,
+                    5,
+                )
 
         self._results[f"RSI_{period}"] = value
         self._results[f"RSI{period}"] = value
