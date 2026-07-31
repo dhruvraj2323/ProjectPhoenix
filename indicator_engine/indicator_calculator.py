@@ -46,6 +46,40 @@ class IndicatorCalculator:
 
         return float(getattr(candle, "close", 0.0))
 
+    def _get_high(
+        self,
+        candle,
+    ) -> float:
+        """
+        Extract high price from a candle.
+
+        Supports dictionary candles and
+        future object-based candle models.
+        """
+
+        if isinstance(candle, dict):
+
+            return float(candle.get("high", 0.0))
+
+        return float(getattr(candle, "high", 0.0))
+
+    def _get_low(
+        self,
+        candle,
+    ) -> float:
+        """
+        Extract low price from a candle.
+
+        Supports dictionary candles and
+        future object-based candle models.
+        """
+
+        if isinstance(candle, dict):
+
+            return float(candle.get("low", 0.0))
+
+        return float(getattr(candle, "low", 0.0))
+        
     # ---------------------------------------------------------
     # EMA
     # ---------------------------------------------------------
@@ -234,7 +268,53 @@ class IndicatorCalculator:
         period: int,
     ):
 
-        value = 0.0
+        if candles is None or len(candles) < (period + 1):
+
+            value = 0.0
+
+        else:
+
+            true_ranges = []
+
+            for index in range(
+                1,
+                len(candles),
+            ):
+
+                current = candles[index]
+                previous = candles[index - 1]
+
+                high = self._get_high(current)
+                low = self._get_low(current)
+                previous_close = self._get_close(previous)
+
+                true_range = max(
+                    high - low,
+                    abs(high - previous_close),
+                    abs(low - previous_close),
+                )
+
+                true_ranges.append(true_range)
+
+            atr = (
+                sum(true_ranges[:period])
+                / period
+            )
+
+            for true_range in true_ranges[period:]:
+
+                atr = (
+                    (
+                        atr
+                        * (period - 1)
+                    )
+                    + true_range
+                ) / period
+
+            value = round(
+                atr,
+                5,
+            )
 
         self._results[f"ATR_{period}"] = value
         self._results[f"ATR{period}"] = value
