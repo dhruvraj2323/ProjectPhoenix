@@ -535,4 +535,156 @@ class PatternDetector:
 
                     }
 
-                )                                                          
+                )
+
+            # ---------------------------------------------
+        # Higher High / Higher Low Detection
+        # ---------------------------------------------
+
+        if index > 0:
+
+            previous = context.candles[index - 1]
+
+            previous_high = previous.get(
+                "high",
+                0.0,
+            )
+
+            previous_low = previous.get(
+                "low",
+                0.0,
+            )
+
+            current_high = high
+
+            current_low = low
+
+            if (
+
+                current_high > previous_high
+
+                and
+
+                current_low > previous_low
+
+            ):
+
+                high_strength = (
+                    current_high
+                    - previous_high
+                )
+
+                low_strength = (
+                    current_low
+                    - previous_low
+                )
+
+                strength = round(
+
+                    (
+                        high_strength
+                        + low_strength
+                    )
+                    / 2.0,
+
+                    5,
+
+                )
+
+                context.add_pattern(
+
+                    {
+
+                        "name": "HIGHER_HIGH_HIGHER_LOW",
+
+                        "index": index,
+
+                        "strength": strength,
+
+                        "previous_high": previous_high,
+
+                        "previous_low": previous_low,
+
+                        "current_high": current_high,
+
+                        "current_low": current_low,
+
+                    }
+
+                )
+
+            # ---------------------------------------------
+        # Higher High / Higher Low Detection
+        # ---------------------------------------------
+
+        if index > 0:
+
+            previous = context.candles[index - 1]
+
+            previous_high = previous.get(
+                "high",
+                0.0,
+            )
+
+            previous_low = previous.get(
+                "low",
+                0.0,
+            )
+
+            current_high = high
+
+            current_low = low
+
+            if (
+
+                current_high > previous_high
+
+                and
+
+                current_low > previous_low
+
+            ):
+
+                high_strength = (
+                    current_high
+                    - previous_high
+                )
+
+                low_strength = (
+                    current_low
+                    - previous_low
+                )
+
+                strength = round(
+
+                    (
+                        high_strength
+                        + low_strength
+                    )
+                    / 2.0,
+
+                    5,
+
+                )
+
+                context.add_pattern(
+
+                    {
+
+                        "name": "HIGHER_HIGH_HIGHER_LOW",
+
+                        "index": index,
+
+                        "strength": strength,
+
+                        "previous_high": previous_high,
+
+                        "previous_low": previous_low,
+
+                        "current_high": current_high,
+
+                        "current_low": current_low,
+
+                    }
+
+                )                                                                                          
