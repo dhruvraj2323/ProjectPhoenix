@@ -643,11 +643,62 @@ class IndicatorCalculator:
     def calculate_supertrend(
         self,
         candles,
-        period: int = 10,
+        period: int = 14,
         multiplier: float = 3.0,
     ):
 
-        value = 0.0
+        if candles is None or len(candles) < period:
+
+            value = 0.0
+
+            self._results["SUPERTREND"] = value
+
+            return value
+
+        atr = self.calculate_atr(
+            candles,
+            period,
+        )
+
+        last = candles[-1]
+
+        high = self._get_high(last)
+        low = self._get_low(last)
+
+        hl2 = (
+            high + low
+        ) / 2.0
+
+        upper_band = hl2 + (
+            multiplier * atr
+        )
+
+        lower_band = hl2 - (
+            multiplier * atr
+        )
+
+        close = self._get_close(last)
+
+        if close >= upper_band:
+
+            value = round(
+                lower_band,
+                5,
+            )
+
+        elif close <= lower_band:
+
+            value = round(
+                upper_band,
+                5,
+            )
+
+        else:
+
+            value = round(
+                lower_band,
+                5,
+            )
 
         self._results["SUPERTREND"] = value
 
