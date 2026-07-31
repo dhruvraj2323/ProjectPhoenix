@@ -1033,4 +1033,79 @@ class PatternDetector:
 
                     }
 
-                )                                                                                                                                                             
+                )
+
+        # ---------------------------------------------
+        # Indicator-Based Pattern Confirmation
+        # ---------------------------------------------
+
+        indicators = context.get_metadata(
+            "indicators",
+            {},
+        )
+
+        if (
+
+            indicators
+
+            and
+
+            context.patterns
+
+        ):
+
+            ema20 = indicators.get(
+                "EMA_20",
+                0.0,
+            )
+
+            ema200 = indicators.get(
+                "EMA_200",
+                indicators.get(
+                    "EMA200",
+                    0.0,
+                ),
+            )
+
+            rsi = indicators.get(
+                "RSI_14",
+                50.0,
+            )
+
+            supertrend = indicators.get(
+                "SUPERTREND",
+                0.0,
+            )
+
+            for pattern in context.patterns:
+
+                confirmation = 0
+
+                if ema20 > ema200:
+
+                    confirmation += 1
+
+                if 40 <= rsi <= 70:
+
+                    confirmation += 1
+
+                if close_price >= supertrend:
+
+                    confirmation += 1
+
+                pattern[
+                    "indicator_confirmation"
+                ] = confirmation
+
+                pattern[
+                    "confirmed"
+                ] = (
+                    confirmation >= 2
+                )
+
+                pattern[
+                    "confirmation_score"
+                ] = round(
+                    confirmation / 3.0,
+                    3,
+                )                                                                                                                                                                             
