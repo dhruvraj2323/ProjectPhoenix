@@ -9,6 +9,7 @@ Strategy Alignment
 
 from __future__ import annotations
 
+from math import sqrt
 from typing import Any, Dict
 
 
@@ -454,9 +455,73 @@ class IndicatorCalculator:
         period: int = 20,
     ):
 
-        value = 0.0
+        if candles is None or len(candles) < period:
 
-        self._results["BOLLINGER_BANDS"] = value
+            value = {
+                "upper": 0.0,
+                "middle": 0.0,
+                "lower": 0.0,
+            }
+
+        else:
+
+            closes = [
+                self._get_close(candle)
+                for candle in candles[-period:]
+            ]
+
+            middle = (
+                sum(closes)
+                / period
+            )
+
+            variance = (
+                sum(
+                    (
+                        close
+                        - middle
+                    ) ** 2
+                    for close in closes
+                )
+                / period
+            )
+
+            standard_deviation = sqrt(
+                variance
+            )
+
+            upper = round(
+                middle
+                + (
+                    2.0
+                    * standard_deviation
+                ),
+                5,
+            )
+
+            middle = round(
+                middle,
+                5,
+            )
+
+            lower = round(
+                middle
+                - (
+                    2.0
+                    * standard_deviation
+                ),
+                5,
+            )
+
+            value = {
+                "upper": upper,
+                "middle": middle,
+                "lower": lower,
+            }
+
+        self._results[
+            "BOLLINGER_BANDS"
+        ] = value
 
         return value
 
