@@ -43,9 +43,20 @@ class IndicatorCalculator:
 
         if isinstance(candle, dict):
 
-            return float(candle.get("close", 0.0))
+            return float(
+                candle.get(
+                    "close",
+                    0.0,
+                )
+            )
 
-        return float(getattr(candle, "close", 0.0))
+        return float(
+            getattr(
+                candle,
+                "close",
+                0.0,
+            )
+        )    
 
     def _get_high(
         self,
@@ -60,9 +71,20 @@ class IndicatorCalculator:
 
         if isinstance(candle, dict):
 
-            return float(candle.get("high", 0.0))
+            return float(
+                candle.get(
+                    "high",
+                    0.0,
+                )
+            )
 
-        return float(getattr(candle, "high", 0.0))
+        return float(
+            getattr(
+                candle,
+                "high",
+                0.0,
+            )
+        )
 
     def _get_low(
         self,
@@ -77,9 +99,48 @@ class IndicatorCalculator:
 
         if isinstance(candle, dict):
 
-            return float(candle.get("low", 0.0))
+            return float(
+                candle.get(
+                    "low",
+                    0.0,
+                )
+            )
 
-        return float(getattr(candle, "low", 0.0))
+        return float(
+            getattr(
+                candle,
+                "low",
+                0.0,
+            )
+        )
+
+    def _get_volume(
+        self,
+        candle,
+    ) -> float:
+        """
+        Extract volume from a candle.
+
+        Supports dictionary candles and
+        future object-based candle models.
+        """
+
+        if isinstance(candle, dict):
+
+            return float(
+                candle.get(
+                    "volume",
+                    0.0,
+                )
+            )
+
+        return float(
+            getattr(
+                candle,
+                "volume",
+                0.0,
+            )
+        )
         
     # ---------------------------------------------------------
     # EMA
@@ -532,7 +593,46 @@ class IndicatorCalculator:
         candles,
     ):
 
-        value = 0.0
+        if candles is None or len(candles) == 0:
+
+            value = 0.0
+
+        else:
+
+            weighted_price_sum = 0.0
+            volume_sum = 0.0
+
+            for candle in candles:
+
+                high = self._get_high(candle)
+                low = self._get_low(candle)
+                close = self._get_close(candle)
+                volume = self._get_volume(candle)
+
+                typical_price = (
+                    high
+                    + low
+                    + close
+                ) / 3.0
+
+                weighted_price_sum += (
+                    typical_price
+                    * volume
+                )
+
+                volume_sum += volume
+
+            if volume_sum == 0.0:
+
+                value = 0.0
+
+            else:
+
+                value = round(
+                    weighted_price_sum
+                    / volume_sum,
+                    5,
+                )
 
         self._results["VWAP"] = value
 
