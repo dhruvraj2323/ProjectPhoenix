@@ -441,4 +441,98 @@ class PatternDetector:
 
                     }
 
-                )                                          
+                )
+
+            # ---------------------------------------------
+        # Pin Bar Detection
+        # ---------------------------------------------
+
+        if candle_range > 0:
+
+            body_ratio = (
+                body
+                / candle_range
+            )
+
+            lower_ratio = (
+                lower_shadow
+                / candle_range
+            )
+
+            upper_ratio = (
+                upper_shadow
+                / candle_range
+            )
+
+            if (
+
+                body_ratio <= 0.30
+
+                and
+
+                (
+
+                    lower_ratio >= 0.60
+
+                    or
+
+                    upper_ratio >= 0.60
+
+                )
+
+            ):
+
+                if lower_ratio > upper_ratio:
+
+                    direction = "BULLISH"
+
+                    dominant_shadow = lower_ratio
+
+                else:
+
+                    direction = "BEARISH"
+
+                    dominant_shadow = upper_ratio
+
+                strength = round(
+
+                    dominant_shadow
+                    * (
+                        1.0
+                        - body_ratio
+                    ),
+
+                    3,
+
+                )
+
+                context.add_pattern(
+
+                    {
+
+                        "name": "PIN_BAR",
+
+                        "direction": direction,
+
+                        "index": index,
+
+                        "strength": strength,
+
+                        "body_ratio": round(
+                            body_ratio,
+                            5,
+                        ),
+
+                        "upper_shadow": round(
+                            upper_ratio,
+                            5,
+                        ),
+
+                        "lower_shadow": round(
+                            lower_ratio,
+                            5,
+                        ),
+
+                    }
+
+                )                                                          
