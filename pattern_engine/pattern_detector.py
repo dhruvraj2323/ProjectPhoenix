@@ -165,7 +165,7 @@ class PatternDetector:
 
                 )        
 
-            # ---------------------------------------------
+        # ---------------------------------------------
         # Shooting Star Detection
         # ---------------------------------------------
 
@@ -241,4 +241,104 @@ class PatternDetector:
 
                     }
 
-                )                
+                )      
+
+        # ---------------------------------------------
+        # Bullish Engulfing Detection
+        # ---------------------------------------------
+
+        if index > 0:
+
+            previous = context.candles[index - 1]
+
+            previous_open = previous.get(
+                "open",
+                0.0,
+            )
+
+            previous_close = previous.get(
+                "close",
+                0.0,
+            )
+
+            previous_bearish = (
+                previous_close
+                < previous_open
+            )
+
+            current_bullish = (
+                close_price
+                > open_price
+            )
+
+            body_engulfs = (
+
+                open_price
+                <= previous_close
+
+                and
+
+                close_price
+                >= previous_open
+
+            )
+
+            if (
+
+                previous_bearish
+
+                and
+
+                current_bullish
+
+                and
+
+                body_engulfs
+
+            ):
+
+                previous_body = abs(
+                    previous_open
+                    - previous_close
+                )
+
+                current_body = abs(
+                    close_price
+                    - open_price
+                )
+
+                if previous_body > 0:
+
+                    strength = round(
+                        current_body
+                        / previous_body,
+                        3,
+                    )
+
+                else:
+
+                    strength = 1.0
+
+                context.add_pattern(
+
+                    {
+
+                        "name": "BULLISH_ENGULFING",
+
+                        "index": index,
+
+                        "strength": strength,
+
+                        "previous_body": round(
+                            previous_body,
+                            5,
+                        ),
+
+                        "current_body": round(
+                            current_body,
+                            5,
+                        ),
+
+                    }
+
+                )                          
