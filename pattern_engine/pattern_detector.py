@@ -65,3 +65,102 @@ class PatternDetector:
                 )
 
         return context
+
+            # ---------------------------------------------
+        # Hammer Detection
+        # ---------------------------------------------
+
+        upper_shadow = (
+            high
+            - max(
+                open_price,
+                close_price,
+            )
+        )
+
+        lower_shadow = (
+            min(
+                open_price,
+                close_price,
+            )
+            - low
+        )
+
+        body = abs(
+            close_price
+            - open_price
+        )
+
+        if candle_range > 0:
+
+            body_ratio = (
+                body
+                / candle_range
+            )
+
+            lower_ratio = (
+                lower_shadow
+                / candle_range
+            )
+
+            upper_ratio = (
+                upper_shadow
+                / candle_range
+            )
+
+            if (
+
+                body_ratio <= 0.35
+
+                and
+
+                lower_ratio >= 0.50
+
+                and
+
+                upper_ratio <= 0.20
+
+            ):
+
+                strength = round(
+
+                    (
+                        lower_ratio
+                        * (
+                            1.0
+                            - body_ratio
+                        )
+                    ),
+
+                    3,
+
+                )
+
+                context.add_pattern(
+
+                    {
+
+                        "name": "HAMMER",
+
+                        "index": index,
+
+                        "strength": strength,
+
+                        "body_ratio": round(
+                            body_ratio,
+                            5,
+                        ),
+
+                        "lower_shadow": round(
+                            lower_ratio,
+                            5,
+                        ),
+
+                        "upper_shadow": round(
+                            upper_ratio,
+                            5,
+                        ),
+
+                    }
+
+                )        
