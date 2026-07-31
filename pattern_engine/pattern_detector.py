@@ -341,4 +341,104 @@ class PatternDetector:
 
                     }
 
-                )                          
+                )
+
+            # ---------------------------------------------
+        # Bearish Engulfing Detection
+        # ---------------------------------------------
+
+        if index > 0:
+
+            previous = context.candles[index - 1]
+
+            previous_open = previous.get(
+                "open",
+                0.0,
+            )
+
+            previous_close = previous.get(
+                "close",
+                0.0,
+            )
+
+            previous_bullish = (
+                previous_close
+                > previous_open
+            )
+
+            current_bearish = (
+                close_price
+                < open_price
+            )
+
+            body_engulfs = (
+
+                open_price
+                >= previous_close
+
+                and
+
+                close_price
+                <= previous_open
+
+            )
+
+            if (
+
+                previous_bullish
+
+                and
+
+                current_bearish
+
+                and
+
+                body_engulfs
+
+            ):
+
+                previous_body = abs(
+                    previous_close
+                    - previous_open
+                )
+
+                current_body = abs(
+                    open_price
+                    - close_price
+                )
+
+                if previous_body > 0:
+
+                    strength = round(
+                        current_body
+                        / previous_body,
+                        3,
+                    )
+
+                else:
+
+                    strength = 1.0
+
+                context.add_pattern(
+
+                    {
+
+                        "name": "BEARISH_ENGULFING",
+
+                        "index": index,
+
+                        "strength": strength,
+
+                        "previous_body": round(
+                            previous_body,
+                            5,
+                        ),
+
+                        "current_body": round(
+                            current_body,
+                            5,
+                        ),
+
+                    }
+
+                )                                          
