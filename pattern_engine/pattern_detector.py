@@ -22,44 +22,45 @@ class PatternDetector:
         self,
         context: PatternContext,
     ) -> PatternContext:
+        """
+        Detect candlestick patterns.
 
-        for candle in context.candles:
+        M50.X.1
+        Enhanced Doji Detection
+        """
 
-            open_price = candle.get(
-                "open",
-                0,
-            )
+        DOJI_THRESHOLD = 0.10
 
-            close_price = candle.get(
-                "close",
-                0,
-            )
+        for index, candle in enumerate(context.candles):
 
-            high = candle.get(
-                "high",
-                0,
-            )
-
-            low = candle.get(
-                "low",
-                0,
-            )
-
-            body = abs(
-                close_price - open_price
-            )
+            open_price = candle.get("open", 0.0)
+            close_price = candle.get("close", 0.0)
+            high = candle.get("high", 0.0)
+            low = candle.get("low", 0.0)
 
             candle_range = high - low
 
-            if (
-                candle_range > 0
-                and body <= candle_range * 0.10
-            ):
+            if candle_range <= 0:
+
+                continue
+
+            body = abs(close_price - open_price)
+
+            body_ratio = body / candle_range
+
+            if body_ratio <= DOJI_THRESHOLD:
+
+                strength = round(
+                    1.0 - (body_ratio / DOJI_THRESHOLD),
+                    3,
+                )
 
                 context.add_pattern(
                     {
                         "name": "DOJI",
-                        "strength": 1.0,
+                        "index": index,
+                        "strength": strength,
+                        "body_ratio": round(body_ratio, 5),
                     }
                 )
 
