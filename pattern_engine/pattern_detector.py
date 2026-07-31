@@ -343,7 +343,7 @@ class PatternDetector:
 
                 )
 
-            # ---------------------------------------------
+        # ---------------------------------------------
         # Bearish Engulfing Detection
         # ---------------------------------------------
 
@@ -443,7 +443,7 @@ class PatternDetector:
 
                 )
 
-            # ---------------------------------------------
+        # ---------------------------------------------
         # Pin Bar Detection
         # ---------------------------------------------
 
@@ -537,7 +537,7 @@ class PatternDetector:
 
                 )
 
-            # ---------------------------------------------
+        # ---------------------------------------------
         # Higher High / Higher Low Detection
         # ---------------------------------------------
 
@@ -613,7 +613,7 @@ class PatternDetector:
 
                 )
 
-            # ---------------------------------------------
+        # ---------------------------------------------
         # Higher High / Higher Low Detection
         # ---------------------------------------------
 
@@ -689,7 +689,7 @@ class PatternDetector:
 
                 )
 
-            # ---------------------------------------------
+        # ---------------------------------------------
         # Lower High / Lower Low Detection
         # ---------------------------------------------
 
@@ -763,4 +763,73 @@ class PatternDetector:
 
                     }
 
-                )                                                                                                          
+                )
+
+        # ---------------------------------------------
+        # Breakout Detection
+        # ---------------------------------------------
+
+        LOOKBACK = 5
+
+        if index >= LOOKBACK:
+
+            previous_candles = (
+                context.candles[
+                    index - LOOKBACK:index
+                ]
+            )
+
+            highest_high = max(
+
+                candle.get(
+                    "high",
+                    0.0,
+                )
+
+                for candle in previous_candles
+
+            )
+
+            if high > highest_high:
+
+                breakout_size = round(
+
+                    high - highest_high,
+
+                    5,
+
+                )
+
+                strength = round(
+
+                    breakout_size
+                    / max(
+                        highest_high,
+                        1.0,
+                    ),
+
+                    5,
+
+                )
+
+                context.add_pattern(
+
+                    {
+
+                        "name": "BREAKOUT",
+
+                        "index": index,
+
+                        "strength": strength,
+
+                        "breakout_size": breakout_size,
+
+                        "highest_high": highest_high,
+
+                        "current_high": high,
+
+                        "lookback": LOOKBACK,
+
+                    }
+
+                )                                                                                                                          
