@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Strategy Rules
-M38
+M51
 =================================================
 """
 
@@ -13,26 +13,99 @@ from strategy.strategy_context import (
 )
 
 from strategy.strategy_models import (
-    StrategySignal,
-    StrategyType,
     StrategyStatus,
+    StrategyType,
     TradeDirection,
+)
+
+from strategy.strategy_scoring import (
+    StrategyScoring,
+)
+
+from strategy.strategy_signal_builder import (
+    StrategySignalBuilder,
 )
 
 
 class StrategyRules:
     """
     Implements all trading strategies.
+
+    Responsibilities
+
+    • Evaluate strategies
+
+    • Calculate intelligence
+
+    • Build strategy signals
+
+    • Select approved strategy
     """
 
+    def __init__(self) -> None:
+
+        self.scoring = StrategyScoring()
+
+        self.builder = StrategySignalBuilder()
+
     # --------------------------------------------------
-    # S01 EMA Trend Strategy
+    # Internal Helper
+    # --------------------------------------------------
+
+    def _apply_signal(
+        self,
+        context: StrategyContext,
+        signal,
+    ) -> None:
+        """
+        Apply approved strategy signal.
+        """
+
+        signal.rank = 1
+
+        signal.selected = True
+
+        context.strategy_result.signals.append(
+            signal,
+        )
+
+        context.strategy_result.selected_strategy = (
+            signal.strategy_name
+        )
+
+        context.strategy_result.status = (
+            StrategyStatus.APPROVED
+        )
+
+        context.strategy_result.best_score = (
+            signal.strategy_score
+        )
+
+        context.strategy_result.selected_rank = 1
+
+        context.strategy_result.selection_reason = (
+            signal.reason
+        )
+
+        context.strategy_result.statistics.total_evaluated += 1
+
+        context.strategy_result.statistics.approved += 1
+
+    # --------------------------------------------------
+    # S01
     # --------------------------------------------------
 
     def evaluate_s01(
         self,
         context: StrategyContext,
     ) -> StrategyContext:
+        """
+        EMA Trend Strategy
+        """
+
+        scores = self.scoring.calculate(
+            context,
+        )
 
         ema9 = context.indicators.get(
             "EMA9",
@@ -59,6 +132,32 @@ class StrategyRules:
             0.0,
         )
 
+        breakout = any(
+
+            pattern.get(
+                "name",
+            ) == "BREAKOUT"
+
+            for pattern in context.patterns
+
+        )
+
+        retest = any(
+
+            pattern.get(
+                "name",
+            ) in (
+
+                "BULLISH_RETEST",
+
+                "BEARISH_RETEST",
+
+            )
+
+            for pattern in context.patterns
+
+        )
+
         signal = None
 
         # ---------------- BUY ----------------
@@ -73,15 +172,13 @@ class StrategyRules:
 
         ):
 
-            signal = StrategySignal(
+            signal = self.builder.build(
 
                 strategy_id="S01",
 
                 strategy_name=StrategyType.S01_EMA_TREND,
 
                 direction=TradeDirection.BUY,
-
-                confidence=90.0,
 
                 entry_price=price,
 
@@ -91,9 +188,17 @@ class StrategyRules:
 
                 risk_percent=1.0,
 
-                reason=(
-                    "EMA Trend BUY confirmed."
-                ),
+                reason="EMA Trend BUY confirmed.",
+
+                strategy_score=scores.strategy_score,
+
+                pattern_score=scores.pattern_score,
+
+                indicator_score=scores.indicator_score,
+
+                confirmation_score=scores.confirmation_score,
+
+                confidence=scores.confidence,
 
             )
 
@@ -107,17 +212,16 @@ class StrategyRules:
 
             and rsi14 < 45
 
+
         ):
 
-            signal = StrategySignal(
+            signal = self.builder.build(
 
                 strategy_id="S01",
 
                 strategy_name=StrategyType.S01_EMA_TREND,
 
                 direction=TradeDirection.SELL,
-
-                confidence=90.0,
 
                 entry_price=price,
 
@@ -127,29 +231,29 @@ class StrategyRules:
 
                 risk_percent=1.0,
 
-                reason=(
-                    "EMA Trend SELL confirmed."
-                ),
+                reason="EMA Trend SELL confirmed.",
+
+                strategy_score=scores.strategy_score,
+
+                pattern_score=scores.pattern_score,
+
+                indicator_score=scores.indicator_score,
+
+                confirmation_score=scores.confirmation_score,
+
+                confidence=scores.confidence,
 
             )
 
         if signal is not None:
 
-            context.strategy_result.signals.append(
-                signal
+            self._apply_signal(
+
+                context,
+
+                signal,
+
             )
-
-            context.strategy_result.selected_strategy = (
-                StrategyType.S01_EMA_TREND
-            )
-
-            context.strategy_result.status = (
-                StrategyStatus.APPROVED
-            )
-
-            context.strategy_result.statistics.total_evaluated += 1
-
-            context.strategy_result.statistics.approved += 1
 
         else:
 
@@ -167,6 +271,11 @@ class StrategyRules:
         self,
         context: StrategyContext,
     ) -> StrategyContext:
+        """
+        Breakout + Retest Strategy.
+
+        Reserved for M52.
+        """
 
         return context
 
@@ -178,6 +287,11 @@ class StrategyRules:
         self,
         context: StrategyContext,
     ) -> StrategyContext:
+        """
+        Pullback Strategy.
+
+        Reserved for M52.
+        """
 
         return context
 
@@ -189,5 +303,10 @@ class StrategyRules:
         self,
         context: StrategyContext,
     ) -> StrategyContext:
+        """
+        Mean Reversion Strategy.
 
-        return context
+        Reserved for M52.
+        """
+
+        return context        

@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Strategy Engine
-M38
+M51
 =================================================
 """
 
@@ -33,9 +33,9 @@ class StrategyEngine:
 
     def __init__(self) -> None:
 
-        self.rules = StrategyRules()
-
         self.validator = StrategyValidator()
+
+        self.rules = StrategyRules()
 
         self.logger = StrategyLogger()
 
@@ -44,12 +44,21 @@ class StrategyEngine:
         context: StrategyContext,
     ) -> StrategyContext:
         """
-        Execute Strategy Engine.
+        Execute complete
+        Strategy Engine pipeline.
         """
+
+        # ------------------------------------
+        # Start
+        # ------------------------------------
 
         self.logger.log_start(
             context,
         )
+
+        # ------------------------------------
+        # Validation
+        # ------------------------------------
 
         if not self.validator.validate(
             context,
@@ -62,7 +71,7 @@ class StrategyEngine:
             return context
 
         # ------------------------------------
-        # Execute Frozen Strategies
+        # Strategy Evaluation
         # ------------------------------------
 
         context = self.rules.evaluate_s01(
@@ -80,6 +89,10 @@ class StrategyEngine:
         context = self.rules.evaluate_s04(
             context,
         )
+
+        # ------------------------------------
+        # Finalize
+        # ------------------------------------
 
         context.complete()
 

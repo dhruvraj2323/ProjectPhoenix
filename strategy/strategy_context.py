@@ -54,6 +54,20 @@ class StrategyContext:
     )
 
     # --------------------------------------------------
+    # Strategy Intelligence (M51)
+    # --------------------------------------------------
+
+    pattern_score: float = 0.0
+
+    indicator_score: float = 0.0
+
+    confirmation_score: float = 0.0
+
+    strategy_score: float = 0.0
+
+    selected_strategy_rank: int = 0
+
+    # --------------------------------------------------
     # Strategy Result
     # --------------------------------------------------
 
@@ -67,6 +81,10 @@ class StrategyContext:
 
     metadata: dict[str, Any] = field(
         default_factory=dict,
+    )
+
+    strategy_candidates: list[dict[str, Any]] = field(
+        default_factory=list,
     )
 
     # --------------------------------------------------
@@ -105,6 +123,18 @@ class StrategyContext:
         self.strategy_result = StrategyResult()
 
         self.metadata.clear()
+
+        self.pattern_score = 0.0
+
+        self.indicator_score = 0.0
+
+        self.confirmation_score = 0.0
+
+        self.strategy_score = 0.0
+
+        self.selected_strategy_rank = 0
+
+        self.strategy_candidates.clear()        
 
         self.completed = False
 

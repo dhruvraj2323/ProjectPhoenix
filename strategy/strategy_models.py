@@ -78,6 +78,21 @@ class StrategySignal:
         default_factory=dict,
     )
 
+    # -----------------------------------------
+    # Strategy Intelligence (M51)
+    # -----------------------------------------
+
+    strategy_score: float = 0.0
+
+    pattern_score: float = 0.0
+
+    indicator_score: float = 0.0
+
+    confirmation_score: float = 0.0
+
+    rank: int = 0
+
+    selected: bool = False
 
 @dataclass(slots=True)
 class StrategyStatistics:
@@ -111,3 +126,17 @@ class StrategyResult:
     )
 
     message: str = ""
+
+    # -----------------------------------------
+    # Strategy Intelligence (M51)
+    # -----------------------------------------
+
+    best_score: float = 0.0
+
+    selected_rank: int = 0
+
+    selection_reason: str = ""
+
+    evaluated_patterns: int = 0
+
+    evaluated_indicators: int = 0    
