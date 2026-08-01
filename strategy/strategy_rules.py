@@ -26,6 +26,18 @@ from strategy.strategy_signal_builder import (
     StrategySignalBuilder,
 )
 
+from strategy.strategy_multi_timeframe import (
+    StrategyMultiTimeframe,
+)
+
+from strategy.strategy_timeframe_ranker import (
+    StrategyTimeframeRanker,
+)
+
+from strategy.strategy_models import (
+    TimeframeAnalysis,
+)
+
 
 class StrategyRules:
     """
@@ -47,6 +59,14 @@ class StrategyRules:
         self.scoring = StrategyScoring()
 
         self.builder = StrategySignalBuilder()
+
+        self.multi_timeframe = (
+            StrategyMultiTimeframe()
+        )
+
+        self.ranker = (
+            StrategyTimeframeRanker()
+        )
 
     # --------------------------------------------------
     # Internal Helper
@@ -90,6 +110,102 @@ class StrategyRules:
         context.strategy_result.statistics.total_evaluated += 1
 
         context.strategy_result.statistics.approved += 1
+
+        # --------------------------------------------------
+    # M52
+    # Build Timeframe Analysis
+    # --------------------------------------------------
+
+    def _build_timeframe_analysis(
+        self,
+        signal,
+    ) -> list[
+        TimeframeAnalysis
+    ]:
+        """
+        Build default timeframe
+        analyses for M52.
+
+        Actual values will be
+        replaced once true
+        multi-timeframe data
+        becomes available.
+        """
+
+        analyses = []
+
+        for timeframe in (
+
+            "D1",
+
+            "H4",
+
+            "H1",
+
+            "M15",
+
+            "M5",
+
+            "M1",
+
+        ):
+
+            analyses.append(
+
+                TimeframeAnalysis(
+
+                    timeframe=timeframe,
+
+                    direction=signal.direction,
+
+                    strategy_score=signal.strategy_score,
+
+                    confidence=signal.confidence,
+
+                    aligned=True,
+
+                )
+
+            )
+
+        return analyses
+
+    # --------------------------------------------------
+    # M52
+    # Store Multi-Timeframe Result
+    # --------------------------------------------------
+
+    def _apply_multi_timeframe(
+        self,
+        context: StrategyContext,
+        signal,
+    ) -> None:
+        """
+        Execute Multi-Timeframe
+        confirmation.
+        """
+
+        analyses = self._build_timeframe_analysis(
+            signal,
+        )
+
+        result = self.multi_timeframe.evaluate(
+            analyses,
+        )
+
+        context.multi_timeframe_result = result
+
+        context.strategy_result.multi_timeframe_result = (
+            result
+        )
+
+        signal.alignment_score = (
+            result.alignment_score
+        )
+
+        signal.multi_timeframe_confirmed = (
+            result.approved
+        )                
 
     # --------------------------------------------------
     # S01
@@ -159,6 +275,12 @@ class StrategyRules:
         )
 
         signal = None
+
+        # ------------------------------------
+        # M52 Multi-Timeframe
+        # ------------------------------------
+
+        multi_result = None
 
         # ---------------- BUY ----------------
 
@@ -246,6 +368,11 @@ class StrategyRules:
             )
 
         if signal is not None:
+
+            self._apply_multi_timeframe(
+                context,
+                signal,
+            )
 
             self._apply_signal(
 

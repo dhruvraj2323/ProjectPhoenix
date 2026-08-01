@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Strategy Context
-M38
+M52
 =================================================
 """
 
@@ -14,6 +14,7 @@ from typing import Any
 
 from strategy.strategy_models import (
     StrategyResult,
+    MultiTimeframeResult,
 )
 
 
@@ -54,7 +55,7 @@ class StrategyContext:
     )
 
     # --------------------------------------------------
-    # Strategy Intelligence (M51)
+    # M51 Strategy Intelligence
     # --------------------------------------------------
 
     pattern_score: float = 0.0
@@ -68,11 +69,44 @@ class StrategyContext:
     selected_strategy_rank: int = 0
 
     # --------------------------------------------------
+    # M52 Multi-Timeframe Intelligence
+    # --------------------------------------------------
+
+    primary_timeframe: str = "M15"
+
+    execution_timeframe: str = "M1"
+
+    entry_timeframe: str = "M5"
+
+    trend_timeframe: str = "H1"
+
+    major_trend_timeframe: str = "H4"
+
+    market_bias_timeframe: str = "D1"
+
+    alignment_score: float = 0.0
+
+    multi_timeframe_score: float = 0.0
+
+    market_bias: str = "NONE"
+
+    timeframe_scores: dict[
+        str,
+        float,
+    ] = field(
+        default_factory=dict,
+    )
+
+    # --------------------------------------------------
     # Strategy Result
     # --------------------------------------------------
 
     strategy_result: StrategyResult = field(
         default_factory=StrategyResult,
+    )
+
+    multi_timeframe_result: MultiTimeframeResult = field(
+        default_factory=MultiTimeframeResult,
     )
 
     # --------------------------------------------------
@@ -83,7 +117,9 @@ class StrategyContext:
         default_factory=dict,
     )
 
-    strategy_candidates: list[dict[str, Any]] = field(
+    strategy_candidates: list[
+        dict[str, Any]
+    ] = field(
         default_factory=list,
     )
 
@@ -101,7 +137,9 @@ class StrategyContext:
     # Utility Methods
     # --------------------------------------------------
 
-    def complete(self) -> None:
+    def complete(
+        self,
+    ) -> None:
 
         self.completed = True
 
@@ -118,9 +156,17 @@ class StrategyContext:
 
         self.reason = reason
 
-    def reset(self) -> None:
+    def reset(
+        self,
+    ) -> None:
 
-        self.strategy_result = StrategyResult()
+        self.strategy_result = (
+            StrategyResult()
+        )
+
+        self.multi_timeframe_result = (
+            MultiTimeframeResult()
+        )
 
         self.metadata.clear()
 
@@ -132,9 +178,17 @@ class StrategyContext:
 
         self.strategy_score = 0.0
 
+        self.alignment_score = 0.0
+
+        self.multi_timeframe_score = 0.0
+
+        self.market_bias = "NONE"
+
         self.selected_strategy_rank = 0
 
-        self.strategy_candidates.clear()        
+        self.timeframe_scores.clear()
+
+        self.strategy_candidates.clear()
 
         self.completed = False
 

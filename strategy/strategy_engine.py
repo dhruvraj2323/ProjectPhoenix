@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Strategy Engine
-M51
+M52
 =================================================
 """
 
@@ -29,15 +29,37 @@ class StrategyEngine:
     """
     Executes the complete
     Strategy Engine pipeline.
+
+    M52 Pipeline
+
+    Validate
+        ↓
+    Strategy Evaluation
+        ↓
+    Multi-Timeframe Intelligence
+        ↓
+    Finalize
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+    ) -> None:
 
-        self.validator = StrategyValidator()
+        self.validator = (
+            StrategyValidator()
+        )
 
-        self.rules = StrategyRules()
+        self.rules = (
+            StrategyRules()
+        )
 
-        self.logger = StrategyLogger()
+        self.logger = (
+            StrategyLogger()
+        )
+
+    # --------------------------------------------------
+    # Run Engine
+    # --------------------------------------------------
 
     def run(
         self,
@@ -45,7 +67,7 @@ class StrategyEngine:
     ) -> StrategyContext:
         """
         Execute complete
-        Strategy Engine pipeline.
+        Strategy Engine.
         """
 
         # ------------------------------------
@@ -57,7 +79,7 @@ class StrategyEngine:
         )
 
         # ------------------------------------
-        # Validation
+        # Validate
         # ------------------------------------
 
         if not self.validator.validate(
@@ -71,7 +93,7 @@ class StrategyEngine:
             return context
 
         # ------------------------------------
-        # Strategy Evaluation
+        # Evaluate Strategies
         # ------------------------------------
 
         context = self.rules.evaluate_s01(
@@ -91,10 +113,14 @@ class StrategyEngine:
         )
 
         # ------------------------------------
-        # Finalize
+        # Complete
         # ------------------------------------
 
         context.complete()
+
+        # ------------------------------------
+        # Finish
+        # ------------------------------------
 
         self.logger.log_finish(
             context,
