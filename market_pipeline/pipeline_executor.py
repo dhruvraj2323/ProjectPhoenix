@@ -325,7 +325,7 @@ class PipelineExecutor:
             self.strategy_manager.execute(
                 strategy_context,
             )
-        )
+        )     
 
         if not strategy_context.completed:
 

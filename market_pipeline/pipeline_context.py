@@ -12,6 +12,10 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
+from strategy.strategy_models import (
+    AIConfidenceResult,
+)
+
 
 @dataclass(slots=True)
 class PipelineContext:
@@ -89,6 +93,23 @@ class PipelineContext:
     signals: list = field(
         default_factory=list,
     )
+
+    # --------------------------------------------------
+    # AI Intelligence (M53)
+    # --------------------------------------------------
+
+    ai_confidence_result: (
+        AIConfidenceResult | None
+    ) = None
+
+    ai_metadata: dict[
+        str,
+        object,
+    ] = field(
+        default_factory=dict,
+    )
+
+    ai_enabled: bool = True
 
     # --------------------------------------------------
     # Risk Engine
@@ -245,3 +266,9 @@ class PipelineContext:
         self.decision = ""
 
         self.reason = ""
+
+        self.ai_confidence_result = None
+
+        self.ai_metadata.clear()
+
+        self.ai_enabled = True
