@@ -2,49 +2,46 @@
 =================================================
 Project Phoenix
 Live Trading Engine
+M55
 =================================================
-
-Master controller of Live Trading Layer.
 """
 
+from __future__ import annotations
+
+from live_trading.live_context import LiveContext
 from live_trading.live_logger import LiveLogger
-from live_trading.live_models import (
-    LiveTradingStatus,
-    LiveTradingResult,
-)
-from live_trading.live_portfolio import LivePortfolioManager
+from live_trading.live_validator import LiveValidator
 
 
 class LiveTradingEngine:
     """
-    Master controller for Live Trading.
+    Core Live Trading Engine.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
 
-        self.portfolio = LivePortfolioManager()
+        self.validator = LiveValidator()
 
-    def initialize(self):
+        self.logger = LiveLogger()
 
-        portfolio = self.portfolio.portfolio()
+    def run(
+        self,
+        context: LiveContext,
+    ) -> LiveContext:
+        """
+        Execute Live Trading Engine.
+        """
 
-        status = LiveTradingStatus(
-            running=True,
-            account_balance=portfolio.balance,
-            total_positions=0,
-        )
+        if not self.validator.validate(context):
 
-        result = LiveTradingResult(
-            approved=True,
-            reason="Live trading engine initialized successfully.",
-            status=status,
-        )
+            context.fail("Live Trading validation failed.")
 
-        LiveLogger.log(result)
+            self.logger.log_finish(context)
 
-        return result
-    # -------------------------------------------------
+            return context
 
-    def shutdown(self):
+        context.complete()
 
-        pass        
+        self.logger.log_finish(context)
+
+        return context

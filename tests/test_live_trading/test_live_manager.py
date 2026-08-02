@@ -1,18 +1,18 @@
 """
 =================================================
 Project Phoenix
-Live Trading Engine Test
+Live Trading Manager Test
 M55
 =================================================
 """
 
 from live_trading.live_context import LiveContext
-from live_trading.live_engine import LiveTradingEngine
+from live_trading.live_manager import LiveManager
 
 
-def test_live_engine():
+def test_live_manager():
 
-    engine = LiveTradingEngine()
+    manager = LiveManager()
 
     context = LiveContext(
         live_id="LIVE-001",
@@ -23,7 +23,7 @@ def test_live_engine():
 
     context.market_price = 1.1050
 
-    result = engine.run(context)
+    result = manager.run(context)
 
     assert result.completed
 

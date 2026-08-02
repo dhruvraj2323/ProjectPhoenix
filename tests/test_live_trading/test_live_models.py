@@ -2,71 +2,70 @@
 =================================================
 Project Phoenix
 Live Trading Models Test
+M55
 =================================================
 """
 
 from live_trading.live_models import (
+    BrokerType,
+    LiveAccount,
+    LiveExecutionResult,
     LiveOrder,
     LivePosition,
-    LivePortfolio,
-    LiveTradingStatus,
-    LiveTradingResult,
+    LiveResult,
+    LiveStatistics,
+    LiveTrade,
+    OrderStatus,
+    OrderType,
+    PositionDirection,
 )
 
 
-def run_test():
+def test_live_models():
 
     order = LiveOrder(
-        ticket=1001,
+        order_id="ORD-001",
+        broker_order_id="MT5-1001",
         symbol="EURUSD",
-        direction="BUY",
+        order_type=OrderType.BUY,
         volume=0.10,
-        entry_price=1.1065,
+        price=1.1050,
+        status=OrderStatus.SUBMITTED,
     )
 
     position = LivePosition(
-        ticket=1001,
+        position_id="POS-001",
+        broker_position_id="MT5-2001",
         symbol="EURUSD",
-        direction="BUY",
-        volume=0.10,
-        entry_price=1.1065,
-        current_price=1.1072,
-        profit=7.0,
+        direction=PositionDirection.LONG,
     )
 
-    portfolio = LivePortfolio(
-        balance=10000.0,
-        equity=10007.0,
-        floating_profit=7.0,
-        closed_profit=0.0,
+    trade = LiveTrade(
+        trade_id="TRD-001",
+        broker_ticket="3001",
+        symbol="EURUSD",
     )
 
-    status = LiveTradingStatus(
-        running=True,
-        account_balance=10000.0,
-        total_positions=1,
+    account = LiveAccount(
+        account_id="ACC-001",
+        broker=BrokerType.MT5,
     )
 
-    result = LiveTradingResult(
-        approved=True,
-        reason="Live trading initialized successfully.",
-        status=status,
+    execution = LiveExecutionResult(
+        success=True,
+        broker_ticket="3001",
     )
 
-    print("===== Live Trading Models =====")
+    statistics = LiveStatistics()
 
-    print(f"Ticket          : {order.ticket}")
-    print(f"Symbol          : {order.symbol}")
-    print(f"Direction       : {order.direction}")
-    print(f"Profit          : {position.profit}")
-    print(f"Balance         : {portfolio.balance}")
+    result = LiveResult(
+        success=True,
+        execution_result=execution,
+        statistics=statistics,
+    )
 
-    assert result.approved
-
-    print()
-    print("Live Trading Models Test Passed")
-
-
-if __name__ == "__main__":
-
-    run_test()
+    assert order.symbol == "EURUSD"
+    assert position.symbol == "EURUSD"
+    assert trade.symbol == "EURUSD"
+    assert account.broker == BrokerType.MT5
+    assert result.success
