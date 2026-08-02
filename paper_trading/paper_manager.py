@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Paper Trading Manager
-M24
+M54
 =================================================
 """
 
@@ -19,22 +19,35 @@ from paper_trading.paper_engine import (
 
 class PaperTradingManager:
     """
-    High-level interface for
-    Paper Trading Engine.
+    High-level manager responsible for
+    executing the complete Paper Trading
+    workflow.
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+    ) -> None:
 
-        self.engine = PaperTradingEngine()
+        self._engine = PaperTradingEngine()
+
+    @property
+    def engine(
+        self,
+    ) -> PaperTradingEngine:
+        """
+        Return engine instance.
+        """
+
+        return self._engine
 
     def execute(
         self,
         context: PaperContext,
     ) -> PaperContext:
         """
-        Execute complete paper trading workflow.
+        Execute Paper Trading Engine.
         """
 
-        return self.engine.run(
+        return self._engine.run(
             context,
         )

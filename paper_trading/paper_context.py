@@ -2,53 +2,96 @@
 =================================================
 Project Phoenix
 Paper Trading Context
-M24
+M54
 =================================================
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime
+from typing import Any
 
 from paper_trading.paper_models import (
-    PaperPortfolio,
+    PaperOrder,
     PaperPosition,
-    PaperTradingResult,
+    PaperTrade,
+    PaperStatistics,
+    PaperResult,
 )
 
 
 @dataclass(slots=True)
 class PaperContext:
     """
-    Runtime context for Paper Trading Engine.
+    Shared runtime context for
+    Paper Trading Engine.
     """
+
+    # --------------------------------------------------
+    # Engine Information
+    # --------------------------------------------------
 
     paper_id: str
 
     account_id: str
 
+    symbol: str
+
+    timeframe: str
+
     created_at: datetime = field(
-        default_factory=lambda: datetime.now(UTC),
+        default_factory=datetime.utcnow,
     )
 
-    portfolio: PaperPortfolio = field(
-        default_factory=PaperPortfolio,
+    # --------------------------------------------------
+    # Input
+    # --------------------------------------------------
+
+    execution_result: Any = None
+
+    market_price: float = 0.0
+
+    spread: float = 0.0
+
+    balance: float = 100000.0
+
+    equity: float = 100000.0
+
+    leverage: float = 100.0
+
+    # --------------------------------------------------
+    # Runtime Objects
+    # --------------------------------------------------
+
+    order: PaperOrder | None = None
+
+    position: PaperPosition | None = None
+
+    trade: PaperTrade | None = None
+
+    statistics: PaperStatistics = field(
+        default_factory=PaperStatistics,
     )
 
-    positions: list[PaperPosition] = field(
-        default_factory=list,
+    result: PaperResult = field(
+        default_factory=PaperResult,
     )
 
-    result: PaperTradingResult = field(
-        default_factory=PaperTradingResult,
-    )
+    # --------------------------------------------------
+    # Metadata
+    # --------------------------------------------------
 
-    execution_result: object | None = None
-
-    metadata: dict = field(
+    metadata: dict[
+        str,
+        Any,
+    ] = field(
         default_factory=dict,
     )
+
+    # --------------------------------------------------
+    # Runtime State
+    # --------------------------------------------------
 
     completed: bool = False
 
@@ -56,9 +99,16 @@ class PaperContext:
 
     reason: str = ""
 
-    def complete(self) -> None:
+    # --------------------------------------------------
+    # Utility Methods
+    # --------------------------------------------------
+
+    def complete(
+        self,
+    ) -> None:
         """
-        Mark processing as completed.
+        Mark Paper Trading
+        execution completed.
         """
 
         self.completed = True
@@ -70,7 +120,8 @@ class PaperContext:
         reason: str,
     ) -> None:
         """
-        Mark processing as failed.
+        Mark Paper Trading
+        execution failed.
         """
 
         self.completed = False
@@ -78,3 +129,47 @@ class PaperContext:
         self.failed = True
 
         self.reason = reason
+
+    def reset(
+        self,
+    ) -> None:
+        """
+        Reset runtime state.
+        """
+
+        self.order = None
+
+        self.position = None
+
+        self.trade = None
+
+        self.statistics = (
+            PaperStatistics()
+        )
+
+        self.result = (
+            PaperResult()
+        )
+
+        self.metadata.clear()
+
+        self.market_price = 0.0
+
+        self.spread = 0.0
+
+        self.completed = False
+
+        self.failed = False
+
+        self.reason = ""
+
+    def set_metadata(
+        self,
+        key: str,
+        value: Any,
+    ) -> None:
+        """
+        Store metadata.
+        """
+
+        self.metadata[key] = value

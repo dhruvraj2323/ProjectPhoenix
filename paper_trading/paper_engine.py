@@ -2,70 +2,174 @@
 =================================================
 Project Phoenix
 Paper Trading Engine
-M24
+M54
 =================================================
 """
 
 from __future__ import annotations
 
-from paper_trading.paper_context import PaperContext
-from paper_trading.paper_logger import PaperLogger
-from paper_trading.paper_portfolio import PaperPortfolioManager
-from paper_trading.paper_validator import PaperValidator
+from paper_trading.order_manager import (
+    OrderManager,
+)
+
+from paper_trading.paper_context import (
+    PaperContext,
+)
+
+from paper_trading.paper_logger import (
+    PaperLogger,
+)
+
+from paper_trading.paper_validator import (
+    PaperValidator,
+)
+
+from paper_trading.position_manager import (
+    PositionManager,
+)
+
+from paper_trading.portfolio_sync import (
+    PortfolioSync,
+)
+
+from paper_trading.trade_manager import (
+    TradeManager,
+)
 
 
 class PaperTradingEngine:
     """
-    Main Paper Trading Engine.
+    Executes the complete
+    Paper Trading workflow.
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+    ) -> None:
 
-        self.validator = PaperValidator()
+        self.validator = (
+            PaperValidator()
+        )
 
-        self.portfolio = PaperPortfolioManager()
+        self.order_manager = (
+            OrderManager()
+        )
 
-        self.logger = PaperLogger()
+        self.position_manager = (
+            PositionManager()
+        )
+
+        self.trade_manager = (
+            TradeManager()
+        )
+
+        self.portfolio_sync = (
+            PortfolioSync()
+        )
+
+        self.logger = (
+            PaperLogger()
+        )
+
+    # --------------------------------------------------
+    # Run Engine
+    # --------------------------------------------------
 
     def run(
         self,
         context: PaperContext,
     ) -> PaperContext:
         """
-        Execute complete Paper Trading workflow.
+        Execute complete
+        Paper Trading Engine.
         """
 
-        self.logger.log_start(context)
+        self.logger.log_start(
+            context,
+        )
 
-        if not self.validator.validate(context):
+        if not self.validator.validate(
+            context,
+        ):
 
-            self.logger.log_failure(context)
+            self.logger.log_failure(
+                context,
+            )
 
             return context
 
-        # Synchronize virtual portfolio into PaperContext
-        context = self.portfolio.update_context(context)
+        # ------------------------------------
+        # Create Paper Order
+        # ------------------------------------
 
-        context.result.approved = True
-
-        context.result.reason = (
-            "Paper trading completed successfully."
+        context = (
+            self.order_manager.create_order(
+                context,
+            )
         )
 
-        context.result.status.running = True
-
-        context.result.status.virtual_balance = (
-            context.portfolio.balance
+        context = (
+            self.order_manager.update_context(
+                context,
+            )
         )
 
-        context.result.status.total_positions = (
-            context.portfolio.total_positions
+        # ------------------------------------
+        # Open Position
+        # ------------------------------------
+
+        context = (
+            self.position_manager.open_position(
+                context,
+            )
         )
+
+        context = (
+            self.position_manager.update_context(
+                context,
+            )
+        )
+
+        # ------------------------------------
+        # Close Trade
+        # ------------------------------------
+
+        context = (
+            self.trade_manager.close_trade(
+                context,
+            )
+        )
+
+        context = (
+            self.trade_manager.update_context(
+                context,
+            )
+        )
+
+        # ------------------------------------
+        # Synchronize Portfolio
+        # ------------------------------------
+
+        context = (
+            self.portfolio_sync.synchronize(
+                context,
+            )
+        )
+
+        context = (
+            self.portfolio_sync.update_statistics(
+                context,
+            )
+        )
+
+        # ------------------------------------
+        # Complete
+        # ------------------------------------
 
         context.complete()
 
-        self.logger.log_summary(context)
-
-        self.logger.log_finish(context)
+        self.logger.log_finish(
+            context,
+        )
 
         return context

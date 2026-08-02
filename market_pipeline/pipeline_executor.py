@@ -20,6 +20,14 @@ from execution_engine.execution_manager import (
     ExecutionManager,
 )
 
+from paper_trading.paper_context import (
+    PaperContext,
+)
+
+from paper_trading.paper_manager import (
+    PaperTradingManager,
+)
+
 from indicator_engine.indicator_context import IndicatorContext
 from indicator_engine.indicator_manager import IndicatorManager
 
@@ -86,6 +94,10 @@ class PipelineExecutor:
         self.ai_engine = AIEngine()
 
         self.execution_manager = ExecutionManager()
+
+        self.paper_manager = (
+            PaperTradingManager()
+        )
 
     # ---------------------------------------------------------
 
@@ -172,6 +184,12 @@ class PipelineExecutor:
         elif stage == PipelineStage.EXECUTION:
 
             self._execution(context)
+
+        elif stage == PipelineStage.PAPER_TRADING:
+
+            self._paper_trading(
+                context,
+            )
 
     # =========================================================
     # Market Data

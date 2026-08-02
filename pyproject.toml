@@ -12,3 +12,6 @@ authors = [
 project = "Project Phoenix"
 phase = "Development Phase V1.0"
 milestone = "M1.1 Repository Initialization"
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

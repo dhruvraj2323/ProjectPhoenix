@@ -34,6 +34,8 @@ class PipelineStage(Enum):
     AI = "AI"
 
     EXECUTION = "EXECUTION"
+    
+    PAPER_TRADING = "PAPER_TRADING"
 
     COMPLETED = "COMPLETED"
 

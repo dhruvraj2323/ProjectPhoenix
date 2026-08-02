@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Paper Trading Logger
-M24
+M54
 =================================================
 """
 
@@ -17,74 +17,98 @@ from paper_trading.paper_context import (
 
 class PaperLogger:
     """
-    Logger for Paper Trading Engine.
+    Logging utility for the
+    Paper Trading Engine.
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+    ) -> None:
 
         self.logger = logging.getLogger(
-            "PaperTrading",
+            "PaperTradingEngine",
         )
+
+    # --------------------------------------------------
+    # Log Start
+    # --------------------------------------------------
 
     def log_start(
         self,
         context: PaperContext,
     ) -> None:
+        """
+        Log engine start.
+        """
 
         self.logger.info(
 
-            "Paper trading started | %s",
+            "Paper Trading started | "
+            "Paper ID=%s | "
+            "Symbol=%s | "
+            "Timeframe=%s",
 
             context.paper_id,
 
-        )
+            context.symbol,
 
-    def log_summary(
-        self,
-        context: PaperContext,
-    ) -> None:
-
-        portfolio = context.portfolio
-
-        self.logger.info(
-
-            (
-                "Paper Summary | "
-                "Balance=%.2f | "
-                "Equity=%.2f | "
-                "OpenPositions=%d"
-            ),
-
-            portfolio.balance,
-
-            portfolio.equity,
-
-            portfolio.total_positions,
+            context.timeframe,
 
         )
 
-    def log_finish(
-        self,
-        context: PaperContext,
-    ) -> None:
-
-        self.logger.info(
-
-            "Paper trading completed | %s",
-
-            context.paper_id,
-
-        )
+    # --------------------------------------------------
+    # Log Failure
+    # --------------------------------------------------
 
     def log_failure(
         self,
         context: PaperContext,
     ) -> None:
+        """
+        Log failed execution.
+        """
 
         self.logger.error(
 
-            "Paper trading failed | %s",
+            "Paper Trading failed | "
+            "Paper ID=%s | "
+            "Reason=%s",
+
+            context.paper_id,
 
             context.reason,
+
+        )
+
+    # --------------------------------------------------
+    # Log Finish
+    # --------------------------------------------------
+
+    def log_finish(
+        self,
+        context: PaperContext,
+    ) -> None:
+        """
+        Log successful completion.
+        """
+
+        self.logger.info(
+
+            "Paper Trading completed | "
+            "Paper ID=%s | "
+            "Balance=%.2f | "
+            "Equity=%.2f | "
+            "Trades=%d | "
+            "Net Profit=%.2f",
+
+            context.paper_id,
+
+            context.balance,
+
+            context.equity,
+
+            context.statistics.total_trades,
+
+            context.statistics.net_profit,
 
         )

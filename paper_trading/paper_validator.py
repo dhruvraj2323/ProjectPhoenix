@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Paper Trading Validator
-M24
+M54
 =================================================
 """
 
@@ -15,13 +15,17 @@ from paper_trading.paper_context import (
 
 class PaperValidator:
     """
-    Validates Paper Trading input.
+    Validates Paper Trading Context
+    before execution.
     """
 
     def validate(
         self,
         context: PaperContext,
     ) -> bool:
+        """
+        Validate Paper Trading input.
+        """
 
         if not context.paper_id:
 
@@ -39,10 +43,10 @@ class PaperValidator:
 
             return False
 
-        if context.portfolio.balance < 0:
+        if not context.symbol:
 
             context.fail(
-                "Invalid virtual balance.",
+                "Trading symbol is missing.",
             )
 
             return False
