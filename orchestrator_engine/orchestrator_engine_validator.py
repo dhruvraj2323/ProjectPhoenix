@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Orchestrator Engine Validator
-M39
+M56
 =================================================
 """
 
@@ -15,8 +15,8 @@ from orchestrator_engine.orchestrator_engine_models import (
 
 class OrchestratorEngineValidator:
     """
-    Validates the Orchestrator Engine before
-    pipeline execution.
+    Validates Orchestrator Engine
+    before pipeline execution.
     """
 
     def validate(
@@ -28,6 +28,16 @@ class OrchestratorEngineValidator:
         """
 
         if result is None:
+
+            return False
+
+        if result.approved:
+
+            # Fresh execution should never
+            # start with an approved result.
+            return False
+
+        if result.status != "PENDING":
 
             return False
 

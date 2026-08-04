@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Orchestrator Engine Manager
-M39
+M56
 =================================================
 """
 
@@ -18,18 +18,24 @@ from orchestrator_engine.orchestrator_engine_models import (
 
 class OrchestratorEngineManager:
     """
-    Public entry point for the Orchestrator Engine.
+    High-level manager for the
+    Orchestrator Engine.
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+    ) -> None:
 
-        self.engine = OrchestratorEngine()
+        self.engine = (
+            OrchestratorEngine()
+        )
 
     def execute(
         self,
     ) -> OrchestratorResult:
         """
-        Execute the complete Project Phoenix pipeline.
+        Execute the complete
+        Project Phoenix pipeline.
         """
 
         return self.engine.run()

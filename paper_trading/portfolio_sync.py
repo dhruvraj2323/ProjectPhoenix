@@ -62,14 +62,6 @@ class PortfolioSync:
         statistics and metadata.
         """
 
-        context.result.balance = (
-            context.balance
-        )
-
-        context.result.equity = (
-            context.equity
-        )
-
         context.result.statistics = (
             context.statistics
         )

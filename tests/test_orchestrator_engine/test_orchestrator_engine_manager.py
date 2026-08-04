@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Test Orchestrator Engine Manager
-M39
+M56
 =================================================
 """
 
@@ -13,12 +13,17 @@ from orchestrator_engine.orchestrator_engine_manager import (
 
 def test_orchestrator_engine_manager():
 
-    manager = OrchestratorEngineManager()
+    manager = (
+        OrchestratorEngineManager()
+    )
 
     result = manager.execute()
 
-    assert result.approved is True
+    assert result.approved
 
     assert result.status == "SUCCESS"
 
-    assert result.reason == "Pipeline executed successfully."
+    assert (
+        result.reason
+        == "Pipeline executed successfully."
+    )
