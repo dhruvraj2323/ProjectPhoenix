@@ -2,43 +2,79 @@
 =================================================
 Project Phoenix
 Analytics Engine Test
+M57
 =================================================
 """
 
-from reporting.analytics_engine import AnalyticsEngine
+from reporting.analytics_engine import (
+    AnalyticsEngine,
+)
+from reporting.reporting_models import (
+    TradeRecord,
+)
 
 
-def run_test():
+def test_analytics_engine():
 
-    analytics = AnalyticsEngine()
+    trades = [
 
-    result = analytics.calculate(
-        winning_trades=68,
-        losing_trades=32,
-        gross_profit=18000.0,
-        gross_loss=5500.0,
+        TradeRecord(
+            trade_id="T1",
+            symbol="EURUSD",
+            direction="BUY",
+            strategy="Breakout",
+            pattern="Bull Flag",
+            profit_loss=100.0,
+            status="CLOSED",
+        ),
+
+        TradeRecord(
+            trade_id="T2",
+            symbol="EURUSD",
+            direction="SELL",
+            strategy="Reversal",
+            pattern="Double Top",
+            profit_loss=-40.0,
+            status="CLOSED",
+        ),
+
+        TradeRecord(
+            trade_id="T3",
+            symbol="EURUSD",
+            direction="BUY",
+            strategy="Trend",
+            pattern="Channel",
+            profit_loss=60.0,
+            status="CLOSED",
+        ),
+
+    ]
+
+    engine = AnalyticsEngine()
+
+    summary = engine.calculate(
+        trades,
     )
 
-    print("===== Analytics Engine =====")
+    assert summary.total_trades == 3
 
-    print(f"Total Trades   : {result['total_trades']}")
-    print(f"Win Rate       : {result['win_rate']}")
-    print(f"Loss Rate      : {result['loss_rate']}")
-    print(f"Net Profit     : {result['net_profit']}")
-    print(f"Profit Factor  : {result['profit_factor']}")
+    assert summary.winning_trades == 2
 
-    assert result["total_trades"] == 100
-    assert result["winning_trades"] == 68
-    assert result["losing_trades"] == 32
-    assert result["win_rate"] == 68.0
-    assert result["loss_rate"] == 32.0
-    assert result["net_profit"] == 12500.0
-    assert result["profit_factor"] == 3.27
+    assert summary.losing_trades == 1
 
-    print()
-    print("Analytics Engine Test Passed")
+    assert summary.gross_profit == 160.0
 
+    assert summary.gross_loss == 40.0
 
-if __name__ == "__main__":
+    assert summary.net_profit == 120.0
 
-    run_test()
+    assert round(
+        summary.win_rate,
+        2,
+    ) == 66.67
+
+    assert summary.average_profit == 80.0
+
+    assert summary.average_loss == 40.0
+
+    assert summary.profit_factor == 4.0

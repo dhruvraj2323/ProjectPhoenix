@@ -2,39 +2,60 @@
 =================================================
 Project Phoenix
 Report Generator
+M57
 =================================================
-
-Generates structured trading reports.
 """
 
+from __future__ import annotations
+
+from datetime import datetime
+
 from reporting.reporting_models import (
-    PerformanceAnalytics,
-    ReportSummary,
-    TradeStatistics,
+    DailyReport,
+    PerformanceSummary,
+    TradeRecord,
 )
 
 
 class ReportGenerator:
     """
-    Generates reporting summaries.
+    Builds Daily Trading Reports.
     """
 
     def generate(
         self,
-        summary: ReportSummary,
-        statistics: TradeStatistics,
-        analytics: PerformanceAnalytics,
-    ):
+        trades: list[TradeRecord],
+        summary: PerformanceSummary,
+    ) -> DailyReport:
+        """
+        Generate complete daily report.
+        """
 
-        return {
-            "report_name": summary.report_name,
-            "generated_at": summary.generated_at,
-            "total_records": summary.total_records,
-            "total_trades": statistics.total_trades,
-            "winning_trades": statistics.winning_trades,
-            "losing_trades": statistics.losing_trades,
-            "win_rate": statistics.win_rate,
-            "net_profit": analytics.net_profit,
-            "profit_factor": analytics.profit_factor,
-            "drawdown": analytics.drawdown,
-        }
+        report = DailyReport()
+
+        report.trades = trades
+
+        report.summary = summary
+
+        report.report_date = (
+            datetime.utcnow()
+        )
+
+        report.generated_at = (
+            datetime.utcnow()
+        )
+
+        report.report_name = (
+            report.report_date.strftime(
+                "%Y-%m-%d"
+            )
+            + "_Trading_Report"
+        )
+
+        report.output_file = (
+            "reports/Daily/"
+            + report.report_name
+            + ".xlsx"
+        )
+
+        return report

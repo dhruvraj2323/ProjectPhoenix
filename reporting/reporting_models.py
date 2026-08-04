@@ -2,128 +2,119 @@
 =================================================
 Project Phoenix
 Reporting Models
+M57
 =================================================
-
-Defines reporting and analytics models.
 """
 
-from dataclasses import dataclass
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from datetime import datetime
 
 
-# -------------------------------------------------
-# Report Summary
-# -------------------------------------------------
-
-
-@dataclass(slots=True)
-class ReportSummary:
-
-    report_name: str
-
-    generated_at: str
-
-    total_records: int
-
-
-# -------------------------------------------------
-# Trade Statistics
-# -------------------------------------------------
+# --------------------------------------------------
+# Trade Record
+# --------------------------------------------------
 
 
 @dataclass(slots=True)
-class TradeStatistics:
+class TradeRecord:
+    """
+    Individual trade information.
+    """
 
-    total_trades: int
+    trade_id: str = ""
 
-    winning_trades: int
+    symbol: str = ""
 
-    losing_trades: int
+    direction: str = ""
 
-    win_rate: float
+    strategy: str = ""
 
-    loss_rate: float
+    pattern: str = ""
 
+    entry_price: float = 0.0
 
-# -------------------------------------------------
-# Performance Analytics
-# -------------------------------------------------
+    exit_price: float = 0.0
 
+    stop_loss: float = 0.0
 
-@dataclass(slots=True)
-class PerformanceAnalytics:
+    take_profit: float = 0.0
 
-    net_profit: float
+    volume: float = 0.0
 
-    gross_profit: float
+    profit_loss: float = 0.0
 
-    gross_loss: float
+    status: str = ""
 
-    profit_factor: float
+    opened_at: datetime = field(
+        default_factory=datetime.utcnow,
+    )
 
-    expectancy: float
-
-    drawdown: float
-
-
-# -------------------------------------------------
-# Equity Curve
-# -------------------------------------------------
-
-
-@dataclass(slots=True)
-class EquityCurve:
-
-    starting_balance: float
-
-    current_balance: float
-
-    highest_balance: float
+    closed_at: datetime = field(
+        default_factory=datetime.utcnow,
+    )
 
 
-# -------------------------------------------------
-# Monthly Statistics
-# -------------------------------------------------
+# --------------------------------------------------
+# Performance Summary
+# --------------------------------------------------
 
 
 @dataclass(slots=True)
-class MonthlyStatistics:
+class PerformanceSummary:
+    """
+    Daily trading statistics.
+    """
 
-    month: str
+    total_trades: int = 0
 
-    trades: int
+    winning_trades: int = 0
 
-    profit: float
+    losing_trades: int = 0
 
-    win_rate: float
+    win_rate: float = 0.0
+
+    gross_profit: float = 0.0
+
+    gross_loss: float = 0.0
+
+    net_profit: float = 0.0
+
+    average_profit: float = 0.0
+
+    average_loss: float = 0.0
+
+    profit_factor: float = 0.0
 
 
-# -------------------------------------------------
-# Reporting Status
-# -------------------------------------------------
+# --------------------------------------------------
+# Daily Report
+# --------------------------------------------------
 
 
 @dataclass(slots=True)
-class ReportingStatus:
+class DailyReport:
+    """
+    Complete daily trading report.
+    """
 
-    generated: bool
+    report_date: datetime = field(
+        default_factory=datetime.utcnow,
+    )
 
-    analytics_completed: bool
+    generated_at: datetime = field(
+        default_factory=datetime.utcnow,
+    )
 
-    report_name: str
+    trades: list[TradeRecord] = field(
+        default_factory=list,
+    )
 
+    summary: PerformanceSummary = field(
+        default_factory=PerformanceSummary,
+    )
 
-# -------------------------------------------------
-# Reporting Result
-# -------------------------------------------------
+    report_name: str = ""
 
-
-@dataclass(slots=True)
-class ReportingResult:
-
-    approved: bool
-
-    reason: str
-
-    status: ReportingStatus
-
-    report: dict
+    output_file: str = ""

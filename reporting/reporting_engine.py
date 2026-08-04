@@ -2,92 +2,84 @@
 =================================================
 Project Phoenix
 Reporting Engine
+M57
 =================================================
-
-Master controller for the Reporting Layer.
 """
 
-from reporting.analytics_engine import AnalyticsEngine
-from reporting.report_generator import ReportGenerator
-from reporting.reporting_logger import ReportingLogger
+from __future__ import annotations
+
+from reporting.analytics_engine import (
+    AnalyticsEngine,
+)
+from reporting.report_generator import (
+    ReportGenerator,
+)
+from reporting.reporting_logger import (
+    ReportingLogger,
+)
 from reporting.reporting_models import (
-    PerformanceAnalytics,
-    ReportingResult,
-    ReportingStatus,
-    ReportSummary,
-    TradeStatistics,
+    DailyReport,
+    TradeRecord,
 )
 
 
 class ReportingEngine:
     """
-    Executes the complete reporting workflow.
+    Executes the complete
+    Reporting workflow.
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+    ) -> None:
 
-        self.analytics = AnalyticsEngine()
-
-        self.generator = ReportGenerator()
-
-    # -------------------------------------------------
-
-    def run(self) -> ReportingResult:
-
-        analytics_data = self.analytics.calculate(
-            winning_trades=68,
-            losing_trades=32,
-            gross_profit=18000.0,
-            gross_loss=5500.0,
+        self.analytics = (
+            AnalyticsEngine()
         )
 
-        summary = ReportSummary(
-            report_name="Monthly Report",
-            generated_at="2026-01-01",
-            total_records=250,
+        self.generator = (
+            ReportGenerator()
         )
 
-        statistics = TradeStatistics(
-            total_trades=analytics_data["total_trades"],
-            winning_trades=analytics_data["winning_trades"],
-            losing_trades=analytics_data["losing_trades"],
-            win_rate=analytics_data["win_rate"],
-            loss_rate=analytics_data["loss_rate"],
+        self.logger = (
+            ReportingLogger()
         )
 
-        performance = PerformanceAnalytics(
-            net_profit=analytics_data["net_profit"],
-            gross_profit=analytics_data["gross_profit"],
-            gross_loss=analytics_data["gross_loss"],
-            profit_factor=analytics_data["profit_factor"],
-            expectancy=125.0,
-            drawdown=4.5,
+    # --------------------------------------------------
+    # Generate Report
+    # --------------------------------------------------
+
+    def run(
+        self,
+        trades: list[TradeRecord],
+    ) -> DailyReport:
+        """
+        Execute complete
+        reporting workflow.
+        """
+
+        # Create temporary report
+        report = DailyReport()
+
+        self.logger.log_start(
+            report,
         )
 
-        report = self.generator.generate(
-            summary,
-            statistics,
-            performance,
+        summary = (
+            self.analytics.calculate(
+                trades,
+            )
         )
 
-        status = ReportingStatus(
-            generated=True,
-            analytics_completed=True,
-            report_name=summary.report_name,
+        report = (
+            self.generator.generate(
+                trades,
+                summary,
+            )
         )
 
-        result = ReportingResult(
-
-            approved=True,
-
-            reason="Reporting completed successfully.",
-
-            status=status,
-
-            report=report,
-
+        self.logger.log_finish(
+            report,
         )
 
-        ReportingLogger.log(result)
-
-        return result
+        return report

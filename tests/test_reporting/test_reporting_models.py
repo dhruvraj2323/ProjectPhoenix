@@ -2,99 +2,51 @@
 =================================================
 Project Phoenix
 Reporting Models Test
+M57
 =================================================
 """
 
 from reporting.reporting_models import (
-    EquityCurve,
-    MonthlyStatistics,
-    PerformanceAnalytics,
-    ReportingResult,
-    ReportingStatus,
-    ReportSummary,
-    TradeStatistics,
+    DailyReport,
+    PerformanceSummary,
+    TradeRecord,
 )
 
 
-def run_test():
+def test_reporting_models():
 
-    summary = ReportSummary(
-        report_name="Monthly Report",
-        generated_at="2026-01-01 10:00",
-        total_records=250,
+    trade = TradeRecord(
+        trade_id="TRD-001",
+        symbol="EURUSD",
+        direction="BUY",
+        strategy="Breakout",
+        pattern="Bull Flag",
+        entry_price=1.1050,
+        exit_price=1.1080,
+        volume=0.10,
+        profit_loss=30.0,
+        status="CLOSED",
     )
 
-    statistics = TradeStatistics(
-        total_trades=100,
-        winning_trades=68,
-        losing_trades=32,
-        win_rate=68.0,
-        loss_rate=32.0,
+    summary = PerformanceSummary(
+        total_trades=1,
+        winning_trades=1,
+        gross_profit=30.0,
+        net_profit=30.0,
     )
 
-    analytics = PerformanceAnalytics(
-        net_profit=12500.0,
-        gross_profit=18000.0,
-        gross_loss=5500.0,
-        profit_factor=3.27,
-        expectancy=125.0,
-        drawdown=4.5,
-    )
+    report = DailyReport()
 
-    equity = EquityCurve(
-        starting_balance=100000.0,
-        current_balance=112500.0,
-        highest_balance=114000.0,
-    )
+    report.trades.append(trade)
 
-    monthly = MonthlyStatistics(
-        month="January",
-        trades=45,
-        profit=3500.0,
-        win_rate=70.0,
-    )
+    report.summary = summary
 
-    status = ReportingStatus(
-        generated=True,
-        analytics_completed=True,
-        report_name="Monthly Report",
-    )
+    report.report_name = "Trading Report"
 
-    result = ReportingResult(
+    assert report.trades[0].trade_id == "TRD-001"
 
-        approved=True,
+    assert report.summary.total_trades == 1
 
-        reason="Reporting completed successfully.",
+    assert report.summary.net_profit == 30.0
 
-        status=status,
-
-        report={
-            "total_trades": 100,
-            "win_rate": 68.0,
-            "net_profit": 12500.0,
-            "profit_factor": 3.27,
-        },
-
-    )
-
-    assert summary.total_records == 250
-    assert statistics.total_trades == 100
-    assert analytics.net_profit == 12500.0
-    assert equity.current_balance == 112500.0
-    assert monthly.month == "January"
-    assert result.approved
-
-    print("===== Reporting Models =====")
-    print(f"Report Name      : {summary.report_name}")
-    print(f"Total Trades     : {statistics.total_trades}")
-    print(f"Net Profit       : {analytics.net_profit}")
-    print(f"Current Balance  : {equity.current_balance}")
-    print(f"Month            : {monthly.month}")
-
-    print()
-    print("Reporting Models Test Passed")
-
-
-if __name__ == "__main__":
-
-    run_test()
+    assert report.report_name == "Trading Report"

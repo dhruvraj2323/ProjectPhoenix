@@ -2,55 +2,100 @@
 =================================================
 Project Phoenix
 Analytics Engine
+M57
 =================================================
-
-Calculates trading analytics.
 """
+
+from __future__ import annotations
+
+from reporting.reporting_models import (
+    PerformanceSummary,
+    TradeRecord,
+)
 
 
 class AnalyticsEngine:
     """
-    Performs trading performance calculations.
+    Calculates trading statistics
+    for daily reports.
     """
 
     def calculate(
         self,
-        winning_trades: int,
-        losing_trades: int,
-        gross_profit: float,
-        gross_loss: float,
-    ):
+        trades: list[TradeRecord],
+    ) -> PerformanceSummary:
+        """
+        Generate performance summary
+        from completed trades.
+        """
 
-        total_trades = winning_trades + losing_trades
+        summary = PerformanceSummary()
 
-        win_rate = (
-            (winning_trades / total_trades) * 100
-            if total_trades
-            else 0.0
+        summary.total_trades = len(
+            trades,
         )
 
-        loss_rate = (
-            (losing_trades / total_trades) * 100
-            if total_trades
-            else 0.0
+        if not trades:
+
+            return summary
+
+        summary.winning_trades = sum(
+            1
+            for trade in trades
+            if trade.profit_loss > 0
         )
 
-        net_profit = gross_profit - gross_loss
-
-        profit_factor = (
-            gross_profit / gross_loss
-            if gross_loss > 0
-            else float("inf")
+        summary.losing_trades = sum(
+            1
+            for trade in trades
+            if trade.profit_loss < 0
         )
 
-        return {
-            "total_trades": total_trades,
-            "winning_trades": winning_trades,
-            "losing_trades": losing_trades,
-            "win_rate": round(win_rate, 2),
-            "loss_rate": round(loss_rate, 2),
-            "gross_profit": gross_profit,
-            "gross_loss": gross_loss,
-            "net_profit": net_profit,
-            "profit_factor": round(profit_factor, 2),
-        }
+        summary.gross_profit = sum(
+            trade.profit_loss
+            for trade in trades
+            if trade.profit_loss > 0
+        )
+
+        summary.gross_loss = abs(
+            sum(
+                trade.profit_loss
+                for trade in trades
+                if trade.profit_loss < 0
+            )
+        )
+
+        summary.net_profit = (
+            summary.gross_profit
+            - summary.gross_loss
+        )
+
+        if summary.total_trades > 0:
+
+            summary.win_rate = (
+                summary.winning_trades
+                / summary.total_trades
+            ) * 100.0
+
+        if summary.winning_trades > 0:
+
+            summary.average_profit = (
+                summary.gross_profit
+                / summary.winning_trades
+            )
+
+        if summary.losing_trades > 0:
+
+            summary.average_loss = (
+                summary.gross_loss
+                / summary.losing_trades
+            )
+
+        if summary.gross_loss > 0:
+
+            summary.profit_factor = (
+                summary.gross_profit
+                / summary.gross_loss
+            )
+
+        return summary

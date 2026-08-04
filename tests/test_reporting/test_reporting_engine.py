@@ -2,34 +2,60 @@
 =================================================
 Project Phoenix
 Reporting Engine Test
+M57
 =================================================
 """
 
-from reporting.reporting_engine import ReportingEngine
+from reporting.reporting_engine import (
+    ReportingEngine,
+)
+from reporting.reporting_models import (
+    TradeRecord,
+)
 
 
-def run_test():
+def test_reporting_engine():
+
+    trades = [
+
+        TradeRecord(
+            trade_id="TRD-001",
+            symbol="EURUSD",
+            direction="BUY",
+            strategy="Breakout",
+            pattern="Bull Flag",
+            profit_loss=150.0,
+            status="CLOSED",
+        ),
+
+        TradeRecord(
+            trade_id="TRD-002",
+            symbol="EURUSD",
+            direction="SELL",
+            strategy="Reversal",
+            pattern="Double Top",
+            profit_loss=-50.0,
+            status="CLOSED",
+        ),
+
+    ]
 
     engine = ReportingEngine()
 
-    result = engine.run()
+    report = engine.run(
+        trades,
+    )
 
-    print()
+    assert report.summary.total_trades == 2
 
-    print("===== Reporting Engine =====")
+    assert report.summary.winning_trades == 1
 
-    print(f"Approved : {result.approved}")
-    print(f"Reason   : {result.reason}")
+    assert report.summary.losing_trades == 1
 
-    assert result.approved
-    assert result.status.generated
-    assert result.status.analytics_completed
+    assert report.summary.net_profit == 100.0
 
-    print()
+    assert len(report.trades) == 2
 
-    print("Reporting Engine Test Passed")
-
-
-if __name__ == "__main__":
-
-    run_test()
+    assert report.output_file.endswith(
+        ".xlsx"
+    )

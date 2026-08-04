@@ -2,49 +2,34 @@
 =================================================
 Project Phoenix
 Reporting Logger Test
+M57
 =================================================
 """
 
-from reporting.reporting_logger import ReportingLogger
+from reporting.reporting_logger import (
+    ReportingLogger,
+)
 from reporting.reporting_models import (
-    ReportingResult,
-    ReportingStatus,
+    DailyReport,
 )
 
 
-def run_test():
+def test_reporting_logger():
 
-    status = ReportingStatus(
-        generated=True,
-        analytics_completed=True,
-        report_name="Monthly Report",
+    logger = ReportingLogger()
+
+    report = DailyReport()
+
+    report.summary.total_trades = 5
+
+    report.summary.net_profit = 250.75
+
+    logger.log_start(report)
+
+    logger.log_finish(report)
+
+    logger.log_failure(
+        "Sample failure.",
     )
 
-    result = ReportingResult(
-
-        approved=True,
-
-        reason="Reporting completed successfully.",
-
-        status=status,
-
-        report={
-            "total_trades": 100,
-            "win_rate": 68.0,
-            "net_profit": 12500.0,
-            "profit_factor": 3.27,
-        },
-
-    )
-
-    ReportingLogger.log(result)
-
-    assert result.approved
-
-    print()
-    print("Reporting Logger Test Passed")
-
-
-if __name__ == "__main__":
-
-    run_test()
+    assert True

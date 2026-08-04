@@ -2,51 +2,98 @@
 =================================================
 Project Phoenix
 Reporting Logger
+M57
 =================================================
-
-Logs reporting engine results.
 """
 
-from reporting.reporting_models import ReportingResult
+from __future__ import annotations
+
+import logging
+
+from reporting.reporting_models import DailyReport
 
 
 class ReportingLogger:
     """
-    Logs reporting operations.
+    Logger for Reporting Engine.
     """
 
-    @staticmethod
-    def log(result: ReportingResult) -> None:
+    def __init__(self) -> None:
 
-        print("===== Reporting =====")
-
-        print(f"Approved            : {result.approved}")
-        print(f"Reason              : {result.reason}")
-
-        print()
-
-        print(f"Generated           : {result.status.generated}")
-        print(f"Analytics Completed : {result.status.analytics_completed}")
-        print(f"Report Name         : {result.status.report_name}")
-
-        print()
-
-        print(
-            f"Total Trades       : "
-            f"{result.report['total_trades']}"
+        self.logger = logging.getLogger(
+            "ReportingEngine",
         )
 
-        print(
-            f"Win Rate           : "
-            f"{result.report['win_rate']}%"
+        if not self.logger.handlers:
+
+            handler = logging.StreamHandler()
+
+            formatter = logging.Formatter(
+                "%(asctime)s | %(levelname)s | %(message)s",
+            )
+
+            handler.setFormatter(
+                formatter,
+            )
+
+            self.logger.addHandler(
+                handler,
+            )
+
+            self.logger.setLevel(
+                logging.INFO,
+            )
+
+    # --------------------------------------------------
+    # Start
+    # --------------------------------------------------
+
+    def log_start(
+        self,
+        report: DailyReport,
+    ) -> None:
+        """
+        Log report generation start.
+        """
+
+        self.logger.info(
+            "Report generation started | Date=%s",
+            report.report_date.strftime(
+                "%Y-%m-%d",
+            ),
         )
 
-        print(
-            f"Net Profit         : "
-            f"{result.report['net_profit']}"
+    # --------------------------------------------------
+    # Finish
+    # --------------------------------------------------
+
+    def log_finish(
+        self,
+        report: DailyReport,
+    ) -> None:
+        """
+        Log successful report generation.
+        """
+
+        self.logger.info(
+            "Report generated successfully | Trades=%d | Net Profit=%.2f",
+            report.summary.total_trades,
+            report.summary.net_profit,
         )
 
-        print(
-            f"Profit Factor      : "
-            f"{result.report['profit_factor']}"
+    # --------------------------------------------------
+    # Failure
+    # --------------------------------------------------
+
+    def log_failure(
+        self,
+        reason: str,
+    ) -> None:
+        """
+        Log report generation failure.
+        """
+
+        self.logger.error(
+            "Report generation failed | Reason=%s",
+            reason,
         )
