@@ -58,30 +58,84 @@ class ContinuousRunner:
         cycles: int = 1,
     ) -> None:
         """
-        Start continuous execution.
+        Execute TradingCycle continuously.
 
-        'cycles' is limited for testing.
+        For deployment testing,
+        the number of cycles can be limited.
         """
 
         self.running = True
 
-        count = 0
+        current_cycle = 1
 
         while self.running:
 
-            self.run_once()
+            print()
 
-            count += 1
+            print("=" * 60)
 
-            if count >= cycles:
+            print(
+                f"Starting Cycle {current_cycle}"
+            )
+
+            print("=" * 60)
+
+            try:
+
+                success = self.run_once()
+
+                if success:
+
+                    print()
+
+                    print(
+                        f"Cycle {current_cycle} Completed Successfully."
+                    )
+
+                else:
+
+                    print()
+
+                    print(
+                        f"Cycle {current_cycle} Failed."
+                    )
+
+            except Exception as exc:
+
+                print()
+
+                print(
+                    f"Cycle {current_cycle} Exception:"
+                )
+
+                print(exc)
+
+            if (
+                cycles > 0
+                and current_cycle >= cycles
+            ):
 
                 break
+
+            print()
+
+            print(
+                f"Waiting {self.interval} seconds..."
+            )
 
             time.sleep(
                 self.interval,
             )
 
+            current_cycle += 1
+
         self.running = False
+
+        print()
+
+        print(
+            "Continuous Runner Stopped."
+        )
 
     # --------------------------------------------------
     # Stop

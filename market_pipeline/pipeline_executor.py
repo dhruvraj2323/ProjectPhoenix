@@ -199,19 +199,51 @@ class PipelineExecutor:
         self,
         context: PipelineContext,
     ) -> None:
+        """
+        Load market data.
+
+        Historical Mode:
+            Load candles from MarketDataManager.
+
+        Live Mode:
+            Use candles already supplied by MT5.
+        """
+
+        # --------------------------------------------------
+        # Live Trading Mode
+        # --------------------------------------------------
+
+        if context.candles:
+
+            context.set_metadata(
+                "market_data",
+                "LIVE_MT5",
+            )
+
+            return
+
+        # --------------------------------------------------
+        # Historical Mode
+        # --------------------------------------------------
 
         market_data = self.market_data_manager.process(
+
             context.market_data_source,
+
             context.timeframe,
+
         )
 
         if not market_data.success:
 
             context.reject(
+
                 decision="MARKET_DATA_FAILED",
+
                 reason="; ".join(
                     market_data.errors,
                 ),
+
             )
 
             return
@@ -219,8 +251,11 @@ class PipelineExecutor:
         context.candles = market_data.candles
 
         context.set_metadata(
+
             "market_data",
+
             market_data,
+
         )
 
     # =========================================================

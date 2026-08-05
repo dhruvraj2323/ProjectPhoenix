@@ -2,11 +2,19 @@
 =================================================
 Project Phoenix
 Deployment Runtime
-M58
+M58.12.12
 =================================================
 """
 
 from __future__ import annotations
+
+from deployment.continuous_runner import (
+    ContinuousRunner,
+)
+
+from deployment.runtime_config import (
+    RuntimeConfig,
+)
 
 
 class Runtime:
@@ -21,12 +29,25 @@ class Runtime:
 
         self.running = False
 
+        self.config = RuntimeConfig()
+
+        # ------------------------------------------
+        # Continuous Runner
+        # ------------------------------------------
+
+        self.runner = ContinuousRunner(
+
+            interval=self.config.interval,
+
+        )
+
     # --------------------------------------------------
     # Start
     # --------------------------------------------------
 
     def start(
         self,
+        cycles: int | None = None,
     ) -> None:
         """
         Start runtime.
@@ -40,6 +61,22 @@ class Runtime:
             "Runtime started.",
         )
 
+        print()
+
+        print(
+            "Starting Continuous Runner...",
+        )
+
+        if cycles is None:
+
+            cycles = self.config.cycles
+
+        self.runner.start(
+
+            cycles=cycles,
+
+        )
+
     # --------------------------------------------------
     # Stop
     # --------------------------------------------------
@@ -50,6 +87,8 @@ class Runtime:
         """
         Stop runtime.
         """
+
+        self.runner.stop()
 
         self.running = False
 

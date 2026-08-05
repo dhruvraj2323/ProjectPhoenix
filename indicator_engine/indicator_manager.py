@@ -34,4 +34,6 @@ class IndicatorManager:
         Execute the complete Indicator Engine.
         """
 
-        return self.engine.run(context)
+        return self.engine.run(
+            context,
+        )

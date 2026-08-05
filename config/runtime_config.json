@@ -1,0 +1,20 @@
+{
+    "paper_trading": {
+        "enabled": true
+    },
+
+    "market": {
+        "symbol": "EURUSD",
+        "timeframe": "M15",
+        "bars": 500
+    },
+
+    "runner": {
+        "interval_seconds": 300,
+        "cycles": 0
+    },
+
+    "reporting": {
+        "enabled": true
+    }
+}

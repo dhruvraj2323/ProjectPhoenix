@@ -41,7 +41,9 @@ class Scheduler:
         Execute one trading cycle.
         """
 
-        self.runtime.start()
+        self.runtime.start(
+            cycles=1,
+        )
 
     # --------------------------------------------------
     # Wait

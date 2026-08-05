@@ -17,7 +17,9 @@ def test_runtime():
 
     assert runtime.running is False
 
-    runtime.start()
+    runtime.start(
+        cycles=1,
+    )
 
     assert runtime.running is True
 

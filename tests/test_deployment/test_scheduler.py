@@ -6,8 +6,13 @@ M58
 =================================================
 """
 
-from deployment.runtime import Runtime
-from deployment.scheduler import Scheduler
+from deployment.runtime import (
+    Runtime,
+)
+
+from deployment.scheduler import (
+    Scheduler,
+)
 
 
 def test_scheduler():
@@ -19,6 +24,7 @@ def test_scheduler():
         runtime=runtime,
 
         interval=1,
+
     )
 
     assert scheduler.running is False
