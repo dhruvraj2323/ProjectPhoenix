@@ -20,20 +20,12 @@ from deployment.runtime_config import (
     RuntimeConfig,
 )
 
-from execution_engine.execution_engine import (
-    ExecutionEngine,
-)
-
 from market_pipeline.market_pipeline_engine import (
     MarketPipelineEngine,
 )
 
 from market_pipeline.pipeline_context import (
     PipelineContext,
-)
-
-from paper_trading.paper_engine import (
-    PaperTradingEngine,
 )
 
 from reporting.reporting_engine import (
@@ -109,14 +101,6 @@ class TradingCycle:
 
         self.risk_engine = (
             RiskEngine()
-        )
-
-        self.execution_engine = (
-            ExecutionEngine()
-        )
-
-        self.paper_engine = (
-            PaperTradingEngine()
         )
 
         self.reporting_engine = (
