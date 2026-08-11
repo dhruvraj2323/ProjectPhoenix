@@ -5,6 +5,43 @@ Test Trade Manager
 from unittest.mock import patch
 
 
+class DummySignal:
+    pass
+
+
+class DummyAI:
+    pass
+
+
+class DummySymbolInfo:
+    name = "EURUSD"
+    visible = True
+    trade_mode = 0
+    trade_exemode = 0
+    filling_mode = 1
+    trade_stops_level = 0
+    trade_freeze_level = 0
+    digits = 5
+
+
+class DummyTick:
+    bid = 1.0998
+    ask = 1.1002
+
+
+class DummyResult:
+    retcode = 10009
+    order = 123456
+    price = 1.1002
+    volume = 0.10
+    comment = "Executed"
+
+
+class DummyOrderCheckResult:
+    retcode = 0
+    comment = "Done"
+
+
 from strategy.strategy_models import (
     StrategySignal,
     StrategyResult,
@@ -26,27 +63,12 @@ from live_execution.trade_manager import (
 )
 
 
-class DummySignal:
-    pass
-
-
-class DummyAI:
-    pass
-
-
-class DummyResult:
-    retcode = 10009
-    order = 123456
-    price = 1.1000
-    volume = 0.10
-    comment = "Executed"
-
-
-class DummyOrderCheckResult:
-    retcode = 0
-    comment = "Done"
-
-
+@patch(
+    "MetaTrader5.symbol_info",
+)
+@patch(
+    "MetaTrader5.symbol_info_tick",
+)
 @patch(
     "MetaTrader5.order_check",
 )
@@ -56,10 +78,21 @@ class DummyOrderCheckResult:
 def test_trade_manager(
     mock_order_send,
     mock_order_check,
+    mock_symbol_info_tick,
+    mock_symbol_info,
 ):
+
     # --------------------------------------------------
     # MT5 Mocks
     # --------------------------------------------------
+
+    mock_symbol_info.return_value = (
+        DummySymbolInfo()
+    )
+
+    mock_symbol_info_tick.return_value = (
+        DummyTick()
+    )
 
     mock_order_check.return_value = (
         DummyOrderCheckResult()
@@ -159,6 +192,14 @@ def test_trade_manager(
     # --------------------------------------------------
     # MT5 Boundary Verification
     # --------------------------------------------------
+
+    mock_symbol_info_tick.assert_called_once_with(
+        "EURUSD",
+    )
+
+    mock_symbol_info.assert_called_with(
+        "EURUSD",
+    )
 
     mock_order_check.assert_called_once()
 

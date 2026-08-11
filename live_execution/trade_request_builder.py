@@ -2,11 +2,13 @@
 =================================================
 Project Phoenix
 Trade Request Builder
-M59.7.6
+M60.2.1
 =================================================
 """
 
 from __future__ import annotations
+
+import MetaTrader5 as mt5
 
 from live_execution.trade_context import (
     TradeContext,
@@ -23,6 +25,17 @@ class TradeRequestBuilder:
     """
     Builds a TradeRequest from
     validated Risk Engine output.
+
+    IMPORTANT:
+
+    Strategy entry_price is an analytical/reference
+    price only.
+
+    For MARKET execution, the actual MT5 request
+    price MUST come from the current broker tick:
+
+        BUY  -> Ask
+        SELL -> Bid
     """
 
     def build(
@@ -30,13 +43,39 @@ class TradeRequestBuilder:
         context: TradeContext,
     ) -> TradeRequest:
 
+        # ==================================================
+        # Validate Upstream Results
+        # ==================================================
+
+        if context.strategy_result is None:
+
+            raise RuntimeError(
+                "Strategy result missing."
+            )
+
+        if not context.strategy_result.signals:
+
+            raise RuntimeError(
+                "No strategy signals available."
+            )
+
+        if context.risk_result is None:
+
+            raise RuntimeError(
+                "Risk result missing."
+            )
+
+        # ==================================================
+        # Select Signal
+        # ==================================================
+
         signal = (
             context.strategy_result.signals[0]
         )
 
-        # -----------------------------------------
+        # ==================================================
         # Trade Direction
-        # -----------------------------------------
+        # ==================================================
 
         side = (
 
@@ -48,37 +87,98 @@ class TradeRequestBuilder:
 
         )
 
-        # -----------------------------------------
+        # ==================================================
         # Position Size
-        # -----------------------------------------
+        # ==================================================
 
         volume = (
             context.risk_result.metrics.position_size
         )
 
-        # -----------------------------------------
-        # Entry
-        # -----------------------------------------
+        # ==================================================
+        # Resolve Current MT5 Market Price
+        # ==================================================
 
-        entry_price = (
-            signal.entry_price
+        tick = mt5.symbol_info_tick(
+            context.symbol,
         )
 
-        # -----------------------------------------
-        # Dynamic Risk Values
-        # -----------------------------------------
+        if tick is None:
 
-        stop_loss = (
+            raise RuntimeError(
+                f"Unable to retrieve current MT5 tick "
+                f"for {context.symbol}."
+            )
+
+        if side == OrderSide.BUY:
+
+            market_price = float(
+                tick.ask
+            )
+
+        else:
+
+            market_price = float(
+                tick.bid
+            )
+
+        if market_price <= 0:
+
+            raise RuntimeError(
+                f"Invalid current market price "
+                f"for {context.symbol}: "
+                f"{market_price}"
+            )
+
+        # ==================================================
+        # Broker Price Precision
+        # ==================================================
+
+        symbol_info = mt5.symbol_info(
+            context.symbol,
+        )
+
+        if symbol_info is None:
+
+            raise RuntimeError(
+                f"MT5 symbol information unavailable "
+                f"for {context.symbol}."
+            )
+
+        digits = int(
+            symbol_info.digits
+        )
+
+        market_price = round(
+            market_price,
+            digits,
+        )
+
+        # ==================================================
+        # Dynamic Risk Values
+        # ==================================================
+
+        stop_loss = float(
             context.risk_result.metrics.stop_loss
         )
 
-        take_profit = (
+        take_profit = float(
             context.risk_result.metrics.take_profit
         )
 
-        # -----------------------------------------
+        stop_loss = round(
+            stop_loss,
+            digits,
+        )
+
+        take_profit = round(
+            take_profit,
+            digits,
+        )
+
+        # ==================================================
         # Build Request
-        # -----------------------------------------
+        # ==================================================
 
         request = TradeRequest(
 
@@ -90,7 +190,7 @@ class TradeRequestBuilder:
 
             execution_type=ExecutionType.MARKET,
 
-            price=entry_price,
+            price=market_price,
 
             stop_loss=stop_loss,
 
@@ -98,28 +198,52 @@ class TradeRequestBuilder:
 
         )
 
-        # -----------------------------------------
-        # Store
-        # -----------------------------------------
+        # ==================================================
+        # Diagnostics
+        # ==================================================
 
         print()
 
-        print("===== TRADE REQUEST =====")
-
         print(
-            f"Entry : {request.price}"
+            "===== TRADE REQUEST ====="
         )
 
         print(
-            f"SL    : {request.stop_loss}"
+            f"Symbol      : {request.symbol}"
         )
 
         print(
-            f"TP    : {request.take_profit}"
+            f"Side        : {request.side.value}"
         )
 
-        print("=========================")
-        
+        print(
+            f"Volume      : {request.volume}"
+        )
+
+        print(
+            f"Market Price: {request.price}"
+        )
+
+        print(
+            f"Signal Price: {signal.entry_price}"
+        )
+
+        print(
+            f"SL          : {request.stop_loss}"
+        )
+
+        print(
+            f"TP          : {request.take_profit}"
+        )
+
+        print(
+            "========================="
+        )
+
+        # ==================================================
+        # Store Request
+        # ==================================================
+
         context.trade_request = request
 
         return request

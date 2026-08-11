@@ -13,3 +13,5 @@ logs/
 
 # Local MT5 Credentials
 config/mt5_credentials.json
+# Generated trading reports
+reports/

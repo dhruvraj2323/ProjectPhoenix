@@ -49,6 +49,12 @@ class DummySymbolInfo:
     filling_mode = 1
     trade_stops_level = 0
     trade_freeze_level = 0
+    digits = 3
+
+
+class DummyTick:
+    bid = 3349.500
+    ask = 3350.000
 
 
 class DummyResult:
@@ -68,6 +74,9 @@ class DummyOrderCheckResult:
     "MetaTrader5.symbol_info",
 )
 @patch(
+    "MetaTrader5.symbol_info_tick",
+)
+@patch(
     "MetaTrader5.order_check",
 )
 @patch(
@@ -76,14 +85,20 @@ class DummyOrderCheckResult:
 def test_pipeline_executor(
     mock_order_send,
     mock_order_check,
+    mock_symbol_info_tick,
     mock_symbol_info,
 ):
+
     # -------------------------------------------------
     # MT5 Mocks
     # -------------------------------------------------
 
     mock_symbol_info.return_value = (
         DummySymbolInfo()
+    )
+
+    mock_symbol_info_tick.return_value = (
+        DummyTick()
     )
 
     mock_order_check.return_value = (
@@ -327,6 +342,10 @@ def test_pipeline_executor(
     # -------------------------------------------------
 
     mock_symbol_info.assert_called()
+
+    mock_symbol_info_tick.assert_called_once_with(
+        "XAUUSD",
+    )
 
     mock_order_check.assert_called()
 

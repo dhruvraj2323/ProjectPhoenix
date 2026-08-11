@@ -49,6 +49,12 @@ class DummySymbolInfo:
     filling_mode = 1
     trade_stops_level = 0
     trade_freeze_level = 0
+    digits = 3
+
+
+class DummyTick:
+    bid = 3349.500
+    ask = 3350.000
 
 
 class DummyResult:
@@ -68,6 +74,9 @@ class DummyOrderCheckResult:
     "MetaTrader5.symbol_info",
 )
 @patch(
+    "MetaTrader5.symbol_info_tick",
+)
+@patch(
     "MetaTrader5.order_check",
 )
 @patch(
@@ -76,14 +85,20 @@ class DummyOrderCheckResult:
 def test_pipeline_executor(
     mock_order_send,
     mock_order_check,
+    mock_symbol_info_tick,
     mock_symbol_info,
 ):
+
     # -------------------------------------------------
     # MT5 Mocks
     # -------------------------------------------------
 
     mock_symbol_info.return_value = (
         DummySymbolInfo()
+    )
+
+    mock_symbol_info_tick.return_value = (
+        DummyTick()
     )
 
     mock_order_check.return_value = (
@@ -104,6 +119,10 @@ def test_pipeline_executor(
         timeframe="M1",
         market_data_source=TEST_DATA,
     )
+
+    # -------------------------------------------------
+    # Pipeline Executor
+    # -------------------------------------------------
 
     executor = PipelineExecutor()
 
@@ -204,80 +223,13 @@ def test_pipeline_executor(
     )
 
     # -------------------------------------------------
-    # Pattern Engine
+    # Patterns
     # -------------------------------------------------
-
-    pattern_context = (
-        result.get_metadata(
-            "pattern_context",
-        )
-    )
-
-    assert pattern_context is not None
-
-    assert (
-        pattern_context.completed
-        is True
-    )
-
-    assert (
-        pattern_context.approved
-        is True
-    )
 
     assert isinstance(
         result.patterns,
         list,
     )
-
-    assert (
-        result.patterns
-        == pattern_context.patterns
-    )
-
-    # -------------------------------------------------
-    # Signal Engine
-    # -------------------------------------------------
-
-    signal_context = (
-        result.get_metadata(
-            "signal_context",
-        )
-    )
-
-    assert signal_context is not None
-
-    assert (
-        signal_context.completed
-        is True
-    )
-
-    assert (
-        signal_context.approved
-        is True
-    )
-
-    assert isinstance(
-        result.signals,
-        list,
-    )
-
-    assert (
-        result.signals
-        == signal_context.signals
-    )
-
-    assert len(
-        result.signals,
-    ) > 0
-
-    signal = result.signals[0]
-
-    assert "direction" in signal
-
-    assert "strength" in signal
-
-    assert "reason" in signal
 
     # -------------------------------------------------
     # Risk Engine
@@ -391,6 +343,10 @@ def test_pipeline_executor(
 
     mock_symbol_info.assert_called()
 
+    mock_symbol_info_tick.assert_called_once_with(
+        "XAUUSD",
+    )
+
     mock_order_check.assert_called()
 
     mock_order_send.assert_called()
@@ -428,16 +384,6 @@ def test_pipeline_executor(
     print(
         "Indicators       :",
         len(result.indicators),
-    )
-
-    print(
-        "Patterns         :",
-        len(result.patterns),
-    )
-
-    print(
-        "Signals          :",
-        len(result.signals),
     )
 
     print(

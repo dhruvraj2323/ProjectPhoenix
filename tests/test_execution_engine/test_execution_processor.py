@@ -13,6 +13,12 @@ class DummySymbolInfo:
     filling_mode = 1
     trade_stops_level = 0
     trade_freeze_level = 0
+    digits = 3
+
+
+class DummyTick:
+    bid = 3349.500
+    ask = 3350.000
 
 
 class DummyResult:
@@ -53,6 +59,9 @@ from risk_engine.risk_models import (
     "MetaTrader5.symbol_info",
 )
 @patch(
+    "MetaTrader5.symbol_info_tick",
+)
+@patch(
     "MetaTrader5.order_check",
 )
 @patch(
@@ -61,14 +70,20 @@ from risk_engine.risk_models import (
 def test_execution_processor(
     mock_order_send,
     mock_order_check,
+    mock_symbol_info_tick,
     mock_symbol_info,
 ):
+
     # --------------------------------------------------
     # MT5 Mocks
     # --------------------------------------------------
 
     mock_symbol_info.return_value = (
         DummySymbolInfo()
+    )
+
+    mock_symbol_info_tick.return_value = (
+        DummyTick()
     )
 
     mock_order_check.return_value = (
@@ -183,7 +198,11 @@ def test_execution_processor(
     # MT5 Boundary Verification
     # --------------------------------------------------
 
-    mock_symbol_info.assert_called_once_with(
+    mock_symbol_info.assert_called_with(
+        "XAUUSD",
+    )
+
+    mock_symbol_info_tick.assert_called_once_with(
         "XAUUSD",
     )
 

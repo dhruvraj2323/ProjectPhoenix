@@ -13,6 +13,12 @@ class DummySymbolInfo:
     filling_mode = 1
     trade_stops_level = 0
     trade_freeze_level = 0
+    digits = 3
+
+
+class DummyTick:
+    bid = 3349.500
+    ask = 3350.000
 
 
 class DummyResult:
@@ -53,6 +59,9 @@ from risk_engine.risk_models import (
     "MetaTrader5.symbol_info",
 )
 @patch(
+    "MetaTrader5.symbol_info_tick",
+)
+@patch(
     "MetaTrader5.order_check",
 )
 @patch(
@@ -61,19 +70,45 @@ from risk_engine.risk_models import (
 def test_execution_engine(
     mock_order_send,
     mock_order_check,
+    mock_symbol_info_tick,
     mock_symbol_info,
 ):
+
+    # --------------------------------------------------
+    # MT5 Symbol
+    # --------------------------------------------------
+
     mock_symbol_info.return_value = (
         DummySymbolInfo()
     )
+
+    # --------------------------------------------------
+    # MT5 Current Tick
+    # --------------------------------------------------
+
+    mock_symbol_info_tick.return_value = (
+        DummyTick()
+    )
+
+    # --------------------------------------------------
+    # MT5 Order Check
+    # --------------------------------------------------
 
     mock_order_check.return_value = (
         DummyOrderCheckResult()
     )
 
+    # --------------------------------------------------
+    # MT5 Order Send
+    # --------------------------------------------------
+
     mock_order_send.return_value = (
         DummyResult()
     )
+
+    # --------------------------------------------------
+    # Engine
+    # --------------------------------------------------
 
     engine = ExecutionEngine()
 
@@ -82,6 +117,10 @@ def test_execution_engine(
         symbol="XAUUSD",
         timeframe="M15",
     )
+
+    # --------------------------------------------------
+    # Strategy Signal
+    # --------------------------------------------------
 
     signal = StrategySignal(
         strategy_id="S01",
@@ -105,6 +144,10 @@ def test_execution_engine(
 
     context.signal_result = object()
 
+    # --------------------------------------------------
+    # Risk Result
+    # --------------------------------------------------
+
     risk = RiskResult()
 
     risk.metrics = RiskMetrics(
@@ -115,11 +158,23 @@ def test_execution_engine(
 
     context.risk_result = risk
 
+    # --------------------------------------------------
+    # AI Result
+    # --------------------------------------------------
+
     context.ai_result = object()
+
+    # --------------------------------------------------
+    # Execute
+    # --------------------------------------------------
 
     output = engine.run(
         context,
     )
+
+    # --------------------------------------------------
+    # Assertions
+    # --------------------------------------------------
 
     assert output.completed is True
 
@@ -135,7 +190,15 @@ def test_execution_engine(
         == "123456"
     )
 
-    mock_symbol_info.assert_called_once_with(
+    # --------------------------------------------------
+    # MT5 Boundary Verification
+    # --------------------------------------------------
+
+    mock_symbol_info.assert_called_with(
+        "XAUUSD",
+    )
+
+    mock_symbol_info_tick.assert_called_once_with(
         "XAUUSD",
     )
 
