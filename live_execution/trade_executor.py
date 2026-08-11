@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Trade Executor
-M59.1.7
+M59.1.8
 =================================================
 """
 
@@ -27,12 +27,21 @@ class TradeExecutor:
     """
     Executes MT5 market orders.
 
-    Responsibilities:
-    - Build MT5 order request
-    - Send order through OrderSender
-    - Convert MT5 response into TradeResponse
-    - Update TradeContext
-    - Provide safe diagnostic logging
+    Pipeline:
+
+        Build MT5 Request
+                ↓
+        Symbol Diagnostics
+                ↓
+        MT5 order_check()
+                ↓
+          Check Passed?
+           /        \
+         NO          YES
+         ↓            ↓
+      Reject       order_send()
+                       ↓
+                 TradeResponse
     """
 
     def __init__(
@@ -116,10 +125,7 @@ class TradeExecutor:
         # --------------------------------------------------
         # Symbol Diagnostics
         #
-        # IMPORTANT:
-        # symbol_info() is diagnostic only.
-        # Failure to retrieve symbol information must
-        # never crash trade execution.
+        # Diagnostic only.
         # --------------------------------------------------
 
         self._log_symbol_info(
@@ -127,7 +133,109 @@ class TradeExecutor:
         )
 
         # --------------------------------------------------
-        # Send Order
+        # MT5 PRE-TRADE CHECK
+        #
+        # IMPORTANT:
+        # order_check() MUST pass before
+        # order_send() is allowed.
+        # --------------------------------------------------
+
+        check_result = self._check_order(
+            context=context,
+            mt5_request=mt5_request,
+        )
+
+        # --------------------------------------------------
+        # Reject if MT5 pre-check failed
+        # --------------------------------------------------
+
+        if check_result is None:
+
+            message = (
+                "MT5 order_check() returned None."
+            )
+
+            response = (
+                self.result_builder.failure(
+                    message,
+                )
+            )
+
+            context.trade_response = response
+
+            context.fail(
+                message,
+            )
+
+            return response
+
+        check_retcode = getattr(
+            check_result,
+            "retcode",
+            None,
+        )
+
+        check_comment = getattr(
+            check_result,
+            "comment",
+            "",
+        )
+
+        # MT5 order_check() success retcode is 0.
+        if check_retcode != 0:
+
+            message = (
+                check_comment
+                or
+                f"MT5 order_check() failed "
+                f"with retcode={check_retcode}."
+            )
+
+            response = (
+                self.result_builder.failure(
+                    message=message,
+                    retcode=check_retcode,
+                )
+            )
+
+            context.trade_response = response
+
+            context.fail(
+                message,
+            )
+
+            return response
+
+        # --------------------------------------------------
+        # PRE-CHECK PASSED
+        # --------------------------------------------------
+
+        print()
+
+        print(
+            "===== MT5 ORDER CHECK ====="
+        )
+
+        print(
+            "Status  : PASSED"
+        )
+
+        print(
+            f"Retcode : {check_retcode}"
+        )
+
+        print(
+            f"Comment : {check_comment}"
+        )
+
+        print(
+            "==========================="
+        )
+
+        # --------------------------------------------------
+        # Send Actual Order
+        #
+        # ONLY reached after order_check() success.
         # --------------------------------------------------
 
         result = (
@@ -233,6 +341,82 @@ class TradeExecutor:
         return response
 
     # ==================================================
+    # MT5 Order Check
+    # ==================================================
+
+    def _check_order(
+        self,
+        context: TradeContext,
+        mt5_request: dict,
+    ):
+        """
+        Run MT5 pre-trade validation.
+
+        This method MUST complete successfully
+        before order_send() is allowed.
+        """
+
+        try:
+
+            result = mt5.order_check(
+                mt5_request,
+            )
+
+        except Exception as exc:
+
+            print()
+
+            print(
+                "===== MT5 ORDER CHECK ====="
+            )
+
+            print(
+                "Status  : ERROR"
+            )
+
+            print(
+                f"Reason  : {exc}"
+            )
+
+            print(
+                "==========================="
+            )
+
+            return None
+
+        # --------------------------------------------------
+        # Store diagnostic information
+        # --------------------------------------------------
+
+        try:
+
+            context.metadata[
+                "mt5_order_check"
+            ] = result
+
+            context.metadata[
+                "mt5_order_check_retcode"
+            ] = getattr(
+                result,
+                "retcode",
+                None,
+            )
+
+            context.metadata[
+                "mt5_order_check_comment"
+            ] = getattr(
+                result,
+                "comment",
+                "",
+            )
+
+        except Exception:
+            # Metadata must never break execution.
+            pass
+
+        return result
+
+    # ==================================================
     # Symbol Diagnostics
     # ==================================================
 
@@ -243,11 +427,11 @@ class TradeExecutor:
         """
         Safely print MT5 symbol information.
 
-        This method is diagnostic only.
+        Diagnostic only.
 
         If MT5 is unavailable or symbol_info()
         returns None, execution must continue
-        to the OrderSender.
+        to the order_check() stage.
         """
 
         try:
@@ -303,7 +487,8 @@ class TradeExecutor:
             )
 
             print(
-                "Reason          : mt5.symbol_info() returned None"
+                "Reason          : "
+                "mt5.symbol_info() returned None"
             )
 
             print(

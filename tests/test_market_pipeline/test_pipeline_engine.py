@@ -1,10 +1,5 @@
 """
-=================================================
-Project Phoenix
-Market Pipeline
-Unit Test - Pipeline Executor
-M40.X.2
-=================================================
+Test Pipeline Executor
 """
 
 from unittest.mock import patch
@@ -23,6 +18,23 @@ from market_pipeline.pipeline_executor import (
 
 from market_pipeline.pipeline_models import (
     PipelineStage,
+)
+
+from risk_engine.risk_models import (
+    RiskResult,
+)
+
+from portfolio_engine.portfolio_models import (
+    PortfolioSummary,
+)
+
+from ai_decision.ai_models import (
+    AIDecision,
+)
+
+from execution_engine.execution_models import (
+    ExecutionResult,
+    ExecutionStatus,
 )
 
 
@@ -47,24 +59,44 @@ class DummyResult:
     comment = "Executed"
 
 
+class DummyOrderCheckResult:
+    retcode = 0
+    comment = "Done"
+
+
 @patch(
     "MetaTrader5.symbol_info",
+)
+@patch(
+    "MetaTrader5.order_check",
 )
 @patch(
     "MetaTrader5.order_send",
 )
 def test_pipeline_executor(
     mock_order_send,
+    mock_order_check,
     mock_symbol_info,
 ):
+    # -------------------------------------------------
+    # MT5 Mocks
+    # -------------------------------------------------
 
     mock_symbol_info.return_value = (
         DummySymbolInfo()
     )
 
+    mock_order_check.return_value = (
+        DummyOrderCheckResult()
+    )
+
     mock_order_send.return_value = (
         DummyResult()
     )
+
+    # -------------------------------------------------
+    # Pipeline Context
+    # -------------------------------------------------
 
     context = PipelineContext(
         pipeline_id="PIPELINE-001",
@@ -72,6 +104,10 @@ def test_pipeline_executor(
         timeframe="M1",
         market_data_source=TEST_DATA,
     )
+
+    # -------------------------------------------------
+    # Pipeline Executor
+    # -------------------------------------------------
 
     executor = PipelineExecutor()
 
@@ -184,10 +220,6 @@ def test_pipeline_executor(
     # Risk Engine
     # -------------------------------------------------
 
-    from risk_engine.risk_models import (
-        RiskResult,
-    )
-
     risk_context = (
         result.get_metadata(
             "risk_context",
@@ -219,10 +251,6 @@ def test_pipeline_executor(
     # -------------------------------------------------
     # Portfolio Engine
     # -------------------------------------------------
-
-    from portfolio_engine.portfolio_models import (
-        PortfolioSummary,
-    )
 
     portfolio_context = (
         result.get_metadata(
@@ -256,10 +284,6 @@ def test_pipeline_executor(
     # AI
     # -------------------------------------------------
 
-    from ai_decision.ai_models import (
-        AIDecision,
-    )
-
     ai_decision = result.ai_result
 
     assert isinstance(
@@ -283,11 +307,6 @@ def test_pipeline_executor(
     # Execution
     # -------------------------------------------------
 
-    from execution_engine.execution_models import (
-        ExecutionResult,
-        ExecutionStatus,
-    )
-
     assert isinstance(
         result.execution_result,
         ExecutionResult,
@@ -308,6 +327,8 @@ def test_pipeline_executor(
     # -------------------------------------------------
 
     mock_symbol_info.assert_called()
+
+    mock_order_check.assert_called()
 
     mock_order_send.assert_called()
 

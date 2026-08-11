@@ -1,9 +1,5 @@
 """
-=================================================
-Project Phoenix
-Test Execution Manager
-M37
-=================================================
+Execution Manager Test
 """
 
 from unittest.mock import patch
@@ -25,6 +21,11 @@ class DummyResult:
     price = 3350.0
     volume = 0.10
     comment = "Executed"
+
+
+class DummyOrderCheckResult:
+    retcode = 0
+    comment = "Done"
 
 
 from execution_engine.execution_context import (
@@ -52,20 +53,35 @@ from risk_engine.risk_models import (
     "MetaTrader5.symbol_info",
 )
 @patch(
+    "MetaTrader5.order_check",
+)
+@patch(
     "MetaTrader5.order_send",
 )
 def test_execution_manager(
     mock_order_send,
+    mock_order_check,
     mock_symbol_info,
 ):
+    # --------------------------------------------------
+    # MT5 Mocks
+    # --------------------------------------------------
 
     mock_symbol_info.return_value = (
         DummySymbolInfo()
     )
 
+    mock_order_check.return_value = (
+        DummyOrderCheckResult()
+    )
+
     mock_order_send.return_value = (
         DummyResult()
     )
+
+    # --------------------------------------------------
+    # Manager
+    # --------------------------------------------------
 
     manager = ExecutionManager()
 
@@ -74,6 +90,10 @@ def test_execution_manager(
         symbol="XAUUSD",
         timeframe="M15",
     )
+
+    # --------------------------------------------------
+    # Strategy Signal
+    # --------------------------------------------------
 
     signal = StrategySignal(
         strategy_id="S01",
@@ -95,7 +115,15 @@ def test_execution_manager(
 
     context.strategy_result = result
 
+    # --------------------------------------------------
+    # Signal Result
+    # --------------------------------------------------
+
     context.signal_result = object()
+
+    # --------------------------------------------------
+    # Risk Result
+    # --------------------------------------------------
 
     risk = RiskResult()
 
@@ -107,7 +135,15 @@ def test_execution_manager(
 
     context.risk_result = risk
 
+    # --------------------------------------------------
+    # AI Result
+    # --------------------------------------------------
+
     context.ai_result = object()
+
+    # --------------------------------------------------
+    # Execute
+    # --------------------------------------------------
 
     output = manager.execute(
         context,
@@ -138,5 +174,7 @@ def test_execution_manager(
     mock_symbol_info.assert_called_once_with(
         "XAUUSD",
     )
+
+    mock_order_check.assert_called_once()
 
     mock_order_send.assert_called_once()

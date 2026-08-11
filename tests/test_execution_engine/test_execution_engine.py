@@ -1,9 +1,5 @@
 """
-=================================================
-Project Phoenix
-Test Execution Engine
-M37
-=================================================
+Execution Engine Test
 """
 
 from unittest.mock import patch
@@ -25,6 +21,11 @@ class DummyResult:
     price = 3350.0
     volume = 0.10
     comment = "Executed"
+
+
+class DummyOrderCheckResult:
+    retcode = 0
+    comment = "Done"
 
 
 from execution_engine.execution_context import (
@@ -52,15 +53,22 @@ from risk_engine.risk_models import (
     "MetaTrader5.symbol_info",
 )
 @patch(
+    "MetaTrader5.order_check",
+)
+@patch(
     "MetaTrader5.order_send",
 )
 def test_execution_engine(
     mock_order_send,
+    mock_order_check,
     mock_symbol_info,
 ):
-
     mock_symbol_info.return_value = (
         DummySymbolInfo()
+    )
+
+    mock_order_check.return_value = (
+        DummyOrderCheckResult()
     )
 
     mock_order_send.return_value = (
@@ -113,10 +121,6 @@ def test_execution_engine(
         context,
     )
 
-    # --------------------------------------------------
-    # Assertions
-    # --------------------------------------------------
-
     assert output.completed is True
 
     assert output.order is not None
@@ -131,12 +135,10 @@ def test_execution_engine(
         == "123456"
     )
 
-    # --------------------------------------------------
-    # MT5 Boundary Verification
-    # --------------------------------------------------
-
     mock_symbol_info.assert_called_once_with(
         "XAUUSD",
     )
+
+    mock_order_check.assert_called_once()
 
     mock_order_send.assert_called_once()

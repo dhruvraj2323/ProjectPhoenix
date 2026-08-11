@@ -34,37 +34,48 @@ class DummyAI:
 
 
 class DummyResult:
-
     retcode = 10009
-
     order = 123456
-
     price = 1.1000
-
     volume = 0.10
-
     comment = "Executed"
 
 
+class DummyOrderCheckResult:
+    retcode = 0
+    comment = "Done"
+
+
+@patch(
+    "MetaTrader5.order_check",
+)
 @patch(
     "MetaTrader5.order_send",
 )
 def test_trade_engine(
     mock_order_send,
+    mock_order_check,
 ):
+    # --------------------------------------------------
+    # MT5 Mocks
+    # --------------------------------------------------
+
+    mock_order_check.return_value = (
+        DummyOrderCheckResult()
+    )
 
     mock_order_send.return_value = (
         DummyResult()
     )
 
+    # --------------------------------------------------
+    # Trade Context
+    # --------------------------------------------------
+
     context = TradeContext(
-
         execution_id="EXEC-001",
-
         symbol="EURUSD",
-
         timeframe="M15",
-
     )
 
     # --------------------------------------------------
@@ -72,25 +83,15 @@ def test_trade_engine(
     # --------------------------------------------------
 
     signal = StrategySignal(
-
         strategy_id="S01",
-
         strategy_name=StrategyType.S01_EMA_TREND,
-
         direction=TradeDirection.BUY,
-
         confidence=90,
-
         entry_price=1.1000,
-
         stop_loss=0.0,
-
         take_profit=0.0,
-
         risk_percent=1,
-
         reason="BUY",
-
     )
 
     strategy = StrategyResult()
@@ -116,13 +117,9 @@ def test_trade_engine(
     risk = RiskResult()
 
     risk.metrics = RiskMetrics(
-
         position_size=0.10,
-
         stop_loss=1.0950,
-
         take_profit=1.1100,
-
     )
 
     context.risk_result = risk
@@ -136,6 +133,8 @@ def test_trade_engine(
     )
 
     # --------------------------------------------------
+    # Execute Trade Engine
+    # --------------------------------------------------
 
     engine = TradeEngine()
 
@@ -143,8 +142,23 @@ def test_trade_engine(
         context,
     )
 
+    # --------------------------------------------------
+    # Assertions
+    # --------------------------------------------------
+
     assert result.completed is True
 
     assert result.trade_response is not None
 
-    assert result.trade_response.ticket == 123456
+    assert (
+        result.trade_response.ticket
+        == 123456
+    )
+
+    # --------------------------------------------------
+    # MT5 Boundary Verification
+    # --------------------------------------------------
+
+    mock_order_check.assert_called_once()
+
+    mock_order_send.assert_called_once()

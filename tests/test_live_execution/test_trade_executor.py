@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Test Trade Executor
-M59.1.7
+M59.1.8
 =================================================
 """
 
@@ -24,6 +24,16 @@ from live_execution.trade_models import (
 )
 
 
+class DummyCheckResult:
+    retcode = 0
+    comment = "Done"
+
+
+class DummyFailedCheckResult:
+    retcode = 10014
+    comment = "Invalid volume"
+
+
 class DummyResult:
     retcode = 10009
     order = 123456
@@ -42,24 +52,7 @@ class DummySymbolInfo:
     trade_freeze_level = 0
 
 
-@patch(
-    "MetaTrader5.symbol_info",
-)
-@patch(
-    "MetaTrader5.order_send",
-)
-def test_trade_executor(
-    mock_order_send,
-    mock_symbol_info,
-):
-
-    mock_symbol_info.return_value = (
-        DummySymbolInfo()
-    )
-
-    mock_order_send.return_value = (
-        DummyResult()
-    )
+def create_trade_context() -> TradeContext:
 
     context = TradeContext(
         execution_id="EXEC-001",
@@ -77,21 +70,174 @@ def test_trade_executor(
         take_profit=1.1100,
     )
 
+    return context
+
+
+# ==================================================
+# TEST 1
+# order_check PASS → order_send allowed
+# ==================================================
+
+@patch(
+    "MetaTrader5.symbol_info",
+)
+@patch(
+    "MetaTrader5.order_check",
+)
+@patch(
+    "MetaTrader5.order_send",
+)
+def test_trade_executor_order_check_pass(
+    mock_order_send,
+    mock_order_check,
+    mock_symbol_info,
+):
+
+    mock_symbol_info.return_value = (
+        DummySymbolInfo()
+    )
+
+    mock_order_check.return_value = (
+        DummyCheckResult()
+    )
+
+    mock_order_send.return_value = (
+        DummyResult()
+    )
+
+    context = create_trade_context()
+
     executor = TradeExecutor()
 
     response = executor.execute(
         context,
     )
 
+    # --------------------------------------------------
+    # Execution Result
+    # --------------------------------------------------
+
     assert (
         response.status
         == ExecutionStatus.EXECUTED
     )
 
-    assert response.ticket == 123456
-
-    mock_symbol_info.assert_called_once_with(
-        "XAUUSDm",
+    assert (
+        response.ticket
+        == 123456
     )
 
+    # --------------------------------------------------
+    # order_check MUST happen
+    # --------------------------------------------------
+
+    mock_order_check.assert_called_once()
+
+    # --------------------------------------------------
+    # order_send MUST happen only after
+    # successful order_check
+    # --------------------------------------------------
+
     mock_order_send.assert_called_once()
+
+    # --------------------------------------------------
+    # Metadata
+    # --------------------------------------------------
+
+    assert (
+        context.metadata[
+            "mt5_order_check_retcode"
+        ]
+        == 0
+    )
+
+    assert (
+        context.metadata[
+            "mt5_order_check_comment"
+        ]
+        == "Done"
+    )
+
+
+# ==================================================
+# TEST 2
+# order_check FAIL → order_send BLOCKED
+# ==================================================
+
+@patch(
+    "MetaTrader5.symbol_info",
+)
+@patch(
+    "MetaTrader5.order_check",
+)
+@patch(
+    "MetaTrader5.order_send",
+)
+def test_trade_executor_order_check_fail(
+    mock_order_send,
+    mock_order_check,
+    mock_symbol_info,
+):
+
+    mock_symbol_info.return_value = (
+        DummySymbolInfo()
+    )
+
+    mock_order_check.return_value = (
+        DummyFailedCheckResult()
+    )
+
+    context = create_trade_context()
+
+    executor = TradeExecutor()
+
+    response = executor.execute(
+        context,
+    )
+
+    # --------------------------------------------------
+    # Trade MUST be rejected
+    # --------------------------------------------------
+
+    assert (
+        response.status
+        == ExecutionStatus.FAILED
+    )
+
+    assert (
+        context.failed
+        is True
+    )
+
+    # --------------------------------------------------
+    # order_check MUST happen
+    # --------------------------------------------------
+
+    mock_order_check.assert_called_once()
+
+    # --------------------------------------------------
+    # CRITICAL SAFETY ASSERTION
+    #
+    # Failed pre-check MUST prevent
+    # actual order_send().
+    # --------------------------------------------------
+
+    mock_order_send.assert_not_called()
+
+    # --------------------------------------------------
+    # Metadata
+    # --------------------------------------------------
+
+    assert (
+        context.metadata[
+            "mt5_order_check_retcode"
+        ]
+        == 10014
+    )
+
+    assert (
+        context.metadata[
+            "mt5_order_check_comment"
+        ]
+        == "Invalid volume"
+    )
