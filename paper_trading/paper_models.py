@@ -9,7 +9,7 @@ M54
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -147,7 +147,7 @@ class PaperOrder:
     slippage: float = 0.0
 
     created_at: datetime = field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
     )
 
     metadata: dict[
@@ -195,7 +195,7 @@ class PaperPosition:
     )
 
     opened_at: datetime = field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
     )
 
     closed_at: datetime | None = None
@@ -244,7 +244,7 @@ class PaperTrade:
     )
 
     opened_at: datetime = field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
     )
 
     closed_at: datetime | None = None

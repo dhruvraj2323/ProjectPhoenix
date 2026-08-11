@@ -9,7 +9,7 @@ M34
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -47,7 +47,7 @@ class TradingSignal:
     confidence: float = 0.0
 
     created_at: datetime = field(
-        default_factory=datetime.utcnow
+        default_factory=lambda: datetime.now(UTC)
     )
 
     metadata: dict[str, Any] = field(

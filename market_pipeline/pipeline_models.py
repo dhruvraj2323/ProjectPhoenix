@@ -9,7 +9,7 @@ M40.X.8A
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -67,7 +67,7 @@ class PipelineExecutionResult:
     )
 
     timestamp: datetime = field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
     )
 
 
@@ -78,7 +78,7 @@ class PipelineStatistics:
     """
 
     started_at: datetime = field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
     )
 
     finished_at: datetime | None = None

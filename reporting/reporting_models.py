@@ -9,7 +9,7 @@ M57
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 
 
 # --------------------------------------------------
@@ -48,11 +48,11 @@ class TradeRecord:
     status: str = ""
 
     opened_at: datetime = field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
     )
 
     closed_at: datetime = field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
     )
 
 
@@ -100,11 +100,11 @@ class DailyReport:
     """
 
     report_date: datetime = field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
     )
 
     generated_at: datetime = field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
     )
 
     trades: list[TradeRecord] = field(

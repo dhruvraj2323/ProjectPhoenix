@@ -9,7 +9,7 @@ M37
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 
 
@@ -49,7 +49,7 @@ class ExecutionOrder:
     order_type: str = "MARKET"
 
     created_at: datetime = field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
     )
 
 
@@ -72,5 +72,5 @@ class ExecutionResult:
     reason: str = ""
 
     created_at: datetime = field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
     )

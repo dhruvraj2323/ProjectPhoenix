@@ -9,7 +9,7 @@ M39
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 
 
 @dataclass(slots=True)
@@ -25,7 +25,7 @@ class TradingSession:
     session_id: str
 
     started_at: datetime = field(
-        default_factory=datetime.utcnow
+        default_factory=lambda: datetime.now(UTC)
     )
 
     ended_at: datetime | None = None
@@ -112,7 +112,7 @@ class TradingSession:
 
         self.completed = True
 
-        self.ended_at = datetime.utcnow()
+        self.ended_at = datetime.now(UTC)
 
     def reset(self) -> None:
         """
@@ -137,6 +137,6 @@ class TradingSession:
 
         self.completed = False
 
-        self.started_at = datetime.utcnow()
+        self.started_at = datetime.now(UTC)
 
         self.ended_at = None

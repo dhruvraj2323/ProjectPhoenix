@@ -9,14 +9,14 @@ M39
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 
 
 @dataclass(slots=True)
 class IntegrationLog:
 
     timestamp: datetime = field(
-        default_factory=datetime.utcnow
+        default_factory=lambda: datetime.now(UTC)
     )
 
     level: str = "INFO"

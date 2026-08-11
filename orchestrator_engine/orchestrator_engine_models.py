@@ -9,7 +9,7 @@ M39
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 
 
 # -------------------------------------------------
@@ -50,7 +50,7 @@ class OrchestratorResult:
     reason: str = ""
 
     started_at: datetime = field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
     )
 
     finished_at: datetime | None = None

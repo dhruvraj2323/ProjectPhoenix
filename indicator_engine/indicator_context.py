@@ -9,7 +9,7 @@ M32
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 
@@ -26,7 +26,7 @@ class IndicatorContext:
     engine_id: str
 
     created_at: datetime = field(
-        default_factory=datetime.utcnow
+        default_factory=lambda: datetime.now(UTC)
     )
 
     # --------------------------------------------------

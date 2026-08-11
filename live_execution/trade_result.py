@@ -8,7 +8,7 @@ M59.1.5
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from live_execution.trade_models import (
     ExecutionStatus,
@@ -43,7 +43,7 @@ class TradeResultBuilder:
 
             broker_message=message,
 
-            execution_time=datetime.utcnow(),
+            execution_time=datetime.now(UTC),
 
             retcode=retcode,
 
@@ -61,7 +61,7 @@ class TradeResultBuilder:
 
             broker_message=message,
 
-            execution_time=datetime.utcnow(),
+            execution_time=datetime.now(UTC),
 
             retcode=retcode,
 

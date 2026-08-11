@@ -9,7 +9,7 @@ M55
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 
 
@@ -76,7 +76,7 @@ class LiveOrder:
     comment: str = ""
 
     created_at: datetime = field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
     )
 
 
@@ -113,7 +113,7 @@ class LivePosition:
     commission: float = 0.0
 
     opened_at: datetime = field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
     )
 
 # --------------------------------------------------
@@ -147,11 +147,11 @@ class LiveTrade:
     net_profit: float = 0.0
 
     opened_at: datetime = field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
     )
 
     closed_at: datetime = field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
     )
 
     duration: float = 0.0
@@ -186,7 +186,7 @@ class LiveAccount:
     leverage: float = 100.0
 
     updated_at: datetime = field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
     )
 
 
@@ -211,7 +211,7 @@ class LiveExecutionResult:
     filled_volume: float = 0.0
 
     execution_time: datetime = field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
     )
 
 
@@ -267,5 +267,5 @@ class LiveResult:
     )
 
     completed_at: datetime = field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
     )    

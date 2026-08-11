@@ -8,7 +8,7 @@ M57
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 from openpyxl import Workbook
@@ -51,8 +51,8 @@ class ReportGenerator:
         report.trades = trades
         report.summary = summary
 
-        report.report_date = datetime.utcnow()
-        report.generated_at = datetime.utcnow()
+        report.report_date = datetime.now(UTC)
+        report.generated_at = datetime.now(UTC)
 
         report.report_name = (
             report.report_date.strftime("%Y-%m-%d")

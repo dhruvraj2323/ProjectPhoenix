@@ -9,7 +9,7 @@ M53
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -148,7 +148,7 @@ class AILearningRecord:
     notes: str = ""
 
     created_at: datetime = field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
     )
 
     metadata: dict[
@@ -187,7 +187,7 @@ class AIMemorySummary:
     win_rate: float = 0.0
 
     last_updated: datetime = field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
     )
 
     metadata: dict[
@@ -231,7 +231,7 @@ class AIWeightUpdate:
     implemented: bool = False
 
     created_at: datetime = field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
     )
 
     metadata: dict[
@@ -256,7 +256,7 @@ class AILearningReport:
     report_id: str
 
     generated_at: datetime = field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
     )
 
     decision: AIDecision = (

@@ -9,7 +9,7 @@ M39
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 
 
 @dataclass(slots=True)
@@ -43,11 +43,11 @@ class IntegrationReport:
     reason: str = ""
 
     started_at: datetime = field(
-        default_factory=datetime.utcnow
+        default_factory=lambda: datetime.now(UTC)
     )
 
     finished_at: datetime = field(
-        default_factory=datetime.utcnow
+        default_factory=lambda: datetime.now(UTC)
     )
 
     processing_time_ms: float = 0.0
@@ -62,7 +62,7 @@ class IntegrationReport:
 
         self.processing_time_ms = processing_time_ms
 
-        self.finished_at = datetime.utcnow()
+        self.finished_at = datetime.now(UTC)
 
     def summary(
         self,

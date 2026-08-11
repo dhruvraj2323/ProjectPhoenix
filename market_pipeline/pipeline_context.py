@@ -9,7 +9,7 @@ M40.X.8A — Strategy Integration
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from strategy.strategy_models import (
@@ -31,7 +31,7 @@ class PipelineContext:
     pipeline_id: str
 
     created_at: datetime = field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
     )
 
     current_stage: Any = None
