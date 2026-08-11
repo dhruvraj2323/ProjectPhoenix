@@ -49,6 +49,19 @@ class RiskMetrics:
 
     drawdown: float = 0.0
 
+    # ---------------------------------------------
+    # Dynamic Risk Management (M59.7)
+    # ---------------------------------------------
+
+    stop_loss: float = 0.0
+
+    take_profit: float = 0.0
+
+    risk_reward: float = 2.0
+
+    swing_high: float = 0.0
+
+    swing_low: float = 0.0
 
 # --------------------------------------------------
 # Risk Result

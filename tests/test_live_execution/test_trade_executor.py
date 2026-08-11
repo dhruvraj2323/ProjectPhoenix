@@ -25,55 +25,56 @@ from live_execution.trade_models import (
 
 
 class DummyResult:
-
     retcode = 10009
-
     order = 123456
-
     price = 1.1000
-
     volume = 0.10
-
     comment = "Executed"
 
 
+class DummySymbolInfo:
+    name = "XAUUSDm"
+    visible = True
+    trade_mode = 0
+    trade_exemode = 0
+    filling_mode = 1
+    trade_stops_level = 0
+    trade_freeze_level = 0
+
+
+@patch(
+    "MetaTrader5.symbol_info",
+)
 @patch(
     "MetaTrader5.order_send",
 )
 def test_trade_executor(
     mock_order_send,
+    mock_symbol_info,
 ):
+
+    mock_symbol_info.return_value = (
+        DummySymbolInfo()
+    )
 
     mock_order_send.return_value = (
         DummyResult()
     )
 
     context = TradeContext(
-
         execution_id="EXEC-001",
-
-        symbol="EURUSD",
-
+        symbol="XAUUSDm",
         timeframe="M15",
-
     )
 
     context.trade_request = TradeRequest(
-
-        symbol="EURUSD",
-
+        symbol="XAUUSDm",
         volume=0.10,
-
         side=OrderSide.BUY,
-
         execution_type=ExecutionType.MARKET,
-
         price=1.1000,
-
         stop_loss=1.0950,
-
         take_profit=1.1100,
-
     )
 
     executor = TradeExecutor()
@@ -88,3 +89,9 @@ def test_trade_executor(
     )
 
     assert response.ticket == 123456
+
+    mock_symbol_info.assert_called_once_with(
+        "XAUUSDm",
+    )
+
+    mock_order_send.assert_called_once()

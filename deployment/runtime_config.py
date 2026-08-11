@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Runtime Configuration
-M58.12.13
+M60.1.2
 =================================================
 """
 
@@ -17,7 +17,9 @@ class RuntimeConfig:
     Loads deployment runtime configuration.
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+    ) -> None:
 
         config_file = (
             Path("config")
@@ -30,39 +32,99 @@ class RuntimeConfig:
             encoding="utf-8",
         ) as file:
 
-            self.data = json.load(file)
+            self.data = json.load(
+                file,
+            )
+
+    # ==================================================
+    # Market
+    # ==================================================
 
     @property
-    def symbol(self) -> str:
+    def symbols(
+        self,
+    ) -> list[str]:
 
-        return self.data["market"]["symbol"]
-
-    @property
-    def timeframe(self) -> str:
-
-        return self.data["market"]["timeframe"]
-
-    @property
-    def bars(self) -> int:
-
-        return self.data["market"]["bars"]
+        return self.data[
+            "market"
+        ][
+            "symbols"
+        ]
 
     @property
-    def interval(self) -> int:
+    def timeframe(
+        self,
+    ) -> str:
 
-        return self.data["runner"]["interval_seconds"]
-
-    @property
-    def cycles(self) -> int:
-
-        return self.data["runner"]["cycles"]
-
-    @property
-    def reporting_enabled(self) -> bool:
-
-        return self.data["reporting"]["enabled"]
+        return self.data[
+            "market"
+        ][
+            "timeframe"
+        ]
 
     @property
-    def paper_trading_enabled(self) -> bool:
+    def bars(
+        self,
+    ) -> int:
 
-        return self.data["paper_trading"]["enabled"]
+        return self.data[
+            "market"
+        ][
+            "bars"
+        ]
+
+    # ==================================================
+    # Runner
+    # ==================================================
+
+    @property
+    def interval(
+        self,
+    ) -> int:
+
+        return self.data[
+            "runner"
+        ][
+            "interval_seconds"
+        ]
+
+    @property
+    def cycles(
+        self,
+    ) -> int:
+
+        return self.data[
+            "runner"
+        ][
+            "cycles"
+        ]
+
+    # ==================================================
+    # Reporting
+    # ==================================================
+
+    @property
+    def reporting_enabled(
+        self,
+    ) -> bool:
+
+        return self.data[
+            "reporting"
+        ][
+            "enabled"
+        ]
+
+    # ==================================================
+    # Paper Trading
+    # ==================================================
+
+    @property
+    def paper_trading_enabled(
+        self,
+    ) -> bool:
+
+        return self.data[
+            "paper_trading"
+        ][
+            "enabled"
+        ]

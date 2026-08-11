@@ -1,12 +1,20 @@
 """
-=================================================
-Project Phoenix
 Test Trade Engine
-M59.1.8
-=================================================
 """
 
 from unittest.mock import patch
+
+from strategy.strategy_models import (
+    StrategySignal,
+    StrategyResult,
+    StrategyType,
+    TradeDirection,
+)
+
+from risk_engine.risk_models import (
+    RiskMetrics,
+    RiskResult,
+)
 
 from live_execution.trade_context import (
     TradeContext,
@@ -17,27 +25,11 @@ from live_execution.trade_engine import (
 )
 
 
-class DummyRisk:
-
-    position_size = 0.10
-
-
-class DummyStrategy:
-
-    entry_price = 1.1000
-
-    stop_loss = 1.0950
-
-    take_profit = 1.1100
-
-
 class DummySignal:
-
     pass
 
 
 class DummyAI:
-
     pass
 
 
@@ -75,21 +67,75 @@ def test_trade_engine(
 
     )
 
-    context.strategy_result = (
-        DummyStrategy()
+    # --------------------------------------------------
+    # Strategy Result
+    # --------------------------------------------------
+
+    signal = StrategySignal(
+
+        strategy_id="S01",
+
+        strategy_name=StrategyType.S01_EMA_TREND,
+
+        direction=TradeDirection.BUY,
+
+        confidence=90,
+
+        entry_price=1.1000,
+
+        stop_loss=0.0,
+
+        take_profit=0.0,
+
+        risk_percent=1,
+
+        reason="BUY",
+
     )
+
+    strategy = StrategyResult()
+
+    strategy.signals.append(
+        signal,
+    )
+
+    context.strategy_result = strategy
+
+    # --------------------------------------------------
+    # Signal Engine Output
+    # --------------------------------------------------
 
     context.signal_result = (
         DummySignal()
     )
 
-    context.risk_result = (
-        DummyRisk()
+    # --------------------------------------------------
+    # Risk Engine Output
+    # --------------------------------------------------
+
+    risk = RiskResult()
+
+    risk.metrics = RiskMetrics(
+
+        position_size=0.10,
+
+        stop_loss=1.0950,
+
+        take_profit=1.1100,
+
     )
+
+    context.risk_result = risk
+
+    # --------------------------------------------------
+    # AI Output
+    # --------------------------------------------------
 
     context.ai_result = (
         DummyAI()
     )
+
+    # --------------------------------------------------
 
     engine = TradeEngine()
 

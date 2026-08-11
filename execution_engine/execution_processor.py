@@ -32,6 +32,14 @@ class ExecutionProcessor:
 
     Integrates the Live Trade
     Execution Engine.
+
+    Responsibilities:
+    - Select executable strategy signal
+    - Create Phoenix ExecutionOrder
+    - Create TradeContext
+    - Execute through TradeManager
+    - Propagate MT5 execution response
+    - Update ExecutionResult
     """
 
     def __init__(
@@ -42,6 +50,8 @@ class ExecutionProcessor:
             TradeManager()
         )
 
+    # -------------------------------------------------
+    # Process
     # -------------------------------------------------
 
     def process(
@@ -64,6 +74,10 @@ class ExecutionProcessor:
             )
 
             return context
+
+        # -------------------------------------------------
+        # Select First Executable Signal
+        # -------------------------------------------------
 
         signal = (
             context.strategy_result.signals[0]
@@ -90,13 +104,12 @@ class ExecutionProcessor:
             take_profit=signal.take_profit,
 
             risk_percent=signal.risk_percent,
-
         )
 
         context.order = order
-        
+
         # -------------------------------------------------
-        # Live Trade Execution
+        # Create Live Trade Context
         # -------------------------------------------------
 
         trade_context = TradeContext(
@@ -114,8 +127,11 @@ class ExecutionProcessor:
             risk_result=context.risk_result,
 
             ai_result=context.ai_result,
-
         )
+
+        # -------------------------------------------------
+        # Execute Live Trade
+        # -------------------------------------------------
 
         trade_context = (
             self.trade_manager.execute(
@@ -123,10 +139,34 @@ class ExecutionProcessor:
             )
         )
 
+        # -------------------------------------------------
+        # Handle Trade Failure
+        # -------------------------------------------------
+
         if trade_context.failed:
 
             context.fail(
                 trade_context.reason,
+            )
+
+            return context
+
+        # -------------------------------------------------
+        # Trade Response
+        # -------------------------------------------------
+
+        trade_response = (
+            trade_context.trade_response
+        )
+
+        # -------------------------------------------------
+        # Defensive Response Validation
+        # -------------------------------------------------
+
+        if trade_response is None:
+
+            context.fail(
+                "Trade execution returned no response."
             )
 
             return context
@@ -146,13 +186,37 @@ class ExecutionProcessor:
         )
 
         # -------------------------------------------------
+        # Propagate MT5 Ticket
+        #
+        # MT5:
+        #     trade_response.ticket
+        #
+        # Phoenix:
+        #     execution_result.order_id
+        # -------------------------------------------------
+
+        if trade_response.ticket is not None:
+
+            context.execution_result.order_id = (
+                str(
+                    trade_response.ticket
+                )
+            )
+
+        # -------------------------------------------------
         # Store Trade Response
         # -------------------------------------------------
 
         context.metadata[
             "trade_response"
-        ] = (
-            trade_context.trade_response
-        )
+        ] = trade_response
+
+        # -------------------------------------------------
+        # Store MT5 Ticket Separately
+        # -------------------------------------------------
+
+        context.metadata[
+            "mt5_ticket"
+        ] = trade_response.ticket
 
         return context

@@ -73,6 +73,8 @@ class TradingCycle:
 
         self.pipeline_context = None
 
+        self.current_symbol = ""
+
         # ==================================================
         # Runtime Status
         # ==================================================
@@ -162,8 +164,8 @@ class TradingCycle:
         print("Step 2 : Live Market Data")
 
         self.market_data = (
-                self.market.get_multi_timeframe_data(
-                symbol=self.config.symbol,
+            self.market.get_multi_timeframe_data(
+                symbol=self.current_symbol,
                 bars=self.config.bars,
             )
         )
@@ -198,10 +200,9 @@ class TradingCycle:
 
             pipeline_id="LIVE-PIPELINE",
 
-            symbol=self.config.symbol,
+            symbol=self.current_symbol,
 
             timeframe=self.config.timeframe,
-
         )
 
         context.candles = self.candles
@@ -438,13 +439,27 @@ class TradingCycle:
 
         self._connect_mt5()
 
-        self._load_market_data()
+        for symbol in self.config.symbols:
 
-        self._run_market_pipeline()
+            print()
 
-        self._validate_pipeline_result()
+            print("=" * 50)
 
-        self._generate_trading_report()
+            print(
+                f"Scanning : {symbol}"
+            )
+
+            print("=" * 50)
+
+            self.current_symbol = symbol
+
+            self._load_market_data()
+
+            self._run_market_pipeline()
+
+            self._validate_pipeline_result()
+
+            self._generate_trading_report()
 
         self._finish()
 

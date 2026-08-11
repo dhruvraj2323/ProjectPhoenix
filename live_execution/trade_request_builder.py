@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Trade Request Builder
-M59.1.4
+M59.7.6
 =================================================
 """
 
@@ -22,7 +22,7 @@ from live_execution.trade_models import (
 class TradeRequestBuilder:
     """
     Builds a TradeRequest from
-    the validated TradeContext.
+    validated Risk Engine output.
     """
 
     def build(
@@ -30,53 +30,55 @@ class TradeRequestBuilder:
         context: TradeContext,
     ) -> TradeRequest:
 
-        side = OrderSide.BUY
+        signal = (
+            context.strategy_result.signals[0]
+        )
 
-        if hasattr(
-            context.signal_result,
-            "side",
-        ):
-            side = context.signal_result.side
+        # -----------------------------------------
+        # Trade Direction
+        # -----------------------------------------
 
-        volume = 0.01
+        side = (
 
-        if hasattr(
-            context.risk_result,
-            "position_size",
-        ):
-            volume = (
-                context.risk_result.position_size
-            )
+            OrderSide.BUY
 
-        price = 0.0
+            if signal.direction.value == "BUY"
 
-        if hasattr(
-            context.strategy_result,
-            "entry_price",
-        ):
-            price = (
-                context.strategy_result.entry_price
-            )
+            else OrderSide.SELL
 
-        stop_loss = 0.0
+        )
 
-        if hasattr(
-            context.strategy_result,
-            "stop_loss",
-        ):
-            stop_loss = (
-                context.strategy_result.stop_loss
-            )
+        # -----------------------------------------
+        # Position Size
+        # -----------------------------------------
 
-        take_profit = 0.0
+        volume = (
+            context.risk_result.metrics.position_size
+        )
 
-        if hasattr(
-            context.strategy_result,
-            "take_profit",
-        ):
-            take_profit = (
-                context.strategy_result.take_profit
-            )
+        # -----------------------------------------
+        # Entry
+        # -----------------------------------------
+
+        entry_price = (
+            signal.entry_price
+        )
+
+        # -----------------------------------------
+        # Dynamic Risk Values
+        # -----------------------------------------
+
+        stop_loss = (
+            context.risk_result.metrics.stop_loss
+        )
+
+        take_profit = (
+            context.risk_result.metrics.take_profit
+        )
+
+        # -----------------------------------------
+        # Build Request
+        # -----------------------------------------
 
         request = TradeRequest(
 
@@ -88,7 +90,7 @@ class TradeRequestBuilder:
 
             execution_type=ExecutionType.MARKET,
 
-            price=price,
+            price=entry_price,
 
             stop_loss=stop_loss,
 
@@ -96,6 +98,28 @@ class TradeRequestBuilder:
 
         )
 
+        # -----------------------------------------
+        # Store
+        # -----------------------------------------
+
+        print()
+
+        print("===== TRADE REQUEST =====")
+
+        print(
+            f"Entry : {request.price}"
+        )
+
+        print(
+            f"SL    : {request.stop_loss}"
+        )
+
+        print(
+            f"TP    : {request.take_profit}"
+        )
+
+        print("=========================")
+        
         context.trade_request = request
 
         return request

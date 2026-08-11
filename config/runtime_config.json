@@ -4,7 +4,10 @@
     },
 
     "market": {
-        "symbol": "EURUSD",
+        "symbols": [
+            "XAUUSDm",
+            "BTCUSDm"
+        ],
         "timeframe": "M15",
         "bars": 500
     },

@@ -457,11 +457,30 @@ class PipelineExecutor:
     ) -> None:
 
         risk_context = RiskContext(
+
             engine_id=context.pipeline_id,
+
             account_id="SIM-001",
+
             balance=10000.0,
+
             equity=10000.0,
+
             free_margin=9800.0,
+
+            # -----------------------------------------
+            # M59.7
+            # Market Intelligence
+            # -----------------------------------------
+
+            candles=context.candles,
+
+            indicators=context.indicators,
+
+            patterns=context.patterns,
+
+            strategy_result=context.strategy_result,
+
         )
 
         risk_context = self.risk_manager.execute(
@@ -471,8 +490,11 @@ class PipelineExecutor:
         if risk_context.failed:
 
             context.reject(
+
                 decision="RISK_ENGINE_FAILED",
+
                 reason=risk_context.reason,
+
             )
 
             return
@@ -482,8 +504,11 @@ class PipelineExecutor:
         )
 
         context.set_metadata(
+
             "risk_context",
+
             risk_context,
+
         )
 
     # =========================================================

@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Risk Context
-M36
+M59.7.2
 =================================================
 """
 
@@ -40,6 +40,24 @@ class RiskContext:
     equity: float
 
     free_margin: float
+
+    # --------------------------------------------------
+    # Market Information (M59.7)
+    # --------------------------------------------------
+
+    candles: list[dict[str, Any]] = field(
+        default_factory=list,
+    )
+
+    indicators: dict[str, Any] = field(
+        default_factory=dict,
+    )
+
+    patterns: list[Any] = field(
+        default_factory=list,
+    )
+
+    strategy_result: Any = None
 
     # --------------------------------------------------
     # Runtime Information
@@ -88,9 +106,6 @@ class RiskContext:
         key: str,
         value: Any,
     ) -> None:
-        """
-        Store runtime metadata.
-        """
 
         self.metadata[key] = value
 
@@ -99,9 +114,6 @@ class RiskContext:
         key: str,
         default: Any = None,
     ) -> Any:
-        """
-        Retrieve runtime metadata.
-        """
 
         return self.metadata.get(
             key,
@@ -117,15 +129,15 @@ class RiskContext:
         decision: str,
         reason: str,
     ) -> None:
-        """
-        Mark successful execution.
-        """
 
         self.approved = True
+
         self.completed = True
+
         self.failed = False
 
         self.decision = decision
+
         self.reason = reason
 
     def reject(
@@ -133,15 +145,15 @@ class RiskContext:
         decision: str,
         reason: str,
     ) -> None:
-        """
-        Mark failed execution.
-        """
 
         self.approved = False
+
         self.completed = True
+
         self.failed = True
 
         self.decision = decision
+
         self.reason = reason
 
     # --------------------------------------------------
@@ -151,9 +163,6 @@ class RiskContext:
     def reset(
         self,
     ) -> None:
-        """
-        Reset runtime state.
-        """
 
         self.risk_result = RiskResult()
 
