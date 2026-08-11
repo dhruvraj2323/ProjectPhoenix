@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Trading Cycle
-M58.12.14
+M58.12.15
 =================================================
 """
 
@@ -30,6 +30,10 @@ from market_pipeline.pipeline_context import (
 
 from reporting.reporting_engine import (
     ReportingEngine,
+)
+
+from reporting.trade_record_mapper import (
+    TradeRecordMapper,
 )
 
 from risk_engine.risk_engine import (
@@ -105,9 +109,21 @@ class TradingCycle:
             RiskEngine()
         )
 
+        # ==================================================
+        # Reporting Services
+        # ==================================================
+
         self.reporting_engine = (
             ReportingEngine()
         )
+
+        self.trade_record_mapper = (
+            TradeRecordMapper()
+        )
+
+        self.trade_records = []
+
+        self.daily_report = None
 
     # ==================================================
     # Initialize
@@ -119,11 +135,17 @@ class TradingCycle:
 
         print()
 
-        print("======================================")
+        print(
+            "======================================"
+        )
 
-        print("Starting Trading Cycle")
+        print(
+            "Starting Trading Cycle"
+        )
 
-        print("======================================")
+        print(
+            "======================================"
+        )
 
     # ==================================================
     # MT5 Connection
@@ -136,7 +158,9 @@ class TradingCycle:
         Connect to MT5.
         """
 
-        print("Step 1 : MT5 Connection")
+        print(
+            "Step 1 : MT5 Connection"
+        )
 
         if not self.market.connect():
 
@@ -161,7 +185,9 @@ class TradingCycle:
         Download live market data.
         """
 
-        print("Step 2 : Live Market Data")
+        print(
+            "Step 2 : Live Market Data"
+        )
 
         self.market_data = (
             self.market.get_multi_timeframe_data(
@@ -179,7 +205,8 @@ class TradingCycle:
         )
 
         print(
-            f"M15 Candles Loaded : {len(self.candles)}"
+            f"M15 Candles Loaded : "
+            f"{len(self.candles)}"
         )
 
     # ==================================================
@@ -194,7 +221,9 @@ class TradingCycle:
         using live MT5 candles.
         """
 
-        print("Step 3 : Market Pipeline")
+        print(
+            "Step 3 : Market Pipeline"
+        )
 
         context = PipelineContext(
 
@@ -207,15 +236,18 @@ class TradingCycle:
 
         context.candles = self.candles
 
-        context = self.market_pipeline.engine.run(
-            context,
+        context = (
+            self.market_pipeline.engine.run(
+                context,
+            )
         )
 
         if not context.approved:
 
             raise RuntimeError(
 
-                f"Pipeline Failed : {context.reason}"
+                f"Pipeline Failed : "
+                f"{context.reason}"
 
             )
 
@@ -234,7 +266,8 @@ class TradingCycle:
         )
 
         print(
-            f"Pipeline Approved : {len(context.candles)} candles"
+            f"Pipeline Approved : "
+            f"{len(context.candles)} candles"
         )
 
     # ==================================================
@@ -313,7 +346,180 @@ class TradingCycle:
 
         print()
 
-        print("Pipeline Validation Passed")
+        print(
+            "Pipeline Validation Passed"
+        )
+
+    # ==================================================
+    # Collect Execution Record
+    # ==================================================
+
+    def _collect_execution_record(
+        self,
+    ) -> None:
+        """
+        Convert a successful execution context
+        into a TradeRecord and store it for the
+        consolidated trading-cycle report.
+
+        A rejected or non-executed pipeline is a
+        valid trading-cycle outcome and therefore
+        does not create a TradeRecord.
+        """
+
+        if self.pipeline_context is None:
+
+            raise RuntimeError(
+                "Pipeline context not available."
+            )
+
+        context = self.pipeline_context
+
+        # --------------------------------------------------
+        # Execution Result
+        # --------------------------------------------------
+
+        execution_result = (
+            context.execution_result
+        )
+
+        if execution_result is None:
+
+            print()
+
+            print(
+                "No execution result available."
+            )
+
+            return
+
+        # --------------------------------------------------
+        # No Executed Trade
+        #
+        # Rejected execution is a valid cycle outcome.
+        # Do not create a TradeRecord.
+        # --------------------------------------------------
+
+        if not execution_result.accepted:
+
+            print()
+
+            print(
+                "No executed trade for this cycle."
+            )
+
+            print(
+                "Execution Status : "
+                f"{execution_result.status}"
+            )
+
+            return
+
+        # --------------------------------------------------
+        # Map ExecutionContext -> TradeRecord
+        # --------------------------------------------------
+
+        trade_record = (
+            self.trade_record_mapper.map(
+                context,
+            )
+        )
+
+        # --------------------------------------------------
+        # Store Trade Record
+        # --------------------------------------------------
+
+        self.trade_records.append(
+            trade_record,
+        )
+
+        print()
+
+        print(
+            "===== TRADE RECORD COLLECTED ====="
+        )
+
+        print(
+            f"Trade ID    : "
+            f"{trade_record.trade_id}"
+        )
+
+        print(
+            f"Symbol      : "
+            f"{trade_record.symbol}"
+        )
+
+        print(
+            f"Direction   : "
+            f"{trade_record.direction}"
+        )
+
+        print(
+            f"Entry Price : "
+            f"{trade_record.entry_price}"
+        )
+
+        print(
+            f"Volume      : "
+            f"{trade_record.volume}"
+        )
+
+        print(
+            f"Status      : "
+            f"{trade_record.status}"
+        )
+
+        print(
+            "=================================="
+        )
+
+    # ==================================================
+    # Consolidated Trading Report
+    # ==================================================
+
+    def _generate_consolidated_report(
+        self,
+    ) -> None:
+        """
+        Generate one consolidated report for
+        all executed trades in the trading cycle.
+        """
+
+        if not self.trade_records:
+
+            print()
+
+            print(
+                "No executed trades found."
+            )
+
+            return
+
+        self.daily_report = (
+            self.reporting_engine.run(
+                self.trade_records,
+            )
+        )
+
+        print()
+
+        print(
+            "===== CONSOLIDATED REPORT ====="
+        )
+
+        print(
+            f"Trades Reported : "
+            f"{len(self.trade_records)}"
+        )
+
+        print(
+            f"Report File     : "
+            f"{self.daily_report.output_file}"
+        )
+
+        print(
+            "==============================="
+        )
 
     # ==================================================
     # Trading Cycle Report
@@ -334,50 +540,67 @@ class TradingCycle:
 
         print()
 
-        print("========================================")
-
-        print("Project Phoenix Trading Cycle Report")
-
-        print("========================================")
-
         print(
-            f"Symbol              : {context.symbol}"
+            "========================================"
         )
 
         print(
-            f"Timeframe           : {context.timeframe}"
+            "Project Phoenix Trading Cycle Report"
         )
 
         print(
-            f"Candles             : {len(context.candles)}"
+            "========================================"
         )
 
         print(
-            f"Indicators          : {len(context.indicators)}"
+            f"Symbol              : "
+            f"{context.symbol}"
         )
 
         print(
-            f"Patterns            : {len(context.patterns)}"
+            f"Timeframe           : "
+            f"{context.timeframe}"
         )
 
         print(
-            f"Signals             : {len(context.signals)}"
+            f"Candles             : "
+            f"{len(context.candles)}"
         )
 
         print(
-            f"Pipeline Approved   : {context.approved}"
+            f"Indicators          : "
+            f"{len(context.indicators)}"
         )
 
         print(
-            f"Decision            : {context.decision}"
+            f"Patterns            : "
+            f"{len(context.patterns)}"
         )
 
         print(
-            f"Reason              : {context.reason}"
+            f"Signals             : "
+            f"{len(context.signals)}"
         )
 
-        print("========================================")
-    
+        print(
+            f"Pipeline Approved   : "
+            f"{context.approved}"
+        )
+
+        print(
+            f"Decision            : "
+            f"{context.decision}"
+        )
+
+        print(
+            f"Reason              : "
+            f"{context.reason}"
+        )
+
+        print(
+            "========================================"
+        )
+
     # ==================================================
     # Finish
     # ==================================================
@@ -393,33 +616,47 @@ class TradingCycle:
 
         print()
 
-        print("========== SYSTEM STATUS ==========")
-
         print(
-            f"MT5 Connected        : {self.connected}"
+            "========== SYSTEM STATUS =========="
         )
 
         print(
-            f"Pipeline Completed   : {self.pipeline_completed}"
+            f"MT5 Connected        : "
+            f"{self.connected}"
         )
 
         print(
-            f"Execution Completed  : {self.execution_completed}"
+            f"Pipeline Completed   : "
+            f"{self.pipeline_completed}"
         )
 
         print(
-            f"Paper Trading        : {self.paper_trading_completed}"
+            f"Execution Completed  : "
+            f"{self.execution_completed}"
         )
 
-        print("===================================")
+        print(
+            f"Paper Trading        : "
+            f"{self.paper_trading_completed}"
+        )
+
+        print(
+            "==================================="
+        )
 
         print()
 
-        print("--------------------------------------")
+        print(
+            "--------------------------------------"
+        )
 
-        print("Trading Cycle Completed")
+        print(
+            "Trading Cycle Completed"
+        )
 
-        print("--------------------------------------")
+        print(
+            "--------------------------------------"
+        )
 
         print()
 
@@ -439,17 +676,33 @@ class TradingCycle:
 
         self._connect_mt5()
 
+        # --------------------------------------------------
+        # Reset Cycle-Level Trade Collection
+        # --------------------------------------------------
+
+        self.trade_records = []
+
+        self.daily_report = None
+
+        # --------------------------------------------------
+        # Process All Configured Symbols
+        # --------------------------------------------------
+
         for symbol in self.config.symbols:
 
             print()
 
-            print("=" * 50)
+            print(
+                "=" * 50
+            )
 
             print(
                 f"Scanning : {symbol}"
             )
 
-            print("=" * 50)
+            print(
+                "=" * 50
+            )
 
             self.current_symbol = symbol
 
@@ -459,7 +712,19 @@ class TradingCycle:
 
             self._validate_pipeline_result()
 
+            self._collect_execution_record()
+
             self._generate_trading_report()
+
+        # --------------------------------------------------
+        # Generate One Consolidated Report
+        # --------------------------------------------------
+
+        self._generate_consolidated_report()
+
+        # --------------------------------------------------
+        # Finish
+        # --------------------------------------------------
 
         self._finish()
 

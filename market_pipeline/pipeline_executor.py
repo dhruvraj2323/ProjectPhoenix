@@ -617,8 +617,10 @@ class PipelineExecutor:
 
         )
 
-        execution_context = self.execution_manager.execute(
-            execution_context,
+        execution_context = (
+            self.execution_manager.execute(
+                execution_context,
+            )
         )
 
         if execution_context.failed:
@@ -630,21 +632,78 @@ class PipelineExecutor:
 
             return
 
+        # -------------------------------------------------
+        # Execution Result
+        # -------------------------------------------------
+
         context.execution_result = (
             execution_context.execution_result
         )
+
+        # -------------------------------------------------
+        # Preserve Full Execution Context
+        # -------------------------------------------------
 
         context.set_metadata(
             "execution_context",
             execution_context,
         )
 
+        # -------------------------------------------------
+        # Propagate Trade Response
+        #
+        # ExecutionProcessor stores the MT5
+        # TradeResponse inside ExecutionContext.
+        #
+        # Reporting operates on PipelineContext,
+        # therefore the response must cross this
+        # boundary.
+        # -------------------------------------------------
+
+        trade_response = (
+            execution_context.metadata.get(
+                "trade_response",
+            )
+        )
+
+        if trade_response is not None:
+
+            context.set_metadata(
+                "trade_response",
+                trade_response,
+            )
+
+        # -------------------------------------------------
+        # Propagate MT5 Ticket
+        # -------------------------------------------------
+
+        mt5_ticket = (
+            execution_context.metadata.get(
+                "mt5_ticket",
+            )
+        )
+
+        if mt5_ticket is not None:
+
+            context.set_metadata(
+                "mt5_ticket",
+                mt5_ticket,
+            )
+
+        # -------------------------------------------------
+        # Preserve Strategy Result
+        # -------------------------------------------------
+
         context.set_metadata(
             "strategy_result",
             context.strategy_result,
         )
-        
+
+        # -------------------------------------------------
+        # Complete Pipeline
+        # -------------------------------------------------
+
         context.approve(
             decision="PIPELINE_COMPLETED",
             reason="Pipeline executed successfully.",
-        )    
+        )

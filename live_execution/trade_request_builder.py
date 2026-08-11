@@ -26,16 +26,13 @@ class TradeRequestBuilder:
     Builds a TradeRequest from
     validated Risk Engine output.
 
-    IMPORTANT:
-
     Strategy entry_price is an analytical/reference
     price only.
 
-    For MARKET execution, the actual MT5 request
-    price MUST come from the current broker tick:
+    For MARKET execution:
 
-        BUY  -> Ask
-        SELL -> Bid
+        BUY  -> current MT5 Ask
+        SELL -> current MT5 Bid
     """
 
     def build(

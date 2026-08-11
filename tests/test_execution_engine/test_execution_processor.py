@@ -115,7 +115,7 @@ def test_execution_processor(
         strategy_name=StrategyType.S01_EMA_TREND,
         direction=TradeDirection.BUY,
         confidence=90,
-        entry_price=3350,
+        entry_price=3348,
         stop_loss=3340,
         take_profit=3370,
         risk_percent=1,
@@ -194,6 +194,23 @@ def test_execution_processor(
         == "123456"
     )
 
+    assert (
+        output.execution_result.executed_price
+        == 3350.0
+    )
+
+    trade_response = (
+        output.metadata.get(
+            "trade_response",
+        )
+    )
+
+    assert trade_response is not None
+
+    assert (
+        trade_response.executed_price
+        == 3350.0
+    )
     # --------------------------------------------------
     # MT5 Boundary Verification
     # --------------------------------------------------

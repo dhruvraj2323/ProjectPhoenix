@@ -182,7 +182,7 @@ class ExecutionProcessor:
         )
 
         context.execution_result.executed_price = (
-            signal.entry_price
+            trade_response.executed_price
         )
 
         # -------------------------------------------------
