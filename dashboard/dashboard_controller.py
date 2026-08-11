@@ -32,22 +32,36 @@ class DashboardController:
 
         return [
             DashboardPosition(
-                symbol="EURUSD",
+                symbol="XAUUSDm",
                 direction="BUY",
                 volume=0.10,
-                entry_price=1.1065,
-                current_price=1.1075,
-                profit=10.0,
-            )
+                entry_price=3350.0,
+                current_price=3355.0,
+                profit=50.0,
+            ),
+            DashboardPosition(
+                symbol="BTCUSDm",
+                direction="BUY",
+                volume=0.01,
+                entry_price=115000.0,
+                current_price=115500.0,
+                profit=5.0,
+            ),
         ]
 
     def signals(self):
 
         return [
             DashboardSignal(
-                symbol="EURUSD",
+                symbol="XAUUSDm",
                 signal="BUY",
                 strength=92.5,
                 confidence=96.0,
-            )
+            ),
+            DashboardSignal(
+                symbol="BTCUSDm",
+                signal="BUY",
+                strength=88.0,
+                confidence=91.0,
+            ),
         ]

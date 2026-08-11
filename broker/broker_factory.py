@@ -49,7 +49,7 @@ class MT5Broker(BrokerInterface):
         return True
 
     def symbols(self):
-        return ["EURUSD", "GBPUSD"]
+        return ["XAUUSDm", "BTCUSDm"]
 
     def balance(self):
         return 10000.0

@@ -22,10 +22,13 @@ class MT5Provider(MarketDataProvider):
         return True
 
     def symbols(self):
-        return ["EURUSD", "GBPUSD"]
+        return ["XAUUSDm", "BTCUSDm"]
 
     def latest_tick(self):
-        return {"bid": 1.1064, "ask": 1.1066}
+        return {
+            "bid": 1.1064,
+            "ask": 1.1066,
+        }
 
     def latest_price(self):
         return 1.1065

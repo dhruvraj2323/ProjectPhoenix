@@ -30,17 +30,11 @@ class LiveMarketData:
         self.connector = MT5Connector()
 
         self.timeframes = {
-
             "D1": mt5.TIMEFRAME_D1,
-
             "H4": mt5.TIMEFRAME_H4,
-
             "H1": mt5.TIMEFRAME_H1,
-
             "M15": mt5.TIMEFRAME_M15,
-
             "M5": mt5.TIMEFRAME_M5,
-
         }
 
     # --------------------------------------------------
@@ -75,24 +69,19 @@ class LiveMarketData:
         Automatically resolve broker-specific
         symbol names.
 
-        Example:
-
-        EURUSD
-            ↓
-        EURUSDm
+        Supports exact symbol matching first,
+        followed by prefix matching.
         """
 
         symbols = mt5.symbols_get()
 
         if symbols is None:
-
             return None
 
         # Exact match
         for item in symbols:
 
             if item.name.upper() == symbol.upper():
-
                 return item.name
 
         # Prefix match
@@ -101,7 +90,6 @@ class LiveMarketData:
             if item.name.upper().startswith(
                 symbol.upper()
             ):
-
                 return item.name
 
         return None
@@ -122,7 +110,6 @@ class LiveMarketData:
         )
 
         if resolved_symbol is None:
-
             return []
 
         mt5_timeframe = self.timeframes[
@@ -130,19 +117,13 @@ class LiveMarketData:
         ]
 
         rates = mt5.copy_rates_from_pos(
-
             resolved_symbol,
-
             mt5_timeframe,
-
             0,
-
             bars,
-
         )
 
         if rates is None:
-
             return []
 
         return list(rates)
@@ -164,13 +145,9 @@ class LiveMarketData:
             market_data[
                 timeframe
             ] = self.get_candles(
-
                 symbol,
-
                 timeframe,
-
                 bars,
-
             )
 
         return market_data
