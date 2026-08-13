@@ -2,13 +2,17 @@
 =================================================
 Project Phoenix
 Continuous Runner
-M58
+M61.5 - Deployment Runtime Status
 =================================================
 """
 
 from __future__ import annotations
 
 import time
+
+from deployment.execution_summary import (
+    CycleExecutionStatus,
+)
 
 from deployment.trading_cycle import (
     TradingCycle,
@@ -17,8 +21,14 @@ from deployment.trading_cycle import (
 
 class ContinuousRunner:
     """
-    Executes Project Phoenix
-    continuously.
+    Executes Project Phoenix continuously.
+
+    M61.5 responsibilities:
+    - Execute TradingCycle
+    - Interpret cycle execution summary
+    - Distinguish successful, partial,
+      no-trade and failed cycles
+    - Preserve continuous execution behavior
     """
 
     def __init__(
@@ -43,11 +53,68 @@ class ContinuousRunner:
     ) -> bool:
         """
         Execute one trading cycle.
+
+        Returns
+        -------
+        bool
+            True when the cycle completed without
+            an execution exception.
+
+            False when TradingCycle raised an
+            exception or the cycle ended with
+            ALL_FAILED status.
         """
 
-        return (
-            self.trading_cycle.execute()
-        )
+        try:
+
+            success = (
+                self.trading_cycle.execute()
+            )
+
+            # --------------------------------------------------
+            # Execution Summary
+            # --------------------------------------------------
+
+            execution_summary = getattr(
+                self.trading_cycle,
+                "execution_summary",
+                None,
+            )
+
+            if execution_summary is None:
+
+                return bool(success)
+
+            # --------------------------------------------------
+            # ALL_FAILED
+            # --------------------------------------------------
+
+            if (
+                execution_summary.status
+                == CycleExecutionStatus.ALL_FAILED
+            ):
+
+                return False
+
+            # --------------------------------------------------
+            # ALL_EXECUTED
+            # PARTIAL_SUCCESS
+            # NO_TRADES
+            # --------------------------------------------------
+
+            return bool(success)
+
+        except Exception as exc:
+
+            print()
+
+            print(
+                "Continuous Runner Cycle Exception:"
+            )
+
+            print(exc)
+
+            return False
 
     # --------------------------------------------------
     # Start
@@ -84,12 +151,86 @@ class ContinuousRunner:
 
                 success = self.run_once()
 
-                if success:
+                execution_summary = getattr(
+                    self.trading_cycle,
+                    "execution_summary",
+                    None,
+                )
+
+                # --------------------------------------------------
+                # Cycle Status
+                # --------------------------------------------------
+
+                if execution_summary is not None:
+
+                    status = (
+                        execution_summary.status
+                    )
+
+                    if (
+                        status
+                        == CycleExecutionStatus.ALL_EXECUTED
+                    ):
+
+                        print()
+
+                        print(
+                            f"Cycle {current_cycle} "
+                            "Completed Successfully."
+                        )
+
+                    elif (
+                        status
+                        == CycleExecutionStatus.PARTIAL_SUCCESS
+                    ):
+
+                        print()
+
+                        print(
+                            f"Cycle {current_cycle} "
+                            "Completed With Partial Success."
+                        )
+
+                    elif (
+                        status
+                        == CycleExecutionStatus.NO_TRADES
+                    ):
+
+                        print()
+
+                        print(
+                            f"Cycle {current_cycle} "
+                            "Completed With No Trades."
+                        )
+
+                    elif (
+                        status
+                        == CycleExecutionStatus.ALL_FAILED
+                    ):
+
+                        print()
+
+                        print(
+                            f"Cycle {current_cycle} "
+                            "Failed - All Symbols Failed."
+                        )
+
+                    else:
+
+                        print()
+
+                        print(
+                            f"Cycle {current_cycle} "
+                            "Completed."
+                        )
+
+                elif success:
 
                     print()
 
                     print(
-                        f"Cycle {current_cycle} Completed Successfully."
+                        f"Cycle {current_cycle} "
+                        "Completed Successfully."
                     )
 
                 else:
@@ -109,6 +250,10 @@ class ContinuousRunner:
                 )
 
                 print(exc)
+
+            # --------------------------------------------------
+            # Cycle Limit
+            # --------------------------------------------------
 
             if (
                 cycles > 0
