@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Runtime
-M61.6.2 - Deployment Readiness Gate
+M61.8.5 - Trading Protection Boundary
 =================================================
 """
 
@@ -16,14 +16,19 @@ from deployment.health_monitor import (
     HealthMonitor,
 )
 
+from deployment.trading_protection import (
+    TradingProtection,
+)
+
 
 class Runtime:
     """
     Project Phoenix runtime controller.
 
-    M61.6.2 responsibilities:
+    M61.8.5 responsibilities:
     - Check deployment health before startup
     - Block startup when system is unhealthy
+    - Pass TradingProtection to ContinuousRunner
     - Start ContinuousRunner only when healthy
     - Preserve runtime stop behavior
     """
@@ -31,6 +36,9 @@ class Runtime:
     def __init__(
         self,
         interval: int = 300,
+        trading_protection: (
+            TradingProtection | None
+        ) = None,
     ) -> None:
 
         self.interval = interval
@@ -41,9 +49,18 @@ class Runtime:
             HealthMonitor()
         )
 
+        self.trading_protection = (
+            trading_protection
+            if trading_protection is not None
+            else TradingProtection()
+        )
+
         self.continuous_runner = (
             ContinuousRunner(
                 interval=interval,
+                trading_protection=(
+                    self.trading_protection
+                ),
             )
         )
 
@@ -71,19 +88,7 @@ class Runtime:
     ) -> bool:
         """
         Start Project Phoenix runtime.
-
-        Returns
-        -------
-        bool
-            True when the runtime was started.
-
-            False when startup was blocked by
-            the deployment readiness gate.
         """
-
-        # --------------------------------------------------
-        # Readiness Gate
-        # --------------------------------------------------
 
         if not self.is_ready():
 
@@ -100,10 +105,6 @@ class Runtime:
             )
 
             return False
-
-        # --------------------------------------------------
-        # Start Runtime
-        # --------------------------------------------------
 
         self.running = True
 

@@ -380,3 +380,243 @@ def test_continuous_runner_partial_success_preserved():
         runner.trading_cycle.execution_summary.status
         == CycleExecutionStatus.PARTIAL_SUCCESS
     )
+
+# =========================================================
+# M61.8.5
+# Test L
+# Trading Protection Active Allows Trading
+# =========================================================
+
+def test_continuous_runner_trading_protection_active():
+
+    protection = MagicMock()
+
+    protection.can_trade.return_value = True
+
+    runner = _create_runner(
+        status=(
+            CycleExecutionStatus.ALL_EXECUTED
+        ),
+        execute_result=True,
+    )
+
+    runner.trading_protection = protection
+
+    result = runner.run_once()
+
+    assert result is True
+
+    protection.can_trade.assert_called_once()
+
+    assert (
+        runner.trading_cycle.execute.call_count
+        == 1
+    )
+
+
+# =========================================================
+# M61.8.5
+# Test M
+# Trading Protection Paused Blocks Trading
+# =========================================================
+
+def test_continuous_runner_trading_protection_paused():
+
+    protection = MagicMock()
+
+    protection.can_trade.return_value = False
+
+    runner = _create_runner(
+        status=(
+            CycleExecutionStatus.ALL_EXECUTED
+        ),
+        execute_result=True,
+    )
+
+    runner.trading_protection = protection
+
+    result = runner.run_once()
+
+    assert result is True
+
+    protection.can_trade.assert_called_once()
+
+    runner.trading_cycle.execute.assert_not_called()
+
+
+# =========================================================
+# M61.8.5
+# Test N
+# Paused Runner Does Not Stop
+# =========================================================
+
+def test_continuous_runner_paused_cycle_is_not_failure():
+
+    protection = MagicMock()
+
+    protection.can_trade.return_value = False
+
+    runner = _create_runner(
+        status=(
+            CycleExecutionStatus.ALL_EXECUTED
+        ),
+        execute_result=True,
+    )
+
+    runner.trading_protection = protection
+
+    result = runner.run_once()
+
+    assert result is True
+
+    assert runner.running is False
+
+    runner.trading_cycle.execute.assert_not_called()
+
+
+# =========================================================
+# M61.8.5
+# Test O
+# Protection State Is Checked Before Trading
+# =========================================================
+
+def test_continuous_runner_checks_protection_before_cycle():
+
+    protection = MagicMock()
+
+    protection.can_trade.return_value = False
+
+    runner = _create_runner(
+        status=(
+            CycleExecutionStatus.ALL_EXECUTED
+        ),
+        execute_result=True,
+    )
+
+    runner.trading_protection = protection
+
+    runner.run_once()
+
+    protection.can_trade.assert_called_once()
+
+    runner.trading_cycle.execute.assert_not_called()
+
+# =========================================================
+# M61.8.5
+# Test L
+# Trading Protection Active Allows Trading
+# =========================================================
+
+def test_continuous_runner_trading_protection_active():
+
+    protection = MagicMock()
+
+    protection.can_trade.return_value = True
+
+    runner = _create_runner(
+        status=(
+            CycleExecutionStatus.ALL_EXECUTED
+        ),
+        execute_result=True,
+    )
+
+    runner.trading_protection = protection
+
+    result = runner.run_once()
+
+    assert result is True
+
+    protection.can_trade.assert_called_once()
+
+    assert (
+        runner.trading_cycle.execute.call_count
+        == 1
+    )
+
+
+# =========================================================
+# M61.8.5
+# Test M
+# Trading Protection Paused Blocks Trading
+# =========================================================
+
+def test_continuous_runner_trading_protection_paused():
+
+    protection = MagicMock()
+
+    protection.can_trade.return_value = False
+
+    runner = _create_runner(
+        status=(
+            CycleExecutionStatus.ALL_EXECUTED
+        ),
+        execute_result=True,
+    )
+
+    runner.trading_protection = protection
+
+    result = runner.run_once()
+
+    assert result is True
+
+    protection.can_trade.assert_called_once()
+
+    runner.trading_cycle.execute.assert_not_called()
+
+
+# =========================================================
+# M61.8.5
+# Test N
+# Paused Runner Does Not Stop
+# =========================================================
+
+def test_continuous_runner_paused_cycle_is_not_failure():
+
+    protection = MagicMock()
+
+    protection.can_trade.return_value = False
+
+    runner = _create_runner(
+        status=(
+            CycleExecutionStatus.ALL_EXECUTED
+        ),
+        execute_result=True,
+    )
+
+    runner.trading_protection = protection
+
+    result = runner.run_once()
+
+    assert result is True
+
+    assert runner.running is False
+
+    runner.trading_cycle.execute.assert_not_called()
+
+
+# =========================================================
+# M61.8.5
+# Test O
+# Protection State Is Checked Before Trading
+# =========================================================
+
+def test_continuous_runner_checks_protection_before_cycle():
+
+    protection = MagicMock()
+
+    protection.can_trade.return_value = False
+
+    runner = _create_runner(
+        status=(
+            CycleExecutionStatus.ALL_EXECUTED
+        ),
+        execute_result=True,
+    )
+
+    runner.trading_protection = protection
+
+    runner.run_once()
+
+    protection.can_trade.assert_called_once()
+
+    runner.trading_cycle.execute.assert_not_called()

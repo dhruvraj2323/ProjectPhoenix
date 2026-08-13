@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Continuous Runner
-M61.5 - Deployment Runtime Status
+M61.8.5 - Trading Protection Boundary
 =================================================
 """
 
@@ -18,27 +18,40 @@ from deployment.trading_cycle import (
     TradingCycle,
 )
 
+from deployment.trading_protection import (
+    TradingProtection,
+)
+
 
 class ContinuousRunner:
     """
     Executes Project Phoenix continuously.
 
-    M61.5 responsibilities:
+    M61.8.5 responsibilities:
     - Execute TradingCycle
     - Interpret cycle execution summary
-    - Distinguish successful, partial,
-      no-trade and failed cycles
+    - Respect TradingProtection
+    - Block new trading when protection is PAUSED
     - Preserve continuous execution behavior
     """
 
     def __init__(
         self,
         interval: int = 300,
+        trading_protection: (
+            TradingProtection | None
+        ) = None,
     ) -> None:
 
         self.interval = interval
 
         self.running = False
+
+        self.trading_protection = (
+            trading_protection
+            if trading_protection is not None
+            else TradingProtection()
+        )
 
         self.trading_cycle = (
             TradingCycle()
@@ -54,26 +67,39 @@ class ContinuousRunner:
         """
         Execute one trading cycle.
 
-        Returns
-        -------
-        bool
-            True when the cycle completed without
-            an execution exception.
+        When trading protection is PAUSED,
+        TradingCycle.execute() is not called.
 
-            False when TradingCycle raised an
-            exception or the cycle ended with
-            ALL_FAILED status.
+        The runner itself remains operational.
         """
 
         try:
 
+            # --------------------------------------------------
+            # Trading Protection Boundary
+            # --------------------------------------------------
+
+            if not self.trading_protection.can_trade():
+
+                print()
+
+                print(
+                    "Trading Protection Active:"
+                )
+
+                print(
+                    "New trading is paused."
+                )
+
+                return True
+
+            # --------------------------------------------------
+            # Execute Trading Cycle
+            # --------------------------------------------------
+
             success = (
                 self.trading_cycle.execute()
             )
-
-            # --------------------------------------------------
-            # Execution Summary
-            # --------------------------------------------------
 
             execution_summary = getattr(
                 self.trading_cycle,
@@ -85,22 +111,12 @@ class ContinuousRunner:
 
                 return bool(success)
 
-            # --------------------------------------------------
-            # ALL_FAILED
-            # --------------------------------------------------
-
             if (
                 execution_summary.status
                 == CycleExecutionStatus.ALL_FAILED
             ):
 
                 return False
-
-            # --------------------------------------------------
-            # ALL_EXECUTED
-            # PARTIAL_SUCCESS
-            # NO_TRADES
-            # --------------------------------------------------
 
             return bool(success)
 
@@ -124,12 +140,6 @@ class ContinuousRunner:
         self,
         cycles: int = 1,
     ) -> None:
-        """
-        Execute TradingCycle continuously.
-
-        For deployment testing,
-        the number of cycles can be limited.
-        """
 
         self.running = True
 
@@ -158,10 +168,21 @@ class ContinuousRunner:
                 )
 
                 # --------------------------------------------------
-                # Cycle Status
+                # Protected Cycle
                 # --------------------------------------------------
 
-                if execution_summary is not None:
+                if (
+                    not self.trading_protection.can_trade()
+                ):
+
+                    print()
+
+                    print(
+                        f"Cycle {current_cycle} "
+                        "Paused - Trading Protection Active."
+                    )
+
+                elif execution_summary is not None:
 
                     status = (
                         execution_summary.status
@@ -250,10 +271,6 @@ class ContinuousRunner:
                 )
 
                 print(exc)
-
-            # --------------------------------------------------
-            # Cycle Limit
-            # --------------------------------------------------
 
             if (
                 cycles > 0

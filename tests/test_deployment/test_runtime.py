@@ -191,3 +191,32 @@ def test_runtime_runner_exception_resets_state():
         pass
 
     assert runtime.running is False
+
+# =========================================================
+# M61.8.5
+# Test F
+# Runtime Passes Trading Protection
+# =========================================================
+
+def test_runtime_passes_trading_protection():
+
+    from deployment.trading_protection import (
+        TradingProtection,
+    )
+
+    protection = TradingProtection()
+
+    runtime = Runtime(
+        interval=0,
+        trading_protection=protection,
+    )
+
+    assert (
+        runtime.trading_protection
+        is protection
+    )
+
+    assert (
+        runtime.continuous_runner.trading_protection
+        is protection
+    )
