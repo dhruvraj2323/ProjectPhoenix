@@ -1,7 +1,7 @@
 """
 Project Phoenix
 Trading Cycle Tests
-M61.2 - Multi-Symbol Execution Validation
+M61.3 - Multi-Symbol Execution Summary Validation
 """
 
 from datetime import UTC, datetime
@@ -90,7 +90,9 @@ def _create_success_context(
         "S01_EMA_TREND"
     )
 
-    signal.entry_price = price - 2.838
+    signal.entry_price = (
+        price - 2.838
+    )
 
     signal.metadata = {}
 
@@ -195,15 +197,7 @@ def _create_trade_record(
 
 def test_trading_cycle_execution_reporting():
 
-    # --------------------------------------------------
-    # Trading Cycle
-    # --------------------------------------------------
-
     cycle = TradingCycle()
-
-    # --------------------------------------------------
-    # Mock Pipeline Context
-    # --------------------------------------------------
 
     context = _create_success_context(
         symbol="XAUUSDm",
@@ -212,10 +206,6 @@ def test_trading_cycle_execution_reporting():
     )
 
     cycle.pipeline_context = context
-
-    # --------------------------------------------------
-    # Reporting Boundary
-    # --------------------------------------------------
 
     trade_record = _create_trade_record(
         symbol="XAUUSDm",
@@ -246,15 +236,7 @@ def test_trading_cycle_execution_reporting():
         report
     )
 
-    # --------------------------------------------------
-    # Execute Reporting Integration
-    # --------------------------------------------------
-
     cycle._collect_execution_record()
-
-    # --------------------------------------------------
-    # Assertions
-    # --------------------------------------------------
 
     assert len(
         cycle.trade_records
@@ -281,10 +263,6 @@ def test_trading_cycle_multi_symbol_records():
 
     cycle = TradingCycle()
 
-    # --------------------------------------------------
-    # Configure Two Symbols
-    # --------------------------------------------------
-
     cycle.config = MagicMock()
 
     cycle.config.symbols = [
@@ -293,11 +271,8 @@ def test_trading_cycle_multi_symbol_records():
     ]
 
     cycle.config.timeframe = "M15"
-    cycle.config.bars = 500
 
-    # --------------------------------------------------
-    # Prepare Independent Contexts
-    # --------------------------------------------------
+    cycle.config.bars = 500
 
     xau_context = _create_success_context(
         symbol="XAUUSDm",
@@ -315,10 +290,6 @@ def test_trading_cycle_multi_symbol_records():
         "XAUUSDm": xau_context,
         "BTCUSDm": btc_context,
     }
-
-    # --------------------------------------------------
-    # Mock Pipeline
-    # --------------------------------------------------
 
     def mock_run_market_pipeline():
 
@@ -338,10 +309,6 @@ def test_trading_cycle_multi_symbol_records():
         mock_run_market_pipeline
     )
 
-    # --------------------------------------------------
-    # Mock Other Cycle Boundaries
-    # --------------------------------------------------
-
     cycle._load_market_data = (
         MagicMock()
     )
@@ -357,10 +324,6 @@ def test_trading_cycle_multi_symbol_records():
     cycle._finish = (
         MagicMock()
     )
-
-    # --------------------------------------------------
-    # Trade Records
-    # --------------------------------------------------
 
     xau_record = _create_trade_record(
         symbol="XAUUSDm",
@@ -391,15 +354,7 @@ def test_trading_cycle_multi_symbol_records():
         mock_collect_execution_record
     )
 
-    # --------------------------------------------------
-    # Execute
-    # --------------------------------------------------
-
     result = cycle.execute()
-
-    # --------------------------------------------------
-    # Assertions
-    # --------------------------------------------------
 
     assert result is True
 
@@ -422,10 +377,6 @@ def test_trading_cycle_multi_symbol_records():
         "XAU-001",
         "BTC-001",
     }
-
-    # --------------------------------------------------
-    # Both Symbols Processed
-    # --------------------------------------------------
 
     assert (
         cycle._load_market_data.call_count
@@ -455,10 +406,6 @@ def test_trading_cycle_symbol_failure_isolated():
 
     cycle = TradingCycle()
 
-    # --------------------------------------------------
-    # Configure Two Symbols
-    # --------------------------------------------------
-
     cycle.config = MagicMock()
 
     cycle.config.symbols = [
@@ -467,12 +414,8 @@ def test_trading_cycle_symbol_failure_isolated():
     ]
 
     cycle.config.timeframe = "M15"
-    cycle.config.bars = 500
 
-    # --------------------------------------------------
-    # XAUUSDm Failure
-    # BTCUSDm Success
-    # --------------------------------------------------
+    cycle.config.bars = 500
 
     def mock_run_market_pipeline():
 
@@ -500,41 +443,21 @@ def test_trading_cycle_symbol_failure_isolated():
         mock_run_market_pipeline
     )
 
-    # --------------------------------------------------
-    # Mock Market Loading
-    # --------------------------------------------------
-
     cycle._load_market_data = (
         MagicMock()
     )
-
-    # --------------------------------------------------
-    # Validation
-    # --------------------------------------------------
 
     cycle._validate_pipeline_result = (
         MagicMock()
     )
 
-    # --------------------------------------------------
-    # Reporting
-    # --------------------------------------------------
-
     cycle._generate_trading_report = (
         MagicMock()
     )
 
-    # --------------------------------------------------
-    # Finish
-    # --------------------------------------------------
-
     cycle._finish = (
         MagicMock()
     )
-
-    # --------------------------------------------------
-    # BTC Trade Record
-    # --------------------------------------------------
 
     btc_record = _create_trade_record(
         symbol="BTCUSDm",
@@ -554,24 +477,9 @@ def test_trading_cycle_symbol_failure_isolated():
         mock_collect_execution_record
     )
 
-    # --------------------------------------------------
-    # Execute
-    #
-    # M61.2 requirement:
-    # XAU failure must not abort BTC.
-    # --------------------------------------------------
-
     result = cycle.execute()
 
-    # --------------------------------------------------
-    # Assertions
-    # --------------------------------------------------
-
     assert result is True
-
-    # --------------------------------------------------
-    # BTCUSDm Must Have Been Processed
-    # --------------------------------------------------
 
     assert (
         cycle.current_symbol
@@ -582,10 +490,6 @@ def test_trading_cycle_symbol_failure_isolated():
         cycle._load_market_data.call_count
         == 2
     )
-
-    # --------------------------------------------------
-    # Only Successful Trade Recorded
-    # --------------------------------------------------
 
     assert len(
         cycle.trade_records
@@ -601,8 +505,615 @@ def test_trading_cycle_symbol_failure_isolated():
         == "BTC-002"
     )
 
-    # --------------------------------------------------
-    # Cycle Must Finish
-    # --------------------------------------------------
+    cycle._finish.assert_called_once()
+
+
+# =========================================================
+# M61.3
+# Test C
+# All Symbols Executed
+# =========================================================
+
+def test_trading_cycle_summary_all_executed():
+
+    cycle = TradingCycle()
+
+    cycle.config = MagicMock()
+
+    cycle.config.symbols = [
+        "XAUUSDm",
+        "BTCUSDm",
+    ]
+
+    cycle.config.timeframe = "M15"
+
+    cycle.config.bars = 500
+
+    contexts = {
+        "XAUUSDm": _create_success_context(
+            symbol="XAUUSDm",
+            ticket="XAU-003",
+            price=4381.838,
+        ),
+        "BTCUSDm": _create_success_context(
+            symbol="BTCUSDm",
+            ticket="BTC-003",
+            price=63505.370,
+        ),
+    }
+
+    def mock_run_market_pipeline():
+
+        cycle.pipeline_context = (
+            contexts[
+                cycle.current_symbol
+            ]
+        )
+
+    cycle._run_market_pipeline = (
+        mock_run_market_pipeline
+    )
+
+    cycle._load_market_data = (
+        MagicMock()
+    )
+
+    cycle._validate_pipeline_result = (
+        MagicMock()
+    )
+
+    cycle._generate_trading_report = (
+        MagicMock()
+    )
+
+    cycle._finish = (
+        MagicMock()
+    )
+
+    records = {
+        "XAUUSDm": _create_trade_record(
+            symbol="XAUUSDm",
+            ticket="XAU-003",
+            price=4381.838,
+        ),
+        "BTCUSDm": _create_trade_record(
+            symbol="BTCUSDm",
+            ticket="BTC-003",
+            price=63505.370,
+        ),
+    }
+
+    def mock_collect_execution_record():
+
+        cycle.trade_records.append(
+            records[
+                cycle.current_symbol
+            ]
+        )
+
+        return True
+
+    cycle._collect_execution_record = (
+        mock_collect_execution_record
+    )
+
+    result = cycle.execute()
+
+    assert result is True
+
+    assert (
+        cycle.execution_summary.total_symbols
+        == 2
+    )
+
+    assert (
+        cycle.execution_summary.executed_symbols
+        == 2
+    )
+
+    assert (
+        cycle.execution_summary.no_trade_symbols
+        == 0
+    )
+
+    assert (
+        cycle.execution_summary.failed_symbols
+        == 0
+    )
+
+    assert (
+        cycle.execution_summary.status.value
+        == "ALL_EXECUTED"
+    )
+
+    assert len(
+        cycle.execution_summary.symbol_results
+    ) == 2
+
+    assert {
+        result.symbol
+        for result
+        in cycle.execution_summary.symbol_results
+    } == {
+        "XAUUSDm",
+        "BTCUSDm",
+    }
 
     cycle._finish.assert_called_once()
+
+
+# =========================================================
+# M61.3
+# Test D
+# Partial Success
+# =========================================================
+
+def test_trading_cycle_summary_partial_success():
+
+    cycle = TradingCycle()
+
+    cycle.config = MagicMock()
+
+    cycle.config.symbols = [
+        "XAUUSDm",
+        "BTCUSDm",
+    ]
+
+    cycle.config.timeframe = "M15"
+
+    cycle.config.bars = 500
+
+    def mock_run_market_pipeline():
+
+        if cycle.current_symbol == "XAUUSDm":
+
+            raise RuntimeError(
+                "Simulated XAUUSDm failure."
+            )
+
+        cycle.pipeline_context = (
+            _create_success_context(
+                symbol="BTCUSDm",
+                ticket="BTC-004",
+                price=63505.370,
+            )
+        )
+
+    cycle._run_market_pipeline = (
+        mock_run_market_pipeline
+    )
+
+    cycle._load_market_data = (
+        MagicMock()
+    )
+
+    cycle._validate_pipeline_result = (
+        MagicMock()
+    )
+
+    cycle._generate_trading_report = (
+        MagicMock()
+    )
+
+    cycle._finish = (
+        MagicMock()
+    )
+
+    btc_record = _create_trade_record(
+        symbol="BTCUSDm",
+        ticket="BTC-004",
+        price=63505.370,
+    )
+
+    def mock_collect_execution_record():
+
+        if cycle.current_symbol == "BTCUSDm":
+
+            cycle.trade_records.append(
+                btc_record
+            )
+
+            return True
+
+        return False
+
+    cycle._collect_execution_record = (
+        mock_collect_execution_record
+    )
+
+    result = cycle.execute()
+
+    assert result is True
+
+    assert (
+        cycle.execution_summary.total_symbols
+        == 2
+    )
+
+    assert (
+        cycle.execution_summary.executed_symbols
+        == 1
+    )
+
+    assert (
+        cycle.execution_summary.no_trade_symbols
+        == 0
+    )
+
+    assert (
+        cycle.execution_summary.failed_symbols
+        == 1
+    )
+
+    assert (
+        cycle.execution_summary.status.value
+        == "PARTIAL_SUCCESS"
+    )
+
+    failed_results = [
+        result
+        for result
+        in cycle.execution_summary.symbol_results
+        if result.symbol == "XAUUSDm"
+    ]
+
+    assert len(
+        failed_results
+    ) == 1
+
+    assert (
+        failed_results[0].status.value
+        == "FAILED"
+    )
+
+    assert (
+        "Simulated XAUUSDm failure"
+        in failed_results[0].error
+    )
+
+    executed_results = [
+        result
+        for result
+        in cycle.execution_summary.symbol_results
+        if result.symbol == "BTCUSDm"
+    ]
+
+    assert len(
+        executed_results
+    ) == 1
+
+    assert (
+        executed_results[0].status.value
+        == "EXECUTED"
+    )
+
+    assert (
+        executed_results[0].trade_id
+        == "BTC-004"
+    )
+
+    cycle._finish.assert_called_once()
+
+
+# =========================================================
+# M61.3
+# Test E
+# All Symbols No Trade
+# =========================================================
+
+def test_trading_cycle_summary_no_trades():
+
+    cycle = TradingCycle()
+
+    cycle.config = MagicMock()
+
+    cycle.config.symbols = [
+        "XAUUSDm",
+        "BTCUSDm",
+    ]
+
+    cycle.config.timeframe = "M15"
+
+    cycle.config.bars = 500
+
+    contexts = {
+        "XAUUSDm": _create_success_context(
+            symbol="XAUUSDm",
+            ticket="",
+            price=4381.838,
+        ),
+        "BTCUSDm": _create_success_context(
+            symbol="BTCUSDm",
+            ticket="",
+            price=63505.370,
+        ),
+    }
+
+    def mock_run_market_pipeline():
+
+        cycle.pipeline_context = (
+            contexts[
+                cycle.current_symbol
+            ]
+        )
+
+    cycle._run_market_pipeline = (
+        mock_run_market_pipeline
+    )
+
+    cycle._load_market_data = (
+        MagicMock()
+    )
+
+    cycle._validate_pipeline_result = (
+        MagicMock()
+    )
+
+    cycle._generate_trading_report = (
+        MagicMock()
+    )
+
+    cycle._finish = (
+        MagicMock()
+    )
+
+    def mock_collect_execution_record():
+
+        return False
+
+    cycle._collect_execution_record = (
+        mock_collect_execution_record
+    )
+
+    result = cycle.execute()
+
+    assert result is True
+
+    assert (
+        cycle.execution_summary.total_symbols
+        == 2
+    )
+
+    assert (
+        cycle.execution_summary.executed_symbols
+        == 0
+    )
+
+    assert (
+        cycle.execution_summary.no_trade_symbols
+        == 2
+    )
+
+    assert (
+        cycle.execution_summary.failed_symbols
+        == 0
+    )
+
+    assert (
+        cycle.execution_summary.status.value
+        == "NO_TRADES"
+    )
+
+    assert len(
+        cycle.execution_summary.symbol_results
+    ) == 2
+
+    assert all(
+        result.status.value == "NO_TRADE"
+        for result
+        in cycle.execution_summary.symbol_results
+    )
+
+    cycle._finish.assert_called_once()
+
+
+# =========================================================
+# M61.3
+# Test F
+# All Symbols Failed
+# =========================================================
+
+def test_trading_cycle_summary_all_failed():
+
+    cycle = TradingCycle()
+
+    cycle.config = MagicMock()
+
+    cycle.config.symbols = [
+        "XAUUSDm",
+        "BTCUSDm",
+    ]
+
+    cycle.config.timeframe = "M15"
+
+    cycle.config.bars = 500
+
+    def mock_run_market_pipeline():
+
+        raise RuntimeError(
+            f"Simulated {cycle.current_symbol} failure."
+        )
+
+    cycle._run_market_pipeline = (
+        mock_run_market_pipeline
+    )
+
+    cycle._load_market_data = (
+        MagicMock()
+    )
+
+    cycle._validate_pipeline_result = (
+        MagicMock()
+    )
+
+    cycle._generate_trading_report = (
+        MagicMock()
+    )
+
+    cycle._finish = (
+        MagicMock()
+    )
+
+    result = cycle.execute()
+
+    assert result is True
+
+    assert (
+        cycle.execution_summary.total_symbols
+        == 2
+    )
+
+    assert (
+        cycle.execution_summary.executed_symbols
+        == 0
+    )
+
+    assert (
+        cycle.execution_summary.no_trade_symbols
+        == 0
+    )
+
+    assert (
+        cycle.execution_summary.failed_symbols
+        == 2
+    )
+
+    assert (
+        cycle.execution_summary.status.value
+        == "ALL_FAILED"
+    )
+
+    assert len(
+        cycle.execution_summary.symbol_results
+    ) == 2
+
+    assert all(
+        result.status.value == "FAILED"
+        for result
+        in cycle.execution_summary.symbol_results
+    )
+
+    cycle._finish.assert_called_once()
+
+
+# =========================================================
+# M61.3
+# Test G
+# Summary Must Reset Between Cycles
+# =========================================================
+
+def test_trading_cycle_summary_resets_between_cycles():
+
+    cycle = TradingCycle()
+
+    cycle.config = MagicMock()
+
+    cycle.config.symbols = [
+        "XAUUSDm",
+    ]
+
+    cycle.config.timeframe = "M15"
+
+    cycle.config.bars = 500
+
+    cycle._load_market_data = (
+        MagicMock()
+    )
+
+    cycle._validate_pipeline_result = (
+        MagicMock()
+    )
+
+    cycle._generate_trading_report = (
+        MagicMock()
+    )
+
+    cycle._finish = (
+        MagicMock()
+    )
+
+    context = _create_success_context(
+        symbol="XAUUSDm",
+        ticket="RESET-001",
+        price=4381.838,
+    )
+
+    def mock_run_market_pipeline():
+
+        cycle.pipeline_context = context
+
+    cycle._run_market_pipeline = (
+        mock_run_market_pipeline
+    )
+
+    def mock_collect_execution_record():
+
+        cycle.trade_records.append(
+            _create_trade_record(
+                symbol="XAUUSDm",
+                ticket="RESET-001",
+                price=4381.838,
+            )
+        )
+
+        return True
+
+    cycle._collect_execution_record = (
+        mock_collect_execution_record
+    )
+
+    assert cycle.execute() is True
+
+    assert (
+        cycle.execution_summary.total_symbols
+        == 1
+    )
+
+    assert (
+        cycle.execution_summary.executed_symbols
+        == 1
+    )
+
+    assert (
+        cycle.execution_summary.status.value
+        == "ALL_EXECUTED"
+    )
+
+    def mock_collect_no_trade():
+
+        return False
+
+    cycle._collect_execution_record = (
+        mock_collect_no_trade
+    )
+
+    assert cycle.execute() is True
+
+    assert (
+        cycle.execution_summary.total_symbols
+        == 1
+    )
+
+    assert (
+        cycle.execution_summary.executed_symbols
+        == 0
+    )
+
+    assert (
+        cycle.execution_summary.no_trade_symbols
+        == 1
+    )
+
+    assert (
+        cycle.execution_summary.failed_symbols
+        == 0
+    )
+
+    assert (
+        cycle.execution_summary.status.value
+        == "NO_TRADES"
+    )
+
+    assert len(
+        cycle.execution_summary.symbol_results
+    ) == 1

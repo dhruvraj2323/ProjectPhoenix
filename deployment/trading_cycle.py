@@ -2,11 +2,17 @@
 =================================================
 Project Phoenix
 Trading Cycle
-M61.2
+M61.3
 =================================================
 """
 
 from __future__ import annotations
+
+from deployment.execution_summary import (
+    CycleExecutionSummary,
+    SymbolExecutionResult,
+    SymbolExecutionStatus,
+)
 
 from deployment.live_market_data import (
     LiveMarketData,
@@ -50,10 +56,20 @@ class TradingCycle:
     Executes one complete
     Project Phoenix trading cycle.
 
-    M61.2:
+    M61.3:
 
     Each configured symbol is processed
     independently.
+
+    Each symbol produces one explicit
+    execution outcome:
+
+    - EXECUTED
+    - NO_TRADE
+    - FAILED
+
+    The complete cycle exposes a
+    CycleExecutionSummary.
 
     A failure for one symbol must not
     prevent the remaining symbols from
@@ -133,6 +149,14 @@ class TradingCycle:
         self.trade_records = []
 
         self.daily_report = None
+
+        # ==================================================
+        # M61.3 Execution Summary
+        # ==================================================
+
+        self.execution_summary = (
+            CycleExecutionSummary()
+        )
 
     # ==================================================
     # Initialize
@@ -365,11 +389,19 @@ class TradingCycle:
 
     def _collect_execution_record(
         self,
-    ) -> None:
+    ) -> bool:
         """
         Convert a successful execution context
         into a TradeRecord and store it for the
         consolidated trading-cycle report.
+
+        Returns:
+
+            True:
+                Executed trade collected.
+
+            False:
+                No executed trade.
 
         A rejected or non-executed pipeline is a
         valid trading-cycle outcome and therefore
@@ -400,7 +432,7 @@ class TradingCycle:
                 "No execution result available."
             )
 
-            return
+            return False
 
         # --------------------------------------------------
         # No Executed Trade
@@ -422,7 +454,7 @@ class TradingCycle:
                 f"{execution_result.status}"
             )
 
-            return
+            return False
 
         # --------------------------------------------------
         # Map ExecutionContext -> TradeRecord
@@ -480,6 +512,37 @@ class TradingCycle:
 
         print(
             "=================================="
+        )
+
+        return True
+
+    # ==================================================
+    # M61.3 Record Symbol Result
+    # ==================================================
+
+    def _record_symbol_result(
+        self,
+        symbol: str,
+        status: SymbolExecutionStatus,
+        trade_id: str = "",
+        error: str = "",
+    ) -> None:
+        """
+        Record the final execution outcome
+        for one symbol.
+        """
+
+        result = (
+            SymbolExecutionResult(
+                symbol=symbol,
+                status=status,
+                trade_id=trade_id,
+                error=error,
+            )
+        )
+
+        self.execution_summary.add_result(
+            result
         )
 
     # ==================================================
@@ -633,6 +696,12 @@ class TradingCycle:
 
         self.last_error = message
 
+        self._record_symbol_result(
+            symbol=symbol,
+            status=SymbolExecutionStatus.FAILED,
+            error=str(error),
+        )
+
         print()
 
         print(
@@ -725,16 +794,22 @@ class TradingCycle:
         Execute one complete
         Project Phoenix trading cycle.
 
-        M61.2:
+        M61.3:
 
         Every configured symbol is isolated.
 
-        A failure while processing one symbol
-        does not prevent the next symbol from
-        being processed.
+        Each symbol receives an explicit
+        execution result:
 
-        The MT5 connection is always finalized
-        through _finish().
+        - EXECUTED
+        - NO_TRADE
+        - FAILED
+
+        The complete cycle result is exposed
+        through execution_summary.
+
+        The existing execute() -> bool contract
+        is preserved.
         """
 
         self._initialize()
@@ -752,6 +827,10 @@ class TradingCycle:
         self.last_error = ""
 
         self.pipeline_context = None
+
+        self.execution_summary = (
+            CycleExecutionSummary()
+        )
 
         self.pipeline_completed = False
 
@@ -784,10 +863,7 @@ class TradingCycle:
                 self.current_symbol = symbol
 
                 # --------------------------------------------------
-                # IMPORTANT:
-                #
-                # Clear previous symbol context before processing
-                # the next symbol.
+                # Clear Previous Symbol Context
                 # --------------------------------------------------
 
                 self.pipeline_context = None
@@ -814,7 +890,38 @@ class TradingCycle:
 
                     self._validate_pipeline_result()
 
-                    self._collect_execution_record()
+                    executed = (
+                        self._collect_execution_record()
+                    )
+
+                    # --------------------------------------------------
+                    # M61.3 Symbol Outcome
+                    # --------------------------------------------------
+
+                    if executed:
+
+                        trade_record = (
+                            self.trade_records[-1]
+                        )
+
+                        self._record_symbol_result(
+                            symbol=symbol,
+                            status=(
+                                SymbolExecutionStatus.EXECUTED
+                            ),
+                            trade_id=(
+                                trade_record.trade_id
+                            ),
+                        )
+
+                    else:
+
+                        self._record_symbol_result(
+                            symbol=symbol,
+                            status=(
+                                SymbolExecutionStatus.NO_TRADE
+                            ),
+                        )
 
                     self._generate_trading_report()
 
@@ -839,6 +946,45 @@ class TradingCycle:
             # --------------------------------------------------
 
             self._generate_consolidated_report()
+
+            # --------------------------------------------------
+            # M61.3 Cycle Summary
+            # --------------------------------------------------
+
+            print()
+
+            print(
+                "===== CYCLE EXECUTION SUMMARY ====="
+            )
+
+            print(
+                f"Total Symbols   : "
+                f"{self.execution_summary.total_symbols}"
+            )
+
+            print(
+                f"Executed        : "
+                f"{self.execution_summary.executed_symbols}"
+            )
+
+            print(
+                f"No Trade        : "
+                f"{self.execution_summary.no_trade_symbols}"
+            )
+
+            print(
+                f"Failed          : "
+                f"{self.execution_summary.failed_symbols}"
+            )
+
+            print(
+                f"Cycle Status    : "
+                f"{self.execution_summary.status.value}"
+            )
+
+            print(
+                "===================================="
+            )
 
             return True
 
