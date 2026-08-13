@@ -1,8 +1,8 @@
 """
 =================================================
 Project Phoenix
-Deployment Runtime
-M58.12.12
+Runtime
+M61.6.2 - Deployment Readiness Gate
 =================================================
 """
 
@@ -12,33 +12,53 @@ from deployment.continuous_runner import (
     ContinuousRunner,
 )
 
-from deployment.runtime_config import (
-    RuntimeConfig,
+from deployment.health_monitor import (
+    HealthMonitor,
 )
 
 
 class Runtime:
     """
-    Controls the runtime lifecycle
-    of Project Phoenix.
+    Project Phoenix runtime controller.
+
+    M61.6.2 responsibilities:
+    - Check deployment health before startup
+    - Block startup when system is unhealthy
+    - Start ContinuousRunner only when healthy
+    - Preserve runtime stop behavior
     """
 
     def __init__(
         self,
+        interval: int = 300,
     ) -> None:
+
+        self.interval = interval
 
         self.running = False
 
-        self.config = RuntimeConfig()
+        self.health_monitor = (
+            HealthMonitor()
+        )
 
-        # ------------------------------------------
-        # Continuous Runner
-        # ------------------------------------------
+        self.continuous_runner = (
+            ContinuousRunner(
+                interval=interval,
+            )
+        )
 
-        self.runner = ContinuousRunner(
+    # --------------------------------------------------
+    # Readiness Check
+    # --------------------------------------------------
 
-            interval=self.config.interval,
+    def is_ready(self) -> bool:
+        """
+        Return True when deployment health
+        passes the startup readiness gate.
+        """
 
+        return (
+            self.health_monitor.is_healthy()
         )
 
     # --------------------------------------------------
@@ -47,35 +67,73 @@ class Runtime:
 
     def start(
         self,
-        cycles: int | None = None,
-    ) -> None:
+        cycles: int = 1,
+    ) -> bool:
         """
-        Start runtime.
+        Start Project Phoenix runtime.
+
+        Returns
+        -------
+        bool
+            True when the runtime was started.
+
+            False when startup was blocked by
+            the deployment readiness gate.
         """
+
+        # --------------------------------------------------
+        # Readiness Gate
+        # --------------------------------------------------
+
+        if not self.is_ready():
+
+            self.running = False
+
+            print()
+
+            print(
+                "Runtime startup blocked."
+            )
+
+            print(
+                "Deployment health check failed."
+            )
+
+            return False
+
+        # --------------------------------------------------
+        # Start Runtime
+        # --------------------------------------------------
 
         self.running = True
 
         print()
 
         print(
-            "Runtime started.",
+            "Runtime started."
         )
 
-        print()
+        try:
 
-        print(
-            "Starting Continuous Runner...",
-        )
+            self.continuous_runner.start(
+                cycles=cycles,
+            )
 
-        if cycles is None:
+            return True
 
-            cycles = self.config.cycles
+        except Exception as exc:
 
-        self.runner.start(
+            print()
 
-            cycles=cycles,
+            print(
+                "Runtime execution failed."
+            )
 
-        )
+            print(exc)
+
+            self.running = False
+
+            return False
 
     # --------------------------------------------------
     # Stop
@@ -84,16 +142,13 @@ class Runtime:
     def stop(
         self,
     ) -> None:
-        """
-        Stop runtime.
-        """
-
-        self.runner.stop()
 
         self.running = False
+
+        self.continuous_runner.stop()
 
         print()
 
         print(
-            "Runtime stopped.",
+            "Runtime stopped."
         )

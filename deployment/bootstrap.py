@@ -2,26 +2,37 @@
 =================================================
 Project Phoenix
 Deployment Bootstrap
-M58
+M61.6.3 - Runtime Readiness Integration
 =================================================
 """
 
 from __future__ import annotations
 
-from deployment.runtime import Runtime
+from deployment.runtime import (
+    Runtime,
+)
 
 
 class Bootstrap:
     """
     Initializes and shuts down
     Project Phoenix.
+
+    M61.6.3:
+    Bootstrap now respects the Runtime
+    readiness gate.
     """
 
     def __init__(
         self,
+        runtime: Runtime | None = None,
     ) -> None:
 
-        self.runtime = Runtime()
+        self.runtime = (
+            runtime
+            if runtime is not None
+            else Runtime()
+        )
 
         self.started = False
 
@@ -31,9 +42,13 @@ class Bootstrap:
 
     def start(
         self,
-    ) -> None:
+        cycles: int = 1,
+    ) -> bool:
         """
         Start Project Phoenix.
+
+        Returns True only when Runtime
+        successfully starts.
         """
 
         print()
@@ -42,9 +57,31 @@ class Bootstrap:
             "Initializing Project Phoenix...",
         )
 
-        self.started = True
+        result = self.runtime.start(
+            cycles=cycles,
+        )
 
-        self.runtime.start()
+        self.started = bool(
+            result
+        )
+
+        if self.started:
+
+            print()
+
+            print(
+                "Project Phoenix initialized.",
+            )
+
+        else:
+
+            print()
+
+            print(
+                "Project Phoenix startup blocked.",
+            )
+
+        return self.started
 
     # --------------------------------------------------
     # Stop
@@ -52,14 +89,14 @@ class Bootstrap:
 
     def stop(
         self,
-    ) -> None:
+    ) -> bool:
         """
         Shutdown Project Phoenix.
         """
 
         if not self.started:
 
-            return
+            return False
 
         self.runtime.stop()
 
@@ -70,3 +107,5 @@ class Bootstrap:
         print(
             "Project Phoenix stopped.",
         )
+
+        return True
