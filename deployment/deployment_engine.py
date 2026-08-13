@@ -2,15 +2,24 @@
 =================================================
 Project Phoenix
 Deployment Engine
-M61.9.5 - Deployment Lifecycle Consistency
+M61.10.3 - Runtime Protection Observability
 =================================================
 
 Master deployment controller.
 """
 
-from deployment.runtime_manager import RuntimeManager
-from deployment.health_monitor import HealthMonitor
-from deployment.deployment_logger import DeploymentLogger
+from deployment.runtime_manager import (
+    RuntimeManager,
+)
+
+from deployment.health_monitor import (
+    HealthMonitor,
+)
+
+from deployment.deployment_logger import (
+    DeploymentLogger,
+)
+
 from deployment.deployment_models import (
     DeploymentStatus,
     DeploymentResult,
@@ -26,14 +35,16 @@ class DeploymentEngine:
     """
     Master Deployment Controller.
 
-    M61.9.5 responsibilities:
+    M61.10.3 responsibilities:
     - Start runtime through RuntimeManager
     - Evaluate deployment health
+    - Evaluate runtime trading protection state
     - Approve deployment only when runtime
       startup and health checks both succeed
     - Reject unsafe deployment states
     - Stop runtime when post-startup health
       validation fails
+    - Expose protection state in DeploymentResult
     """
 
     def __init__(self):
@@ -79,6 +90,9 @@ class DeploymentEngine:
         2. Runtime is running
         3. Health report is healthy
 
+        Runtime trading protection state is captured
+        in the deployment result.
+
         If runtime starts but the post-startup
         health check fails, the runtime is stopped
         before the deployment is rejected.
@@ -105,6 +119,10 @@ class DeploymentEngine:
         healthy = (
             health_state
             == DeploymentHealthState.HEALTHY
+        )
+
+        trading_protection_state = (
+            self.runtime.trading_protection_state()
         )
 
         approved = (
@@ -172,6 +190,9 @@ class DeploymentEngine:
             status=status,
             health_report=report,
             health_state=health_state,
+            trading_protection_state=(
+                trading_protection_state
+            ),
         )
 
         DeploymentLogger.log(

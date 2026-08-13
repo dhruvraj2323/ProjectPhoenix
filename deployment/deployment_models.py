@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Deployment Models
-M61.9.3 - Deployment Result Health State
+M61.10.2 - Runtime Protection Observability
 =================================================
 """
 
@@ -10,6 +10,10 @@ from dataclasses import dataclass
 
 from deployment.deployment_health import (
     DeploymentHealthState,
+)
+
+from deployment.trading_protection import (
+    TradingProtectionState,
 )
 
 
@@ -49,8 +53,13 @@ class DeploymentResult:
     approved: bool
     reason: str
     status: DeploymentStatus
+
     health_report: dict | None = None
 
     health_state: DeploymentHealthState = (
         DeploymentHealthState.UNHEALTHY
     )
+
+    trading_protection_state: (
+        TradingProtectionState
+    ) = TradingProtectionState.PAUSED

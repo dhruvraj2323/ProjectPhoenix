@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Deployment Engine Tests
-M61.9.5 - Deployment Lifecycle Consistency
+M61.10.3 - Runtime Protection Observability
 =================================================
 """
 
@@ -16,6 +16,10 @@ from deployment.deployment_health import (
     DeploymentHealthState,
 )
 
+from deployment.trading_protection import (
+    TradingProtectionState,
+)
+
 
 # =========================================================
 # Helper
@@ -25,6 +29,9 @@ def _create_engine(
     runtime_started: bool,
     runtime_running: bool,
     healthy: bool,
+    protection_state=(
+        TradingProtectionState.ACTIVE
+    ),
 ) -> DeploymentEngine:
 
     engine = DeploymentEngine()
@@ -37,6 +44,10 @@ def _create_engine(
 
     engine.runtime.status.return_value = (
         runtime_running
+    )
+
+    engine.runtime.trading_protection_state.return_value = (
+        protection_state
     )
 
     engine.monitor = MagicMock()
@@ -64,6 +75,9 @@ def test_deployment_engine_approved():
         runtime_started=True,
         runtime_running=True,
         healthy=True,
+        protection_state=(
+            TradingProtectionState.ACTIVE
+        ),
     )
 
     result = (
@@ -86,9 +100,16 @@ def test_deployment_engine_approved():
         == DeploymentHealthState.HEALTHY
     )
 
+    assert (
+        result.trading_protection_state
+        == TradingProtectionState.ACTIVE
+    )
+
     engine.runtime.start.assert_called_once()
 
     engine.runtime.status.assert_called_once()
+
+    engine.runtime.trading_protection_state.assert_called_once()
 
     engine.monitor.health_report.assert_called_once()
 
@@ -106,6 +127,9 @@ def test_deployment_engine_runtime_start_failed():
         runtime_started=False,
         runtime_running=False,
         healthy=True,
+        protection_state=(
+            TradingProtectionState.PAUSED
+        ),
     )
 
     result = (
@@ -129,6 +153,11 @@ def test_deployment_engine_runtime_start_failed():
         == DeploymentHealthState.HEALTHY
     )
 
+    assert (
+        result.trading_protection_state
+        == TradingProtectionState.PAUSED
+    )
+
     engine.runtime.stop.assert_not_called()
 
 
@@ -143,6 +172,9 @@ def test_deployment_engine_runtime_not_running():
         runtime_started=True,
         runtime_running=False,
         healthy=True,
+        protection_state=(
+            TradingProtectionState.PAUSED
+        ),
     )
 
     result = (
@@ -164,6 +196,11 @@ def test_deployment_engine_runtime_not_running():
         == DeploymentHealthState.HEALTHY
     )
 
+    assert (
+        result.trading_protection_state
+        == TradingProtectionState.PAUSED
+    )
+
     engine.runtime.stop.assert_not_called()
 
 
@@ -178,6 +215,9 @@ def test_deployment_engine_health_failed():
         runtime_started=True,
         runtime_running=True,
         healthy=False,
+        protection_state=(
+            TradingProtectionState.PAUSED
+        ),
     )
 
     result = (
@@ -201,6 +241,13 @@ def test_deployment_engine_health_failed():
         == DeploymentHealthState.UNHEALTHY
     )
 
+    assert (
+        result.trading_protection_state
+        == TradingProtectionState.PAUSED
+    )
+
+    engine.runtime.trading_protection_state.assert_called_once()
+
     engine.runtime.stop.assert_called_once()
 
 
@@ -215,6 +262,9 @@ def test_deployment_engine_runtime_and_health_failed():
         runtime_started=False,
         runtime_running=False,
         healthy=False,
+        protection_state=(
+            TradingProtectionState.PAUSED
+        ),
     )
 
     result = (
@@ -236,6 +286,11 @@ def test_deployment_engine_runtime_and_health_failed():
     assert (
         result.health_state
         == DeploymentHealthState.UNHEALTHY
+    )
+
+    assert (
+        result.trading_protection_state
+        == TradingProtectionState.PAUSED
     )
 
     engine.runtime.stop.assert_not_called()
@@ -358,4 +413,58 @@ def test_deployment_engine_result_health_state_unhealthy():
     assert (
         result.health_state
         == DeploymentHealthState.UNHEALTHY
+    )
+
+
+# =========================================================
+# M61.10.3
+# Test K
+# Active Protection State Is Captured
+# =========================================================
+
+def test_deployment_engine_result_active_protection_state():
+
+    engine = _create_engine(
+        runtime_started=True,
+        runtime_running=True,
+        healthy=True,
+        protection_state=(
+            TradingProtectionState.ACTIVE
+        ),
+    )
+
+    result = (
+        engine.initialize()
+    )
+
+    assert (
+        result.trading_protection_state
+        == TradingProtectionState.ACTIVE
+    )
+
+
+# =========================================================
+# M61.10.3
+# Test L
+# Paused Protection State Is Captured
+# =========================================================
+
+def test_deployment_engine_result_paused_protection_state():
+
+    engine = _create_engine(
+        runtime_started=True,
+        runtime_running=True,
+        healthy=False,
+        protection_state=(
+            TradingProtectionState.PAUSED
+        ),
+    )
+
+    result = (
+        engine.initialize()
+    )
+
+    assert (
+        result.trading_protection_state
+        == TradingProtectionState.PAUSED
     )
