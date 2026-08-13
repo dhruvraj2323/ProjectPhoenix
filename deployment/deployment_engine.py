@@ -2,6 +2,7 @@
 =================================================
 Project Phoenix
 Deployment Engine
+M61.7.1 - Deployment Approval Gate
 =================================================
 
 Master deployment controller.
@@ -19,42 +20,130 @@ from deployment.deployment_models import (
 class DeploymentEngine:
     """
     Master Deployment Controller.
+
+    M61.7.1 responsibilities:
+    - Start runtime through RuntimeManager
+    - Evaluate deployment health
+    - Approve deployment only when runtime
+      startup and health checks both succeed
+    - Reject unsafe deployment states
     """
 
     def __init__(self):
 
         self.runtime = RuntimeManager()
+
         self.monitor = HealthMonitor()
 
-    def initialize(self):
+    # --------------------------------------------------
+    # Initialize
+    # --------------------------------------------------
 
-        self.runtime.start()
+    def initialize(
+        self,
+    ) -> DeploymentResult:
+        """
+        Initialize the deployment.
 
-        report = self.monitor.health_report()
+        Deployment is approved only when:
+
+        1. Runtime starts successfully
+        2. Health report is healthy
+        """
+
+        runtime_started = (
+            self.runtime.start()
+        )
+
+        report = (
+            self.monitor.health_report()
+        )
+
+        runtime_running = (
+            self.runtime.status()
+        )
+
+        healthy = (
+            report["healthy"]
+        )
+
+        approved = (
+            runtime_started
+            and runtime_running
+            and healthy
+        )
+
+        # --------------------------------------------------
+        # Approval Reason
+        # --------------------------------------------------
+
+        if approved:
+
+            reason = (
+                "Deployment initialized "
+                "successfully."
+            )
+
+        elif not runtime_started:
+
+            reason = (
+                "Deployment rejected: "
+                "runtime startup failed."
+            )
+
+        elif not runtime_running:
+
+            reason = (
+                "Deployment rejected: "
+                "runtime is not running."
+            )
+
+        else:
+
+            reason = (
+                "Deployment rejected: "
+                "health check failed."
+            )
+
+        # --------------------------------------------------
+        # Deployment Status
+        # --------------------------------------------------
 
         status = DeploymentStatus(
-            running=self.runtime.status(),
-            healthy=report["healthy"],
+            running=runtime_running,
+            healthy=healthy,
             version="1.0",
             environment="Production",
         )
 
+        # --------------------------------------------------
+        # Deployment Result
+        # --------------------------------------------------
+
         result = DeploymentResult(
-            approved=True,
-            reason="Deployment initialized successfully.",
+            approved=approved,
+            reason=reason,
             status=status,
             health_report=report,
         )
 
-        DeploymentLogger.log(result)
+        DeploymentLogger.log(
+            result
+        )
 
         return result
-        
-    def shutdown(self):
+
+    # --------------------------------------------------
+    # Shutdown
+    # --------------------------------------------------
+
+    def shutdown(
+        self,
+    ) -> bool:
         """
         Shutdown Deployment Engine.
         """
 
         self.runtime.stop()
 
-        return True        
+        return True

@@ -2,14 +2,14 @@
 =================================================
 Project Phoenix
 Deployment Bootstrap
-M61.6.3 - Runtime Readiness Integration
+M61.7.2 - Deployment Approval Integration
 =================================================
 """
 
 from __future__ import annotations
 
-from deployment.runtime import (
-    Runtime,
+from deployment.deployment_engine import (
+    DeploymentEngine,
 )
 
 
@@ -18,23 +18,28 @@ class Bootstrap:
     Initializes and shuts down
     Project Phoenix.
 
-    M61.6.3:
-    Bootstrap now respects the Runtime
-    readiness gate.
+    M61.7.2 responsibilities:
+    - Delegate deployment initialization
+      to DeploymentEngine
+    - Respect DeploymentResult.approved
+    - Block startup when deployment is rejected
+    - Shutdown only an approved deployment
     """
 
     def __init__(
         self,
-        runtime: Runtime | None = None,
+        deployment_engine: DeploymentEngine | None = None,
     ) -> None:
 
-        self.runtime = (
-            runtime
-            if runtime is not None
-            else Runtime()
+        self.deployment_engine = (
+            deployment_engine
+            if deployment_engine is not None
+            else DeploymentEngine()
         )
 
         self.started = False
+
+        self.deployment_result = None
 
     # --------------------------------------------------
     # Start
@@ -42,13 +47,12 @@ class Bootstrap:
 
     def start(
         self,
-        cycles: int = 1,
     ) -> bool:
         """
-        Start Project Phoenix.
+        Initialize Project Phoenix deployment.
 
-        Returns True only when Runtime
-        successfully starts.
+        Returns True only when the deployment
+        is approved.
         """
 
         print()
@@ -57,12 +61,14 @@ class Bootstrap:
             "Initializing Project Phoenix...",
         )
 
-        result = self.runtime.start(
-            cycles=cycles,
+        result = (
+            self.deployment_engine.initialize()
         )
 
+        self.deployment_result = result
+
         self.started = bool(
-            result
+            result.approved
         )
 
         if self.started:
@@ -81,6 +87,10 @@ class Bootstrap:
                 "Project Phoenix startup blocked.",
             )
 
+            print(
+                f"Reason: {result.reason}"
+            )
+
         return self.started
 
     # --------------------------------------------------
@@ -92,13 +102,16 @@ class Bootstrap:
     ) -> bool:
         """
         Shutdown Project Phoenix.
+
+        Returns False when the deployment
+        was never successfully started.
         """
 
         if not self.started:
 
             return False
 
-        self.runtime.stop()
+        self.deployment_engine.shutdown()
 
         self.started = False
 

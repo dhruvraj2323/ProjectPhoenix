@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Bootstrap Tests
-M61.6.3 - Runtime Readiness Integration
+M61.7.2 - Deployment Approval Integration
 =================================================
 """
 
@@ -12,83 +12,146 @@ from deployment.bootstrap import (
     Bootstrap,
 )
 
+from deployment.deployment_models import (
+    DeploymentResult,
+    DeploymentStatus,
+)
+
+
+# =========================================================
+# Helpers
+# =========================================================
+
+def _create_result(
+    approved: bool,
+    running: bool,
+    healthy: bool,
+    reason: str,
+) -> DeploymentResult:
+
+    status = DeploymentStatus(
+        running=running,
+        healthy=healthy,
+        version="1.0",
+        environment="Production",
+    )
+
+    return DeploymentResult(
+        approved=approved,
+        reason=reason,
+        status=status,
+        health_report={
+            "healthy": healthy,
+        },
+    )
+
 
 # =========================================================
 # Test A
-# Healthy Runtime Starts Bootstrap
+# Approved Deployment Starts Bootstrap
 # =========================================================
 
-def test_bootstrap_start():
+def test_bootstrap_start_approved():
 
-    runtime = MagicMock()
+    engine = MagicMock()
 
-    runtime.start.return_value = True
+    engine.initialize.return_value = (
+        _create_result(
+            approved=True,
+            running=True,
+            healthy=True,
+            reason=(
+                "Deployment initialized "
+                "successfully."
+            ),
+        )
+    )
 
     bootstrap = Bootstrap(
-        runtime=runtime,
+        deployment_engine=engine,
     )
 
     assert bootstrap.started is False
 
-    result = bootstrap.start(
-        cycles=1,
-    )
+    result = bootstrap.start()
 
     assert result is True
 
     assert bootstrap.started is True
 
-    runtime.start.assert_called_once_with(
-        cycles=1,
+    assert (
+        bootstrap.deployment_result.approved
+        is True
     )
+
+    engine.initialize.assert_called_once()
 
 
 # =========================================================
 # Test B
-# Unhealthy Runtime Blocks Bootstrap
+# Rejected Deployment Blocks Bootstrap
 # =========================================================
 
-def test_bootstrap_start_blocked():
+def test_bootstrap_start_rejected():
 
-    runtime = MagicMock()
+    engine = MagicMock()
 
-    runtime.start.return_value = False
+    engine.initialize.return_value = (
+        _create_result(
+            approved=False,
+            running=False,
+            healthy=False,
+            reason=(
+                "Deployment rejected: "
+                "health check failed."
+            ),
+        )
+    )
 
     bootstrap = Bootstrap(
-        runtime=runtime,
+        deployment_engine=engine,
     )
 
-    result = bootstrap.start(
-        cycles=1,
-    )
+    result = bootstrap.start()
 
     assert result is False
 
     assert bootstrap.started is False
 
-    runtime.start.assert_called_once_with(
-        cycles=1,
+    assert (
+        bootstrap.deployment_result.approved
+        is False
     )
+
+    engine.initialize.assert_called_once()
 
 
 # =========================================================
 # Test C
-# Bootstrap Stop
+# Stop Approved Deployment
 # =========================================================
 
 def test_bootstrap_stop():
 
-    runtime = MagicMock()
+    engine = MagicMock()
 
-    runtime.start.return_value = True
+    engine.initialize.return_value = (
+        _create_result(
+            approved=True,
+            running=True,
+            healthy=True,
+            reason=(
+                "Deployment initialized "
+                "successfully."
+            ),
+        )
+    )
 
     bootstrap = Bootstrap(
-        runtime=runtime,
+        deployment_engine=engine,
     )
 
-    bootstrap.start(
-        cycles=1,
-    )
+    bootstrap.start()
 
     result = bootstrap.stop()
 
@@ -96,72 +159,97 @@ def test_bootstrap_stop():
 
     assert bootstrap.started is False
 
-    runtime.stop.assert_called_once()
+    engine.shutdown.assert_called_once()
 
 
 # =========================================================
 # Test D
-# Stop Before Start
+# Stop Before Successful Start
 # =========================================================
 
 def test_bootstrap_stop_before_start():
 
-    runtime = MagicMock()
+    engine = MagicMock()
 
     bootstrap = Bootstrap(
-        runtime=runtime,
+        deployment_engine=engine,
     )
 
     result = bootstrap.stop()
 
     assert result is False
 
-    runtime.stop.assert_not_called()
+    engine.shutdown.assert_not_called()
 
     assert bootstrap.started is False
 
 
 # =========================================================
 # Test E
-# Bootstrap Can Restart After Stop
+# Rejected Deployment Must Not Shutdown
 # =========================================================
 
-def test_bootstrap_restart_flow():
+def test_bootstrap_rejected_deployment_no_shutdown():
 
-    runtime = MagicMock()
+    engine = MagicMock()
 
-    runtime.start.return_value = True
+    engine.initialize.return_value = (
+        _create_result(
+            approved=False,
+            running=False,
+            healthy=False,
+            reason=(
+                "Deployment rejected: "
+                "runtime startup failed."
+            ),
+        )
+    )
 
     bootstrap = Bootstrap(
-        runtime=runtime,
+        deployment_engine=engine,
     )
 
     assert (
-        bootstrap.start(
-            cycles=1,
-        )
-        is True
+        bootstrap.start()
+        is False
     )
-
-    assert bootstrap.started is True
 
     assert (
         bootstrap.stop()
-        is True
+        is False
     )
 
-    assert bootstrap.started is False
+    engine.shutdown.assert_not_called()
 
-    assert (
-        bootstrap.start(
-            cycles=1,
-        )
-        is True
+
+# =========================================================
+# Test F
+# Deployment Result Is Preserved
+# =========================================================
+
+def test_bootstrap_preserves_deployment_result():
+
+    engine = MagicMock()
+
+    result = _create_result(
+        approved=True,
+        running=True,
+        healthy=True,
+        reason=(
+            "Deployment initialized "
+            "successfully."
+        ),
     )
 
-    assert bootstrap.started is True
+    engine.initialize.return_value = result
+
+    bootstrap = Bootstrap(
+        deployment_engine=engine,
+    )
+
+    bootstrap.start()
 
     assert (
-        runtime.start.call_count
-        == 2
+        bootstrap.deployment_result
+        is result
     )
