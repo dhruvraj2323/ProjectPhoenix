@@ -11,6 +11,10 @@ from deployment.deployment_models import (
     DeploymentResult,
 )
 
+from deployment.deployment_health import (
+    DeploymentHealthState,
+)
+
 
 def run_test():
 
@@ -34,6 +38,11 @@ def run_test():
         status=status,
     )
 
+    assert (
+        result.health_state
+        == DeploymentHealthState.UNHEALTHY
+    )
+
     print("===== Deployment Models =====")
 
     print(f"Version          : {status.version}")
@@ -51,3 +60,26 @@ def run_test():
 if __name__ == "__main__":
 
     run_test()
+
+def test_deployment_result_health_state():
+
+    status = DeploymentStatus(
+        running=True,
+        healthy=True,
+        version="1.0",
+        environment="Production",
+    )
+
+    result = DeploymentResult(
+        approved=True,
+        reason="Deployment initialized successfully.",
+        status=status,
+        health_state=(
+            DeploymentHealthState.HEALTHY
+        ),
+    )
+
+    assert (
+        result.health_state
+        == DeploymentHealthState.HEALTHY
+    )

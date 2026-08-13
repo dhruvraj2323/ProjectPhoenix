@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Deployment Engine Tests
-M61.7.1 - Deployment Approval Gate
+M61.9.5 - Deployment Lifecycle Consistency
 =================================================
 """
 
@@ -10,6 +10,10 @@ from unittest.mock import MagicMock
 
 from deployment.deployment_engine import (
     DeploymentEngine,
+)
+
+from deployment.deployment_health import (
+    DeploymentHealthState,
 )
 
 
@@ -77,11 +81,18 @@ def test_deployment_engine_approved():
 
     assert result.status.healthy is True
 
+    assert (
+        result.health_state
+        == DeploymentHealthState.HEALTHY
+    )
+
     engine.runtime.start.assert_called_once()
 
     engine.runtime.status.assert_called_once()
 
     engine.monitor.health_report.assert_called_once()
+
+    engine.runtime.stop.assert_not_called()
 
 
 # =========================================================
@@ -113,6 +124,13 @@ def test_deployment_engine_runtime_start_failed():
 
     assert result.status.healthy is True
 
+    assert (
+        result.health_state
+        == DeploymentHealthState.HEALTHY
+    )
+
+    engine.runtime.stop.assert_not_called()
+
 
 # =========================================================
 # Test C
@@ -140,6 +158,13 @@ def test_deployment_engine_runtime_not_running():
     )
 
     assert result.status.running is False
+
+    assert (
+        result.health_state
+        == DeploymentHealthState.HEALTHY
+    )
+
+    engine.runtime.stop.assert_not_called()
 
 
 # =========================================================
@@ -171,6 +196,13 @@ def test_deployment_engine_health_failed():
 
     assert result.status.healthy is False
 
+    assert (
+        result.health_state
+        == DeploymentHealthState.UNHEALTHY
+    )
+
+    engine.runtime.stop.assert_called_once()
+
 
 # =========================================================
 # Test E
@@ -201,6 +233,13 @@ def test_deployment_engine_runtime_and_health_failed():
 
     assert result.status.healthy is False
 
+    assert (
+        result.health_state
+        == DeploymentHealthState.UNHEALTHY
+    )
+
+    engine.runtime.stop.assert_not_called()
+
 
 # =========================================================
 # Test F
@@ -220,3 +259,103 @@ def test_deployment_engine_shutdown():
     assert result is True
 
     engine.runtime.stop.assert_called_once()
+
+
+# =========================================================
+# M61.9.2
+# Test G
+# Healthy Deployment Health State
+# =========================================================
+
+def test_deployment_engine_health_state_healthy():
+
+    engine = _create_engine(
+        runtime_started=True,
+        runtime_running=True,
+        healthy=True,
+    )
+
+    result = (
+        engine.health_state()
+    )
+
+    assert (
+        result
+        == DeploymentHealthState.HEALTHY
+    )
+
+    engine.monitor.health_report.assert_called_once()
+
+
+# =========================================================
+# M61.9.2
+# Test H
+# Unhealthy Deployment Health State
+# =========================================================
+
+def test_deployment_engine_health_state_unhealthy():
+
+    engine = _create_engine(
+        runtime_started=True,
+        runtime_running=True,
+        healthy=False,
+    )
+
+    result = (
+        engine.health_state()
+    )
+
+    assert (
+        result
+        == DeploymentHealthState.UNHEALTHY
+    )
+
+    engine.monitor.health_report.assert_called_once()
+
+
+# =========================================================
+# M61.9.4
+# Test I
+# Approved Deployment Carries Healthy State
+# =========================================================
+
+def test_deployment_engine_result_health_state_healthy():
+
+    engine = _create_engine(
+        runtime_started=True,
+        runtime_running=True,
+        healthy=True,
+    )
+
+    result = (
+        engine.initialize()
+    )
+
+    assert (
+        result.health_state
+        == DeploymentHealthState.HEALTHY
+    )
+
+
+# =========================================================
+# M61.9.4
+# Test J
+# Rejected Deployment Carries Unhealthy State
+# =========================================================
+
+def test_deployment_engine_result_health_state_unhealthy():
+
+    engine = _create_engine(
+        runtime_started=True,
+        runtime_running=True,
+        healthy=False,
+    )
+
+    result = (
+        engine.initialize()
+    )
+
+    assert (
+        result.health_state
+        == DeploymentHealthState.UNHEALTHY
+    )

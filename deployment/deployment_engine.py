@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Deployment Engine
-M61.7.1 - Deployment Approval Gate
+M61.9.5 - Deployment Lifecycle Consistency
 =================================================
 
 Master deployment controller.
@@ -16,17 +16,24 @@ from deployment.deployment_models import (
     DeploymentResult,
 )
 
+from deployment.deployment_health import (
+    DeploymentHealthState,
+    health_state_from_report,
+)
+
 
 class DeploymentEngine:
     """
     Master Deployment Controller.
 
-    M61.7.1 responsibilities:
+    M61.9.5 responsibilities:
     - Start runtime through RuntimeManager
     - Evaluate deployment health
     - Approve deployment only when runtime
       startup and health checks both succeed
     - Reject unsafe deployment states
+    - Stop runtime when post-startup health
+      validation fails
     """
 
     def __init__(self):
@@ -34,6 +41,27 @@ class DeploymentEngine:
         self.runtime = RuntimeManager()
 
         self.monitor = HealthMonitor()
+
+    # --------------------------------------------------
+    # Health State
+    # --------------------------------------------------
+
+    def health_state(
+        self,
+    ) -> DeploymentHealthState:
+        """
+        Return the current deployment health state.
+        """
+
+        report = (
+            self.monitor.health_report()
+        )
+
+        return (
+            health_state_from_report(
+                report,
+            )
+        )
 
     # --------------------------------------------------
     # Initialize
@@ -48,7 +76,12 @@ class DeploymentEngine:
         Deployment is approved only when:
 
         1. Runtime starts successfully
-        2. Health report is healthy
+        2. Runtime is running
+        3. Health report is healthy
+
+        If runtime starts but the post-startup
+        health check fails, the runtime is stopped
+        before the deployment is rejected.
         """
 
         runtime_started = (
@@ -63,8 +96,15 @@ class DeploymentEngine:
             self.runtime.status()
         )
 
+        health_state = (
+            health_state_from_report(
+                report,
+            )
+        )
+
         healthy = (
-            report["healthy"]
+            health_state
+            == DeploymentHealthState.HEALTHY
         )
 
         approved = (
@@ -105,6 +145,12 @@ class DeploymentEngine:
                 "health check failed."
             )
 
+            # --------------------------------------------------
+            # M61.9.5 Health Failure Protection
+            # --------------------------------------------------
+
+            self.runtime.stop()
+
         # --------------------------------------------------
         # Deployment Status
         # --------------------------------------------------
@@ -125,6 +171,7 @@ class DeploymentEngine:
             reason=reason,
             status=status,
             health_report=report,
+            health_state=health_state,
         )
 
         DeploymentLogger.log(

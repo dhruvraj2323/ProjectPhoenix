@@ -2,18 +2,20 @@
 =================================================
 Project Phoenix
 Deployment Models
+M61.9.3 - Deployment Result Health State
 =================================================
-
-Standard deployment models.
 """
 
 from dataclasses import dataclass
+
+from deployment.deployment_health import (
+    DeploymentHealthState,
+)
 
 
 # -------------------------------------------------
 # Deployment Status
 # -------------------------------------------------
-
 
 @dataclass
 class DeploymentStatus:
@@ -28,7 +30,6 @@ class DeploymentStatus:
 # Runtime Status
 # -------------------------------------------------
 
-
 @dataclass
 class RuntimeStatus:
 
@@ -42,11 +43,14 @@ class RuntimeStatus:
 # Deployment Result
 # -------------------------------------------------
 
-
 @dataclass
 class DeploymentResult:
 
     approved: bool
     reason: str
     status: DeploymentStatus
-    health_report: dict
+    health_report: dict | None = None
+
+    health_state: DeploymentHealthState = (
+        DeploymentHealthState.UNHEALTHY
+    )
