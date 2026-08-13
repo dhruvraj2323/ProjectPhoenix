@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Reporting Models
-M57
+M61.4 - Consolidated Cycle Reporting
 =================================================
 """
 
@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from typing import Any
 
 
 # --------------------------------------------------
@@ -97,6 +98,15 @@ class PerformanceSummary:
 class DailyReport:
     """
     Complete daily trading report.
+
+    M61.4:
+    The report now optionally carries the complete
+    cycle-level execution summary.
+
+    The execution summary remains an external
+    deployment-layer object and is intentionally
+    typed as Any here to keep the reporting layer
+    independent from the deployment package.
     """
 
     report_date: datetime = field(
@@ -114,6 +124,16 @@ class DailyReport:
     summary: PerformanceSummary = field(
         default_factory=PerformanceSummary,
     )
+
+    # --------------------------------------------------
+    # M61.4 Cycle Execution Summary
+    # --------------------------------------------------
+
+    execution_summary: Any = None
+
+    # --------------------------------------------------
+    # Report Metadata
+    # --------------------------------------------------
 
     report_name: str = ""
 

@@ -554,24 +554,50 @@ class TradingCycle:
     ) -> None:
         """
         Generate one consolidated report for
-        all executed trades in the trading cycle.
+        the complete trading cycle.
+
+        M61.4:
+        The report is generated even when there
+        are no executed trades, so that the cycle
+        execution summary is never lost.
+
+        Report categories:
+        - ALL_EXECUTED
+        - PARTIAL_SUCCESS
+        - NO_TRADES
+        - ALL_FAILED
         """
 
-        if not self.trade_records:
+        # --------------------------------------------------
+        # Validate Execution Summary
+        # --------------------------------------------------
+
+        if self.execution_summary is None:
 
             print()
 
             print(
-                "No executed trades found."
+                "No execution summary available."
             )
 
             return
 
+        # --------------------------------------------------
+        # Generate Consolidated Report
+        # --------------------------------------------------
+
         self.daily_report = (
             self.reporting_engine.run(
                 self.trade_records,
+                execution_summary=(
+                    self.execution_summary
+                ),
             )
         )
+
+        # --------------------------------------------------
+        # Report Status
+        # --------------------------------------------------
 
         print()
 
@@ -582,6 +608,31 @@ class TradingCycle:
         print(
             f"Trades Reported : "
             f"{len(self.trade_records)}"
+        )
+
+        print(
+            f"Symbols         : "
+            f"{self.execution_summary.total_symbols}"
+        )
+
+        print(
+            f"Executed        : "
+            f"{self.execution_summary.executed_symbols}"
+        )
+
+        print(
+            f"No Trade        : "
+            f"{self.execution_summary.no_trade_symbols}"
+        )
+
+        print(
+            f"Failed          : "
+            f"{self.execution_summary.failed_symbols}"
+        )
+
+        print(
+            f"Cycle Status    : "
+            f"{self.execution_summary.status.value}"
         )
 
         print(

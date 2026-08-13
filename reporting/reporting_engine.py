@@ -2,21 +2,24 @@
 =================================================
 Project Phoenix
 Reporting Engine
-M57
+M61.4 - Consolidated Cycle Reporting
 =================================================
 """
 
 from __future__ import annotations
 
+from deployment.execution_summary import (
+    CycleExecutionSummary,
+)
+
 from reporting.analytics_engine import (
     AnalyticsEngine,
 )
+
 from reporting.report_generator import (
     ReportGenerator,
 )
-from reporting.reporting_logger import (
-    ReportingLogger,
-)
+
 from reporting.reporting_models import (
     DailyReport,
     TradeRecord,
@@ -25,13 +28,18 @@ from reporting.reporting_models import (
 
 class ReportingEngine:
     """
-    Executes the complete
-    Reporting workflow.
+    Coordinates trading report generation.
+
+    M61.4 responsibilities:
+    - Calculate trading performance
+    - Generate daily trading report
+    - Pass cycle execution summary to
+      the report generator
+    - Preserve backward compatibility with
+      ReportingEngine.run(trades)
     """
 
-    def __init__(
-        self,
-    ) -> None:
+    def __init__(self) -> None:
 
         self.analytics = (
             AnalyticsEngine()
@@ -41,10 +49,6 @@ class ReportingEngine:
             ReportGenerator()
         )
 
-        self.logger = (
-            ReportingLogger()
-        )
-
     # --------------------------------------------------
     # Generate Report
     # --------------------------------------------------
@@ -52,18 +56,30 @@ class ReportingEngine:
     def run(
         self,
         trades: list[TradeRecord],
+        execution_summary: (
+            CycleExecutionSummary | None
+        ) = None,
     ) -> DailyReport:
         """
-        Execute complete
-        reporting workflow.
+        Generate a complete trading report.
+
+        Parameters
+        ----------
+        trades:
+            Individual executed trade records.
+
+        execution_summary:
+            Optional cycle-level execution summary.
+
+        Returns
+        -------
+        DailyReport
+            Generated trading report.
         """
 
-        # Create temporary report
-        report = DailyReport()
-
-        self.logger.log_start(
-            report,
-        )
+        # --------------------------------------------------
+        # Performance Analytics
+        # --------------------------------------------------
 
         summary = (
             self.analytics.calculate(
@@ -71,15 +87,24 @@ class ReportingEngine:
             )
         )
 
+        # --------------------------------------------------
+        # Report Generation
+        # --------------------------------------------------
+
         report = (
             self.generator.generate(
-                trades,
-                summary,
+                trades=trades,
+                summary=summary,
+                execution_summary=execution_summary,
             )
         )
 
-        self.logger.log_finish(
-            report,
+        # --------------------------------------------------
+        # Preserve Summary On Report
+        # --------------------------------------------------
+
+        report.execution_summary = (
+            execution_summary
         )
 
         return report
