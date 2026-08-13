@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Trading Cycle
-M58.12.15
+M61.2
 =================================================
 """
 
@@ -49,6 +49,15 @@ class TradingCycle:
     """
     Executes one complete
     Project Phoenix trading cycle.
+
+    M61.2:
+
+    Each configured symbol is processed
+    independently.
+
+    A failure for one symbol must not
+    prevent the remaining symbols from
+    being processed.
     """
 
     def __init__(
@@ -602,6 +611,51 @@ class TradingCycle:
         )
 
     # ==================================================
+    # Symbol Failure Handler
+    # ==================================================
+
+    def _handle_symbol_failure(
+        self,
+        symbol: str,
+        error: Exception,
+    ) -> None:
+        """
+        Handle an isolated symbol failure.
+
+        A failure for one symbol is recorded
+        and logged, but must not stop the
+        remaining configured symbols.
+        """
+
+        message = (
+            f"{symbol}: {error}"
+        )
+
+        self.last_error = message
+
+        print()
+
+        print(
+            "===== SYMBOL PROCESSING ERROR ====="
+        )
+
+        print(
+            f"Symbol : {symbol}"
+        )
+
+        print(
+            f"Reason : {error}"
+        )
+
+        print(
+            "Action : Continue with next symbol"
+        )
+
+        print(
+            "==================================="
+        )
+
+    # ==================================================
     # Finish
     # ==================================================
 
@@ -670,6 +724,17 @@ class TradingCycle:
         """
         Execute one complete
         Project Phoenix trading cycle.
+
+        M61.2:
+
+        Every configured symbol is isolated.
+
+        A failure while processing one symbol
+        does not prevent the next symbol from
+        being processed.
+
+        The MT5 connection is always finalized
+        through _finish().
         """
 
         self._initialize()
@@ -677,55 +742,110 @@ class TradingCycle:
         self._connect_mt5()
 
         # --------------------------------------------------
-        # Reset Cycle-Level Trade Collection
+        # Reset Cycle-Level State
         # --------------------------------------------------
 
         self.trade_records = []
 
         self.daily_report = None
 
-        # --------------------------------------------------
-        # Process All Configured Symbols
-        # --------------------------------------------------
+        self.last_error = ""
 
-        for symbol in self.config.symbols:
+        self.pipeline_context = None
 
-            print()
+        self.pipeline_completed = False
 
-            print(
-                "=" * 50
-            )
+        self.execution_completed = False
 
-            print(
-                f"Scanning : {symbol}"
-            )
+        self.paper_trading_completed = False
 
-            print(
-                "=" * 50
-            )
+        try:
 
-            self.current_symbol = symbol
+            # --------------------------------------------------
+            # Process All Configured Symbols
+            # --------------------------------------------------
 
-            self._load_market_data()
+            for symbol in self.config.symbols:
 
-            self._run_market_pipeline()
+                print()
 
-            self._validate_pipeline_result()
+                print(
+                    "=" * 50
+                )
 
-            self._collect_execution_record()
+                print(
+                    f"Scanning : {symbol}"
+                )
 
-            self._generate_trading_report()
+                print(
+                    "=" * 50
+                )
 
-        # --------------------------------------------------
-        # Generate One Consolidated Report
-        # --------------------------------------------------
+                self.current_symbol = symbol
 
-        self._generate_consolidated_report()
+                # --------------------------------------------------
+                # IMPORTANT:
+                #
+                # Clear previous symbol context before processing
+                # the next symbol.
+                # --------------------------------------------------
 
-        # --------------------------------------------------
-        # Finish
-        # --------------------------------------------------
+                self.pipeline_context = None
 
-        self._finish()
+                self.market_data = {}
 
-        return True
+                self.candles = []
+
+                self.pipeline_completed = False
+
+                self.execution_completed = False
+
+                self.paper_trading_completed = False
+
+                try:
+
+                    # --------------------------------------------------
+                    # Symbol Processing Pipeline
+                    # --------------------------------------------------
+
+                    self._load_market_data()
+
+                    self._run_market_pipeline()
+
+                    self._validate_pipeline_result()
+
+                    self._collect_execution_record()
+
+                    self._generate_trading_report()
+
+                except Exception as exc:
+
+                    # --------------------------------------------------
+                    # M61.2 SYMBOL ISOLATION
+                    #
+                    # One symbol failure must not stop
+                    # the remaining symbols.
+                    # --------------------------------------------------
+
+                    self._handle_symbol_failure(
+                        symbol=symbol,
+                        error=exc,
+                    )
+
+                    continue
+
+            # --------------------------------------------------
+            # Generate One Consolidated Report
+            # --------------------------------------------------
+
+            self._generate_consolidated_report()
+
+            return True
+
+        finally:
+
+            # --------------------------------------------------
+            # Always Disconnect / Finish
+            # --------------------------------------------------
+
+            self._finish()
