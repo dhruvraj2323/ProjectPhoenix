@@ -2,13 +2,17 @@
 =================================================
 Project Phoenix
 Runtime Manager
-M61.8.4 - Trading Protection Integration
+M62.3.4.4 - Runtime Status Integration
 =================================================
 """
 
 from __future__ import annotations
 
 from deployment.runtime import Runtime
+
+from deployment.runtime_status import (
+    RuntimeStatus,
+)
 
 from deployment.runtime_watchdog import (
     HealthTransition,
@@ -26,16 +30,18 @@ class RuntimeManager:
     """
     Controls the Project Phoenix runtime.
 
-    M61.8.4 responsibilities:
+    Responsibilities:
     - Own Runtime
     - Own RuntimeWatchdog
     - Own TradingProtection
     - Delegate runtime lifecycle
     - Expose runtime health state
     - Expose trading protection state
+    - Expose structured runtime status
     - Update trading protection from health state
 
-    M61.8.4 does NOT:
+    M62.3.4.4 does NOT:
+    - replace the existing boolean status() contract
     - stop runtime automatically
     - restart runtime automatically
     - close existing positions
@@ -140,12 +146,44 @@ class RuntimeManager:
     def status(
         self,
     ) -> bool:
+        """
+        Return the existing boolean runtime status.
+
+        This method intentionally preserves the
+        pre-M62.3.4.4 public contract.
+        """
 
         self.running = (
             self.runtime.running
         )
 
         return self.running
+
+    # --------------------------------------------------
+    # Structured Runtime Status
+    # --------------------------------------------------
+
+    def runtime_status(
+        self,
+    ) -> RuntimeStatus:
+        """
+        Return the structured runtime observability
+        snapshot.
+
+        The underlying Runtime owns creation of the
+        RuntimeStatus snapshot.
+
+        This method does not:
+        - start runtime
+        - stop runtime
+        - change health state
+        - change trading protection
+        - grant trading permission
+        """
+
+        return (
+            self.runtime.status_snapshot()
+        )
 
     # --------------------------------------------------
     # Health Check
