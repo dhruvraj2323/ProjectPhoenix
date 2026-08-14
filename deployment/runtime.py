@@ -2,11 +2,13 @@
 =================================================
 Project Phoenix
 Runtime
-M62.3.4.3 - Runtime Status Integration
+M62.4.5 - Runtime Trading Protection Integration
 =================================================
 """
 
 from __future__ import annotations
+
+from datetime import datetime, timezone
 
 from config.configuration_readiness_models import (
     ConfigurationReadinessResult,
@@ -14,6 +16,10 @@ from config.configuration_readiness_models import (
 
 from deployment.continuous_runner import (
     ContinuousRunner,
+)
+
+from deployment.health_degradation_policy import (
+    HealthDegradationPolicy,
 )
 
 from deployment.health_monitor import (
@@ -33,6 +39,10 @@ from deployment.runtime_status import (
     RuntimeStatus,
 )
 
+from deployment.runtime_watchdog import (
+    WatchdogHealthState,
+)
+
 from deployment.trading_protection import (
     TradingProtection,
 )
@@ -47,15 +57,20 @@ class Runtime:
     - Check deployment health before startup
     - Block startup when readiness fails
     - Track runtime operational state
-    - Expose a structured runtime status snapshot
+    - Expose structured runtime status
+    - Apply health degradation
+    - Apply health recovery
+    - Synchronize TradingProtection with health state
     - Pass TradingProtection to ContinuousRunner
     - Start ContinuousRunner only when ready
     - Preserve runtime stop behavior
 
     This class does not:
-    - connect to MT5
-    - approve live trading
     - execute trades
+    - grant live-trading approval
+    - close positions
+    - cancel orders
+    - automatically restart the runtime
     """
 
     def __init__(
@@ -96,6 +111,10 @@ class Runtime:
             )
         )
 
+        self.health_degradation_policy = (
+            HealthDegradationPolicy()
+        )
+
         self._operational_status = (
             RuntimeOperationalStatus(
                 state=(
@@ -117,10 +136,6 @@ class Runtime:
         """
         Return True when configuration readiness
         passes the startup gate.
-
-        When no configuration readiness result
-        is supplied, preserve the existing runtime
-        startup contract.
         """
 
         if (
@@ -145,8 +160,8 @@ class Runtime:
         self,
     ) -> bool:
         """
-        Return True when deployment health
-        passes the startup health gate.
+        Return True when deployment health passes
+        the startup health gate.
         """
 
         return (
@@ -161,8 +176,8 @@ class Runtime:
         self,
     ) -> bool:
         """
-        Return True only when both configuration
-        readiness and deployment health pass.
+        Return True only when configuration readiness
+        and deployment health both pass.
         """
 
         if not self.configuration_is_ready():
@@ -178,10 +193,125 @@ class Runtime:
         self,
     ) -> RuntimeOperationalStatus:
         """
-        Return the current runtime operational status.
+        Return current runtime operational status.
         """
 
         return self._operational_status
+
+    # --------------------------------------------------
+    # Health Degradation / Recovery
+    # --------------------------------------------------
+
+    def apply_health_state(
+        self,
+        health_state: WatchdogHealthState,
+    ) -> bool:
+        """
+        Apply an observed watchdog health state.
+
+        HEALTHY:
+            Recover an already-running runtime to RUNNING
+            and activate TradingProtection.
+
+        UNHEALTHY:
+            Move an already-running runtime to DEGRADED
+            and pause TradingProtection.
+
+        This method does not:
+        - start runtime
+        - stop runtime
+        - restart runtime
+        - execute trades
+        """
+
+        decision = (
+            self.health_degradation_policy.evaluate(
+                health_state,
+            )
+        )
+
+        # ----------------------------------------------
+        # Healthy / Recovery
+        # ----------------------------------------------
+
+        if (
+            health_state
+            == WatchdogHealthState.HEALTHY
+        ):
+
+            if not self.running:
+                return False
+
+            if (
+                self._operational_status.state
+                not in (
+                    RuntimeOperationalState.DEGRADED,
+                    RuntimeOperationalState.RUNNING,
+                )
+            ):
+                return False
+
+            # TradingProtection owns the actual
+            # protection transition.
+            self.trading_protection.update(
+                health_state,
+            )
+
+            self._operational_status = (
+                RuntimeOperationalStatus(
+                    state=(
+                        RuntimeOperationalState.RUNNING
+                    ),
+                    reason=(
+                        "Runtime health recovered; "
+                        "runtime is operational."
+                    ),
+                )
+            )
+
+            return True
+
+        # ----------------------------------------------
+        # Unhealthy / Degradation
+        # ----------------------------------------------
+
+        if (
+            health_state
+            == WatchdogHealthState.UNHEALTHY
+        ):
+
+            if not self.running:
+                return False
+
+            if (
+                self._operational_status.state
+                not in (
+                    RuntimeOperationalState.RUNNING,
+                    RuntimeOperationalState.DEGRADED,
+                )
+            ):
+                return False
+
+            # TradingProtection owns the actual
+            # protection transition.
+            self.trading_protection.update(
+                health_state,
+            )
+
+            self._operational_status = (
+                RuntimeOperationalStatus(
+                    state=(
+                        RuntimeOperationalState.DEGRADED
+                    ),
+                    reason=(
+                        decision.reason
+                    ),
+                )
+            )
+
+            return True
+
+        return False
 
     # --------------------------------------------------
     # Runtime Status
@@ -191,16 +321,7 @@ class Runtime:
         self,
     ) -> RuntimeStatus:
         """
-        Return an immutable runtime observability
-        snapshot.
-
-        The snapshot contains operational readiness,
-        deployment health, runtime state, reason,
-        and timestamp.
-
-        No credentials, trading decisions,
-        live approval, or MT5 connection details
-        are exposed.
+        Return immutable runtime observability snapshot.
         """
 
         return RuntimeStatus(
@@ -220,12 +341,8 @@ class Runtime:
                 self._operational_status.reason
             ),
             timestamp=(
-                __import__(
-                    "datetime"
-                ).datetime.now(
-                    __import__(
-                        "datetime"
-                    ).timezone.utc
+                datetime.now(
+                    timezone.utc
                 )
             ),
         )
@@ -241,9 +358,8 @@ class Runtime:
         """
         Start Project Phoenix runtime.
 
-        Startup is blocked when:
-        1. configuration readiness fails, or
-        2. deployment health fails.
+        Startup is blocked when configuration readiness
+        or deployment health fails.
         """
 
         self._operational_status = (
@@ -278,11 +394,9 @@ class Runtime:
             )
 
             print()
-
             print(
                 "Runtime startup blocked."
             )
-
             print(
                 "Configuration readiness "
                 "check failed."
@@ -311,11 +425,9 @@ class Runtime:
             )
 
             print()
-
             print(
                 "Runtime startup blocked."
             )
-
             print(
                 "Deployment health check failed."
             )
@@ -341,7 +453,6 @@ class Runtime:
         self.running = True
 
         print()
-
         print(
             "Runtime started."
         )
@@ -372,11 +483,9 @@ class Runtime:
         except Exception as exc:
 
             print()
-
             print(
                 "Runtime execution failed."
             )
-
             print(exc)
 
             self.running = False
@@ -432,7 +541,6 @@ class Runtime:
         )
 
         print()
-
         print(
             "Runtime stopped."
         )
