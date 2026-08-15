@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Runtime
-M62.5 - Runtime Watchdog Integration
+M62.6.5 - Runtime Operational Alert Integration
 =================================================
 """
 
@@ -24,6 +24,18 @@ from deployment.health_degradation_policy import (
 
 from deployment.health_monitor import (
     HealthMonitor,
+)
+
+from deployment.operational_alert_dispatcher import (
+    OperationalAlertDispatcher,
+)
+
+from deployment.operational_incident_classifier import (
+    OperationalIncidentClassifier,
+)
+
+from deployment.operational_incident_models import (
+    OperationalIncidentEventType,
 )
 
 from deployment.runtime_operational_state import (
@@ -62,9 +74,10 @@ class Runtime:
     - Apply health degradation
     - Apply health recovery
     - Synchronize TradingProtection with health state
+    - Integrate RuntimeWatchdog
+    - Generate operational incidents
+    - Dispatch operational alerts
     - Pass TradingProtection to ContinuousRunner
-    - Own RuntimeWatchdog
-    - Integrate RuntimeWatchdog with runtime health state
     - Start ContinuousRunner only when ready
     - Preserve runtime stop behavior
 
@@ -74,7 +87,7 @@ class Runtime:
     - close positions
     - cancel orders
     - automatically restart the runtime
-    - allow RuntimeWatchdog to directly control trading
+    - directly send Telegram or Email alerts
     """
 
     def __init__(
@@ -86,8 +99,9 @@ class Runtime:
         configuration_readiness: (
             ConfigurationReadinessResult | None
         ) = None,
-        watchdog: (
-            RuntimeWatchdog | None
+        watchdog: RuntimeWatchdog | None = None,
+        alert_dispatcher: (
+            OperationalAlertDispatcher | None
         ) = None,
     ) -> None:
 
@@ -100,7 +114,7 @@ class Runtime:
         )
 
         # --------------------------------------------------
-        # Health Monitor
+        # Shared Health Monitor
         # --------------------------------------------------
 
         self.health_monitor = (
@@ -140,15 +154,12 @@ class Runtime:
 
         # --------------------------------------------------
         # Runtime Watchdog
+        #
+        # Important:
+        # The watchdog observes HealthMonitor.
+        # It does not directly control Runtime or
+        # TradingProtection.
         # --------------------------------------------------
-        #
-        # The watchdog must observe the exact same
-        # HealthMonitor instance owned by Runtime.
-        #
-        # Watchdog observes.
-        # Runtime orchestrates.
-        # TradingProtection protects.
-        #
 
         self.watchdog = (
             watchdog
@@ -161,7 +172,26 @@ class Runtime:
         )
 
         # --------------------------------------------------
-        # Runtime Operational Status
+        # Operational Alert Dispatcher
+        #
+        # Runtime only knows the dispatcher boundary.
+        # It does not know Telegram/Email details.
+        # --------------------------------------------------
+
+        self.alert_dispatcher = (
+            alert_dispatcher
+            if alert_dispatcher is not None
+            else OperationalAlertDispatcher()
+        )
+
+        # --------------------------------------------------
+        # Operational Alert Sequence
+        # --------------------------------------------------
+
+        self._alert_sequence = 0
+
+        # --------------------------------------------------
+        # Operational Status
         # --------------------------------------------------
 
         self._operational_status = (
@@ -175,9 +205,9 @@ class Runtime:
             )
         )
 
-    # --------------------------------------------------
+    # ==================================================
     # Configuration Readiness
-    # --------------------------------------------------
+    # ==================================================
 
     def configuration_is_ready(
         self,
@@ -201,9 +231,9 @@ class Runtime:
 
         return readiness.ready
 
-    # --------------------------------------------------
+    # ==================================================
     # Deployment Health
-    # --------------------------------------------------
+    # ==================================================
 
     def deployment_is_healthy(
         self,
@@ -217,9 +247,9 @@ class Runtime:
             self.health_monitor.is_healthy()
         )
 
-    # --------------------------------------------------
+    # ==================================================
     # Readiness Check
-    # --------------------------------------------------
+    # ==================================================
 
     def is_ready(
         self,
@@ -234,9 +264,9 @@ class Runtime:
 
         return self.deployment_is_healthy()
 
-    # --------------------------------------------------
+    # ==================================================
     # Operational State
-    # --------------------------------------------------
+    # ==================================================
 
     def operational_state(
         self,
@@ -247,9 +277,76 @@ class Runtime:
 
         return self._operational_status
 
-    # --------------------------------------------------
+    # ==================================================
+    # Operational Alert Support
+    # ==================================================
+
+    def _next_alert_sequence(
+        self,
+    ) -> int:
+        """
+        Generate the next deterministic runtime-local
+        alert sequence number.
+        """
+
+        self._alert_sequence += 1
+
+        return self._alert_sequence
+
+    def _emit_operational_alert(
+        self,
+        event_type: OperationalIncidentEventType,
+        message: str,
+    ) -> None:
+        """
+        Create and dispatch one operational incident.
+
+        Alert delivery failures are intentionally isolated
+        from runtime execution.
+
+        Runtime operation must never fail merely because
+        an operational notification could not be delivered.
+        """
+
+        sequence = (
+            self._next_alert_sequence()
+        )
+
+        incident = (
+            OperationalIncidentClassifier.classify(
+                event_type=event_type,
+                message=message,
+                timestamp=(
+                    datetime.now(
+                        timezone.utc
+                    )
+                ),
+                incident_id=(
+                    f"INC-{sequence:06d}"
+                ),
+                processing_cycle_id=(
+                    f"RUNTIME-{sequence:06d}"
+                ),
+            )
+        )
+
+        try:
+
+            self.alert_dispatcher.dispatch(
+                incident
+            )
+
+        except Exception as exc:
+
+            print()
+            print(
+                "Operational alert dispatch failed."
+            )
+            print(exc)
+
+    # ==================================================
     # Health Degradation / Recovery
-    # --------------------------------------------------
+    # ==================================================
 
     def apply_health_state(
         self,
@@ -279,9 +376,9 @@ class Runtime:
             )
         )
 
-        # ----------------------------------------------
+        # --------------------------------------------------
         # Healthy / Recovery
-        # ----------------------------------------------
+        # --------------------------------------------------
 
         if (
             health_state
@@ -300,8 +397,6 @@ class Runtime:
             ):
                 return False
 
-            # TradingProtection owns the actual
-            # protection transition.
             self.trading_protection.update(
                 health_state,
             )
@@ -320,9 +415,9 @@ class Runtime:
 
             return True
 
-        # ----------------------------------------------
+        # --------------------------------------------------
         # Unhealthy / Degradation
-        # ----------------------------------------------
+        # --------------------------------------------------
 
         if (
             health_state
@@ -341,8 +436,6 @@ class Runtime:
             ):
                 return False
 
-            # TradingProtection owns the actual
-            # protection transition.
             self.trading_protection.update(
                 health_state,
             )
@@ -362,67 +455,118 @@ class Runtime:
 
         return False
 
-    # --------------------------------------------------
-    # Runtime Watchdog Integration
-    # --------------------------------------------------
+    # ==================================================
+    # Runtime Watchdog
+    # ==================================================
 
     def check_watchdog(
         self,
     ) -> WatchdogHealthState:
         """
-        Execute one RuntimeWatchdog health check.
+        Check runtime health through RuntimeWatchdog.
 
-        The watchdog is responsible only for observing
-        health and detecting health transitions.
+        The watchdog always observes current health.
 
-        Runtime is responsible for consuming a detected
-        transition and applying the corresponding
-        operational health state.
+        Runtime lifecycle control remains separate:
+        - A stopped runtime is never started by watchdog.
+        - A stopped runtime is never moved to DEGRADED.
+        - A stopped runtime does not generate degradation
+          or recovery alerts.
 
-        Processing flow:
-
-            RuntimeWatchdog.check()
-                ↓
-            transition detected?
-                ↓
-            Runtime.apply_health_state()
-                ↓
-            RuntimeWatchdog.clear_transition()
-
-        This method does not:
-        - start the runtime
-        - stop the runtime
-        - restart the runtime
-        - directly manipulate TradingProtection
-        - execute trades
-
-        Returns:
-            Current watchdog health state.
+        For a running runtime, a new watchdog transition
+        is processed exactly once.
         """
+
+        # --------------------------------------------------
+        # Always allow watchdog to observe health.
+        # --------------------------------------------------
 
         health_state = (
             self.watchdog.check()
         )
 
-        if (
-            self.watchdog.has_transitioned()
-        ):
+        # --------------------------------------------------
+        # Stopped runtime:
+        #
+        # Observe health only.
+        # Do not apply runtime transition.
+        # Do not generate operational alert.
+        # --------------------------------------------------
+
+        if not self.running:
+
+            if self.watchdog.has_transitioned():
+
+                self.watchdog.clear_transition()
+
+            return health_state
+
+        # --------------------------------------------------
+        # Running runtime:
+        #
+        # Process only a NEW transition.
+        # --------------------------------------------------
+
+        if self.watchdog.has_transitioned():
+
             transition = (
                 self.watchdog.last_transition
             )
 
             if transition is not None:
-                self.apply_health_state(
-                    transition.current_state,
-                )
+
+                # ------------------------------------------
+                # Healthy → Unhealthy
+                # ------------------------------------------
+
+                if (
+                    transition.current_state
+                    == WatchdogHealthState.UNHEALTHY
+                ):
+
+                    self.apply_health_state(
+                        WatchdogHealthState.UNHEALTHY
+                    )
+
+                    self._emit_operational_alert(
+                        OperationalIncidentEventType
+                        .HEALTH_DEGRADED,
+                        "Runtime health degraded.",
+                    )
+
+                # ------------------------------------------
+                # Unhealthy → Healthy
+                # ------------------------------------------
+
+                elif (
+                    transition.previous_state
+                    == WatchdogHealthState.UNHEALTHY
+                    and
+                    transition.current_state
+                    == WatchdogHealthState.HEALTHY
+                ):
+
+                    self.apply_health_state(
+                        WatchdogHealthState.HEALTHY
+                    )
+
+                    self._emit_operational_alert(
+                        OperationalIncidentEventType
+                        .HEALTH_RECOVERED,
+                        "Runtime health recovered.",
+                    )
+
+            # ----------------------------------------------
+            # Transition consumed.
+            # ----------------------------------------------
 
             self.watchdog.clear_transition()
 
         return health_state
 
-    # --------------------------------------------------
+    # ==================================================
     # Runtime Status
-    # --------------------------------------------------
+    # ==================================================
 
     def status_snapshot(
         self,
@@ -454,9 +598,9 @@ class Runtime:
             ),
         )
 
-    # --------------------------------------------------
+    # ==================================================
     # Start
-    # --------------------------------------------------
+    # ==================================================
 
     def start(
         self,
@@ -480,9 +624,9 @@ class Runtime:
             )
         )
 
-        # ----------------------------------------------
+        # --------------------------------------------------
         # Configuration Readiness Gate
-        # ----------------------------------------------
+        # --------------------------------------------------
 
         if not self.configuration_is_ready():
 
@@ -509,11 +653,20 @@ class Runtime:
                 "check failed."
             )
 
+            self._emit_operational_alert(
+                OperationalIncidentEventType
+                .CONFIGURATION_FAILURE,
+                (
+                    "Runtime startup blocked "
+                    "by configuration readiness."
+                ),
+            )
+
             return False
 
-        # ----------------------------------------------
+        # --------------------------------------------------
         # Deployment Health Gate
-        # ----------------------------------------------
+        # --------------------------------------------------
 
         if not self.deployment_is_healthy():
 
@@ -539,11 +692,20 @@ class Runtime:
                 "Deployment health check failed."
             )
 
+            self._emit_operational_alert(
+                OperationalIncidentEventType
+                .DEPLOYMENT_HEALTH_FAILURE,
+                (
+                    "Runtime startup blocked "
+                    "by deployment health."
+                ),
+            )
+
             return False
 
-        # ----------------------------------------------
+        # --------------------------------------------------
         # Runtime Ready
-        # ----------------------------------------------
+        # --------------------------------------------------
 
         self._operational_status = (
             RuntimeOperationalStatus(
@@ -564,9 +726,9 @@ class Runtime:
             "Runtime started."
         )
 
-        # ----------------------------------------------
+        # --------------------------------------------------
         # Start Continuous Runner
-        # ----------------------------------------------
+        # --------------------------------------------------
 
         try:
 
@@ -608,11 +770,17 @@ class Runtime:
                 )
             )
 
+            self._emit_operational_alert(
+                OperationalIncidentEventType
+                .RUNTIME_FAILURE,
+                "Runtime execution failed.",
+            )
+
             return False
 
-    # --------------------------------------------------
+    # ==================================================
     # Stop
-    # --------------------------------------------------
+    # ==================================================
 
     def stop(
         self,
@@ -650,4 +818,10 @@ class Runtime:
         print()
         print(
             "Runtime stopped."
+        )
+
+        self._emit_operational_alert(
+            OperationalIncidentEventType
+            .RUNTIME_SHUTDOWN,
+            "Runtime stopped.",
         )
