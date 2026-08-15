@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Runtime
-M62.6.5 - Runtime Operational Alert Integration
+M62.7.3 - Runtime Lifecycle Integration
 =================================================
 """
 
@@ -38,6 +38,10 @@ from deployment.operational_incident_models import (
     OperationalIncidentEventType,
 )
 
+from deployment.runtime_lifecycle import (
+    RuntimeLifecycle,
+)
+
 from deployment.runtime_operational_state import (
     RuntimeOperationalState,
     RuntimeOperationalStatus,
@@ -45,6 +49,10 @@ from deployment.runtime_operational_state import (
 
 from deployment.runtime_readiness import (
     RuntimeReadinessAdapter,
+)
+
+from deployment.runtime_session import (
+    RuntimeSession,
 )
 
 from deployment.runtime_status import (
@@ -71,6 +79,8 @@ class Runtime:
     - Block startup when readiness fails
     - Track runtime operational state
     - Expose structured runtime status
+    - Expose the authoritative RuntimeLifecycle contract
+    - Manage runtime session metadata
     - Apply health degradation
     - Apply health recovery
     - Synchronize TradingProtection with health state
@@ -88,6 +98,14 @@ class Runtime:
     - cancel orders
     - automatically restart the runtime
     - directly send Telegram or Email alerts
+
+    RuntimeLifecycle remains stateless and authoritative for
+    transition validation.
+
+    RuntimeOperationalStatus remains the single runtime
+    state store.
+
+    RuntimeSession owns session identity and timing metadata.
     """
 
     def __init__(
@@ -111,6 +129,27 @@ class Runtime:
 
         self.configuration_readiness = (
             configuration_readiness
+        )
+
+        # --------------------------------------------------
+        # Authoritative Lifecycle Contract
+        #
+        # RuntimeLifecycle is intentionally stateless.
+        # Runtime does not create a second lifecycle state
+        # store here.
+        # --------------------------------------------------
+
+        self.lifecycle = RuntimeLifecycle()
+
+        # --------------------------------------------------
+        # Runtime Session
+        #
+        # Session identity is independent from the
+        # lifecycle transition contract.
+        # --------------------------------------------------
+
+        self.session = (
+            RuntimeSession.create()
         )
 
         # --------------------------------------------------
@@ -154,11 +193,6 @@ class Runtime:
 
         # --------------------------------------------------
         # Runtime Watchdog
-        #
-        # Important:
-        # The watchdog observes HealthMonitor.
-        # It does not directly control Runtime or
-        # TradingProtection.
         # --------------------------------------------------
 
         self.watchdog = (
@@ -173,9 +207,6 @@ class Runtime:
 
         # --------------------------------------------------
         # Operational Alert Dispatcher
-        #
-        # Runtime only knows the dispatcher boundary.
-        # It does not know Telegram/Email details.
         # --------------------------------------------------
 
         self.alert_dispatcher = (
@@ -192,6 +223,8 @@ class Runtime:
 
         # --------------------------------------------------
         # Operational Status
+        #
+        # This remains the single runtime state store.
         # --------------------------------------------------
 
         self._operational_status = (
@@ -273,7 +306,64 @@ class Runtime:
     ) -> RuntimeOperationalStatus:
         """
         Return current runtime operational status.
+
+        RuntimeOperationalStatus remains the single
+        authoritative runtime state store.
         """
+
+        return self._operational_status
+
+    # ==================================================
+    # Lifecycle Contract
+    # ==================================================
+
+    def transition_to(
+        self,
+        next_state: RuntimeOperationalState,
+        reason: str = "",
+    ) -> RuntimeOperationalStatus:
+        """
+        Validate and apply a lifecycle transition.
+
+        RuntimeLifecycle owns transition validation.
+
+        RuntimeOperationalStatus remains the runtime's
+        actual state store.
+
+        This method intentionally does not:
+        - execute trades
+        - grant trading permission
+        - control TradingProtection
+        - send alerts
+        - start ContinuousRunner
+        - stop ContinuousRunner
+        """
+
+        current_state = (
+            self._operational_status.state
+        )
+
+        self.lifecycle.validate_transition(
+            current_state,
+            next_state,
+        )
+
+        transition_reason = (
+            reason
+            if reason
+            else (
+                f"Runtime transitioned from "
+                f"{current_state.value} to "
+                f"{next_state.value}."
+            )
+        )
+
+        self._operational_status = (
+            RuntimeOperationalStatus(
+                state=next_state,
+                reason=transition_reason,
+            )
+        )
 
         return self._operational_status
 
@@ -303,9 +393,6 @@ class Runtime:
 
         Alert delivery failures are intentionally isolated
         from runtime execution.
-
-        Runtime operation must never fail merely because
-        an operational notification could not be delivered.
         """
 
         sequence = (
@@ -401,17 +488,22 @@ class Runtime:
                 health_state,
             )
 
-            self._operational_status = (
-                RuntimeOperationalStatus(
-                    state=(
-                        RuntimeOperationalState.RUNNING
-                    ),
+            current_state = (
+                self._operational_status.state
+            )
+
+            if (
+                current_state
+                == RuntimeOperationalState.DEGRADED
+            ):
+
+                self.transition_to(
+                    RuntimeOperationalState.RUNNING,
                     reason=(
                         "Runtime health recovered; "
                         "runtime is operational."
                     ),
                 )
-            )
 
             return True
 
@@ -440,16 +532,19 @@ class Runtime:
                 health_state,
             )
 
-            self._operational_status = (
-                RuntimeOperationalStatus(
-                    state=(
-                        RuntimeOperationalState.DEGRADED
-                    ),
-                    reason=(
-                        decision.reason
-                    ),
-                )
+            current_state = (
+                self._operational_status.state
             )
+
+            if (
+                current_state
+                == RuntimeOperationalState.RUNNING
+            ):
+
+                self.transition_to(
+                    RuntimeOperationalState.DEGRADED,
+                    reason=decision.reason,
+                )
 
             return True
 
@@ -467,30 +562,19 @@ class Runtime:
 
         The watchdog always observes current health.
 
-        Runtime lifecycle control remains separate:
-        - A stopped runtime is never started by watchdog.
-        - A stopped runtime is never moved to DEGRADED.
-        - A stopped runtime does not generate degradation
-          or recovery alerts.
+        A stopped runtime is never started or degraded
+        by the watchdog.
 
         For a running runtime, a new watchdog transition
         is processed exactly once.
         """
-
-        # --------------------------------------------------
-        # Always allow watchdog to observe health.
-        # --------------------------------------------------
 
         health_state = (
             self.watchdog.check()
         )
 
         # --------------------------------------------------
-        # Stopped runtime:
-        #
-        # Observe health only.
-        # Do not apply runtime transition.
-        # Do not generate operational alert.
+        # Stopped runtime
         # --------------------------------------------------
 
         if not self.running:
@@ -502,9 +586,7 @@ class Runtime:
             return health_state
 
         # --------------------------------------------------
-        # Running runtime:
-        #
-        # Process only a NEW transition.
+        # Running runtime
         # --------------------------------------------------
 
         if self.watchdog.has_transitioned():
@@ -556,10 +638,6 @@ class Runtime:
                         "Runtime health recovered.",
                     )
 
-            # ----------------------------------------------
-            # Transition consumed.
-            # ----------------------------------------------
-
             self.watchdog.clear_transition()
 
         return health_state
@@ -609,9 +687,32 @@ class Runtime:
         """
         Start Project Phoenix runtime.
 
-        Startup is blocked when configuration readiness
-        or deployment health fails.
+        Runtime session control is established here.
+
+        The lifecycle contract itself remains stateless;
+        the RuntimeOperationalStatus stores the current
+        operational state.
         """
+
+        # --------------------------------------------------
+        # Duplicate Start Protection
+        # --------------------------------------------------
+
+        if self.running:
+
+            return False
+
+        # --------------------------------------------------
+        # Begin Session
+        #
+        # A Runtime instance represents one runtime
+        # controller. A session is created once and becomes
+        # active when startup begins.
+        # --------------------------------------------------
+
+        if self.session.terminal:
+
+            return False
 
         self._operational_status = (
             RuntimeOperationalStatus(
@@ -623,6 +724,34 @@ class Runtime:
                 ),
             )
         )
+
+        # --------------------------------------------------
+        # Activate Session
+        # --------------------------------------------------
+
+        if not self.session.active:
+
+            try:
+
+                self.session = (
+                    self.session.start()
+                )
+
+            except RuntimeError:
+
+                self._operational_status = (
+                    RuntimeOperationalStatus(
+                        state=(
+                            RuntimeOperationalState.FAILED
+                        ),
+                        reason=(
+                            "Runtime session could "
+                            "not be started."
+                        ),
+                    )
+                )
+
+                return False
 
         # --------------------------------------------------
         # Configuration Readiness Gate
@@ -787,7 +916,25 @@ class Runtime:
     ) -> None:
         """
         Stop Project Phoenix runtime.
+
+        The operational state follows:
+
+            RUNNING / DEGRADED
+                ↓
+            STOPPING
+                ↓
+            STOPPED
+
+        Session metadata becomes terminal after shutdown.
         """
+
+        # --------------------------------------------------
+        # Duplicate Stop Protection
+        # --------------------------------------------------
+
+        if not self.running:
+
+            return
 
         self._operational_status = (
             RuntimeOperationalStatus(
@@ -814,6 +961,22 @@ class Runtime:
                 ),
             )
         )
+
+        # --------------------------------------------------
+        # Close Runtime Session
+        # --------------------------------------------------
+
+        if self.session.active:
+
+            try:
+
+                self.session = (
+                    self.session.stop()
+                )
+
+            except RuntimeError:
+
+                pass
 
         print()
         print(
