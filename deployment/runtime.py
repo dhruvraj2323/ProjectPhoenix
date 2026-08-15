@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Runtime
-M62.4.5 - Runtime Trading Protection Integration
+M62.5 - Runtime Watchdog Integration
 =================================================
 """
 
@@ -40,6 +40,7 @@ from deployment.runtime_status import (
 )
 
 from deployment.runtime_watchdog import (
+    RuntimeWatchdog,
     WatchdogHealthState,
 )
 
@@ -62,6 +63,8 @@ class Runtime:
     - Apply health recovery
     - Synchronize TradingProtection with health state
     - Pass TradingProtection to ContinuousRunner
+    - Own RuntimeWatchdog
+    - Integrate RuntimeWatchdog with runtime health state
     - Start ContinuousRunner only when ready
     - Preserve runtime stop behavior
 
@@ -71,6 +74,7 @@ class Runtime:
     - close positions
     - cancel orders
     - automatically restart the runtime
+    - allow RuntimeWatchdog to directly control trading
     """
 
     def __init__(
@@ -82,6 +86,9 @@ class Runtime:
         configuration_readiness: (
             ConfigurationReadinessResult | None
         ) = None,
+        watchdog: (
+            RuntimeWatchdog | None
+        ) = None,
     ) -> None:
 
         self.interval = interval
@@ -92,15 +99,27 @@ class Runtime:
             configuration_readiness
         )
 
+        # --------------------------------------------------
+        # Health Monitor
+        # --------------------------------------------------
+
         self.health_monitor = (
             HealthMonitor()
         )
+
+        # --------------------------------------------------
+        # Trading Protection
+        # --------------------------------------------------
 
         self.trading_protection = (
             trading_protection
             if trading_protection is not None
             else TradingProtection()
         )
+
+        # --------------------------------------------------
+        # Continuous Runner
+        # --------------------------------------------------
 
         self.continuous_runner = (
             ContinuousRunner(
@@ -111,9 +130,39 @@ class Runtime:
             )
         )
 
+        # --------------------------------------------------
+        # Health Degradation Policy
+        # --------------------------------------------------
+
         self.health_degradation_policy = (
             HealthDegradationPolicy()
         )
+
+        # --------------------------------------------------
+        # Runtime Watchdog
+        # --------------------------------------------------
+        #
+        # The watchdog must observe the exact same
+        # HealthMonitor instance owned by Runtime.
+        #
+        # Watchdog observes.
+        # Runtime orchestrates.
+        # TradingProtection protects.
+        #
+
+        self.watchdog = (
+            watchdog
+            if watchdog is not None
+            else RuntimeWatchdog(
+                health_monitor=(
+                    self.health_monitor
+                ),
+            )
+        )
+
+        # --------------------------------------------------
+        # Runtime Operational Status
+        # --------------------------------------------------
 
         self._operational_status = (
             RuntimeOperationalStatus(
@@ -312,6 +361,64 @@ class Runtime:
             return True
 
         return False
+
+    # --------------------------------------------------
+    # Runtime Watchdog Integration
+    # --------------------------------------------------
+
+    def check_watchdog(
+        self,
+    ) -> WatchdogHealthState:
+        """
+        Execute one RuntimeWatchdog health check.
+
+        The watchdog is responsible only for observing
+        health and detecting health transitions.
+
+        Runtime is responsible for consuming a detected
+        transition and applying the corresponding
+        operational health state.
+
+        Processing flow:
+
+            RuntimeWatchdog.check()
+                ↓
+            transition detected?
+                ↓
+            Runtime.apply_health_state()
+                ↓
+            RuntimeWatchdog.clear_transition()
+
+        This method does not:
+        - start the runtime
+        - stop the runtime
+        - restart the runtime
+        - directly manipulate TradingProtection
+        - execute trades
+
+        Returns:
+            Current watchdog health state.
+        """
+
+        health_state = (
+            self.watchdog.check()
+        )
+
+        if (
+            self.watchdog.has_transitioned()
+        ):
+            transition = (
+                self.watchdog.last_transition
+            )
+
+            if transition is not None:
+                self.apply_health_state(
+                    transition.current_state,
+                )
+
+            self.watchdog.clear_transition()
+
+        return health_state
 
     # --------------------------------------------------
     # Runtime Status
