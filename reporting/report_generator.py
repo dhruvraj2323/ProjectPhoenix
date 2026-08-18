@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Report Generator
-M61.4 - Consolidated Cycle Reporting
+M63.7 - Demo Reporting & Analytics
 =================================================
 """
 
@@ -27,16 +27,21 @@ class ReportGenerator:
     """
     Builds and writes Daily Trading Reports.
 
-    Responsibilities:
+    Existing responsibilities:
     - Build DailyReport model
-    - Create physical XLSX workbook
-    - Write performance summary sheet
-    - Write trades sheet
-    - Write M61.4 execution summary sheet
-    - Store report under reports/Daily/
+    - Create XLSX workbook
+    - Write performance summary
+    - Write trade records
+    - Write cycle execution summary
+
+    M63.7:
+    - Preserve existing reporting architecture
+    - Extend Trades sheet with DEMO observation data
     """
 
-    REPORT_DIRECTORY = Path("reports") / "Daily"
+    REPORT_DIRECTORY = Path(
+        "reports"
+    ) / "Daily"
 
     # --------------------------------------------------
     # Generate
@@ -49,12 +54,7 @@ class ReportGenerator:
         execution_summary: Any = None,
     ) -> DailyReport:
         """
-        Generate complete daily report and
-        create the physical XLSX file.
-
-        execution_summary is optional to preserve
-        backward compatibility with the existing
-        ReportingEngine / M57 interface.
+        Generate complete daily report.
         """
 
         report = DailyReport()
@@ -67,12 +67,18 @@ class ReportGenerator:
             execution_summary
         )
 
-        report.report_date = datetime.now(UTC)
+        report.report_date = datetime.now(
+            UTC
+        )
 
-        report.generated_at = datetime.now(UTC)
+        report.generated_at = datetime.now(
+            UTC
+        )
 
         report.report_name = (
-            report.report_date.strftime("%Y-%m-%d")
+            report.report_date.strftime(
+                "%Y-%m-%d"
+            )
             + "_Trading_Report"
         )
 
@@ -114,31 +120,20 @@ class ReportGenerator:
         report_date: datetime,
         generated_at: datetime,
     ) -> None:
-        """
-        Create and save the XLSX workbook.
-        """
 
         workbook = Workbook()
 
         # --------------------------------------------------
-        # Performance Summary
+        # Sheets
         # --------------------------------------------------
 
         summary_sheet = workbook.active
 
         summary_sheet.title = "Summary"
 
-        # --------------------------------------------------
-        # Trades
-        # --------------------------------------------------
-
         trades_sheet = workbook.create_sheet(
             title="Trades",
         )
-
-        # --------------------------------------------------
-        # M61.4 Execution Summary
-        # --------------------------------------------------
 
         execution_sheet = (
             workbook.create_sheet(
@@ -147,7 +142,7 @@ class ReportGenerator:
         )
 
         # --------------------------------------------------
-        # Write Sheets
+        # Write
         # --------------------------------------------------
 
         self._write_summary_sheet(
@@ -204,11 +199,10 @@ class ReportGenerator:
         report_date: datetime,
         generated_at: datetime,
     ) -> None:
-        """
-        Write performance summary into Summary sheet.
-        """
 
-        worksheet["A1"] = "Project Phoenix"
+        worksheet["A1"] = (
+            "Project Phoenix"
+        )
 
         worksheet["A1"].font = Font(
             bold=True,
@@ -224,7 +218,9 @@ class ReportGenerator:
             size=13,
         )
 
-        worksheet["A4"] = "Report Date"
+        worksheet["A4"] = (
+            "Report Date"
+        )
 
         worksheet["B4"] = (
             report_date.strftime(
@@ -232,7 +228,9 @@ class ReportGenerator:
             )
         )
 
-        worksheet["A5"] = "Generated At"
+        worksheet["A5"] = (
+            "Generated At"
+        )
 
         worksheet["B5"] = (
             generated_at.strftime(
@@ -240,9 +238,13 @@ class ReportGenerator:
             )
         )
 
-        worksheet["A7"] = "Metric"
+        worksheet["A7"] = (
+            "Metric"
+        )
 
-        worksheet["B7"] = "Value"
+        worksheet["B7"] = (
+            "Value"
+        )
 
         worksheet["A7"].font = Font(
             bold=True,
@@ -297,10 +299,14 @@ class ReportGenerator:
 
         start_row = 8
 
-        for index, (metric, value) in enumerate(
+        for index, (
+            metric,
+            value,
+        ) in enumerate(
             metrics,
             start=start_row,
         ):
+
             worksheet.cell(
                 row=index,
                 column=1,
@@ -323,10 +329,19 @@ class ReportGenerator:
         trades: list[TradeRecord],
     ) -> None:
         """
-        Write individual trade records into Trades sheet.
+        Write existing trade fields followed by
+        M63.7 DEMO observation fields.
+
+        Existing first 14 columns remain unchanged
+        for backward compatibility.
         """
 
         headers = [
+
+            # ------------------------------------------
+            # Existing M57 fields
+            # ------------------------------------------
+
             "Trade ID",
             "Symbol",
             "Direction",
@@ -341,12 +356,56 @@ class ReportGenerator:
             "Status",
             "Opened At",
             "Closed At",
+
+            # ------------------------------------------
+            # M63.7 Demo Observation
+            # ------------------------------------------
+
+            "Strategy Decision",
+            "Risk Decision",
+            "Execution Status",
+            "Execution Message",
+            "Execution Retcode",
+            "Requested Price",
+            "Executed Price",
+            "Requested Volume",
+            "Executed Volume",
+            "Order Check Retcode",
+            "Order Check Message",
+
+            "Runtime State",
+            "Trading Protection State",
+
+            "Governance State",
+            "Governance Reason",
+            "Balance",
+            "Equity",
+            "Free Margin",
+            "Open Positions",
+            "Symbol Exposure",
+            "Gross Exposure",
+            "Net Exposure",
+            "Portfolio Heat",
+            "Risk Percent",
+            "Drawdown",
+
+            "Spread",
+            "Slippage",
+            "MFE",
+            "MAE",
+
+            "Observation Error",
         ]
+
+        # --------------------------------------------------
+        # Header
+        # --------------------------------------------------
 
         for column_index, header in enumerate(
             headers,
             start=1,
         ):
+
             cell = worksheet.cell(
                 row=1,
                 column=column_index,
@@ -357,11 +416,21 @@ class ReportGenerator:
                 bold=True,
             )
 
+        # --------------------------------------------------
+        # Rows
+        # --------------------------------------------------
+
         for row_index, trade in enumerate(
             trades,
             start=2,
         ):
+
             values = [
+
+                # ------------------------------------------
+                # Existing fields
+                # ------------------------------------------
+
                 trade.trade_id,
                 trade.symbol,
                 trade.direction,
@@ -374,18 +443,58 @@ class ReportGenerator:
                 trade.volume,
                 trade.profit_loss,
                 trade.status,
-                trade.opened_at.strftime(
-                    "%Y-%m-%d %H:%M:%S"
+                self._format_datetime(
+                    trade.opened_at
                 ),
-                trade.closed_at.strftime(
-                    "%Y-%m-%d %H:%M:%S"
+                self._format_datetime(
+                    trade.closed_at
                 ),
+
+                # ------------------------------------------
+                # M63.7 observation
+                # ------------------------------------------
+
+                trade.strategy_decision,
+                trade.risk_decision,
+                trade.execution_status,
+                trade.execution_message,
+                trade.execution_retcode,
+                trade.requested_price,
+                trade.executed_price,
+                trade.requested_volume,
+                trade.executed_volume,
+                trade.order_check_retcode,
+                trade.order_check_message,
+
+                trade.runtime_state,
+                trade.trading_protection_state,
+
+                trade.governance_state,
+                trade.governance_reason,
+                trade.balance,
+                trade.equity,
+                trade.free_margin,
+                trade.open_positions,
+                trade.symbol_exposure,
+                trade.gross_exposure,
+                trade.net_exposure,
+                trade.portfolio_heat,
+                trade.risk_percent,
+                trade.drawdown,
+
+                trade.spread,
+                trade.slippage,
+                trade.mfe,
+                trade.mae,
+
+                trade.observation_error,
             ]
 
             for column_index, value in enumerate(
                 values,
                 start=1,
             ):
+
                 worksheet.cell(
                     row=row_index,
                     column=column_index,
@@ -393,8 +502,7 @@ class ReportGenerator:
                 )
 
     # --------------------------------------------------
-    # M61.4
-    # Execution Summary Sheet
+    # Execution Summary
     # --------------------------------------------------
 
     def _write_execution_summary_sheet(
@@ -405,12 +513,13 @@ class ReportGenerator:
         """
         Write cycle-level execution summary.
 
-        The method intentionally accepts Any so that
-        the reporting layer does not depend on the
-        deployment package at runtime.
+        Reporting remains independent from the
+        deployment package by accepting Any.
         """
 
-        worksheet["A1"] = "Project Phoenix"
+        worksheet["A1"] = (
+            "Project Phoenix"
+        )
 
         worksheet["A1"].font = Font(
             bold=True,
@@ -426,10 +535,6 @@ class ReportGenerator:
             size=13,
         )
 
-        # --------------------------------------------------
-        # Empty / unavailable summary
-        # --------------------------------------------------
-
         if execution_summary is None:
 
             worksheet["A4"] = (
@@ -442,11 +547,9 @@ class ReportGenerator:
 
             return
 
-        # --------------------------------------------------
-        # Cycle Metrics
-        # --------------------------------------------------
-
-        worksheet["A4"] = "Cycle Status"
+        worksheet["A4"] = (
+            "Cycle Status"
+        )
 
         worksheet["B4"] = (
             self._enum_value(
@@ -454,7 +557,9 @@ class ReportGenerator:
             )
         )
 
-        worksheet["A5"] = "Total Symbols"
+        worksheet["A5"] = (
+            "Total Symbols"
+        )
 
         worksheet["B5"] = (
             execution_summary.total_symbols
@@ -484,10 +589,6 @@ class ReportGenerator:
             execution_summary.failed_symbols
         )
 
-        # --------------------------------------------------
-        # Symbol Results
-        # --------------------------------------------------
-
         worksheet["A10"] = (
             "Symbol"
         )
@@ -510,6 +611,7 @@ class ReportGenerator:
             "C10",
             "D10",
         ):
+
             worksheet[column].font = Font(
                 bold=True,
             )
@@ -524,6 +626,7 @@ class ReportGenerator:
             results,
             start=11,
         ):
+
             worksheet.cell(
                 row=row_index,
                 column=1,
@@ -567,17 +670,13 @@ class ReportGenerator:
             )
 
     # --------------------------------------------------
-    # Enum Utility
+    # Utilities
     # --------------------------------------------------
 
     @staticmethod
     def _enum_value(
         value: Any,
     ) -> str:
-        """
-        Return Enum.value when available.
-        Otherwise return a string representation.
-        """
 
         if value is None:
             return ""
@@ -593,21 +692,34 @@ class ReportGenerator:
 
         return str(value)
 
-    # --------------------------------------------------
-    # Column Width
-    # --------------------------------------------------
+    @staticmethod
+    def _format_datetime(
+        value: Any,
+    ) -> str:
+
+        if value is None:
+            return ""
+
+        if hasattr(
+            value,
+            "strftime",
+        ):
+
+            return value.strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
+
+        return str(value)
 
     def _auto_size_columns(
         self,
         worksheet,
     ) -> None:
-        """
-        Automatically size worksheet columns.
-        """
 
         for column_cells in (
             worksheet.columns
         ):
+
             max_length = 0
 
             column_letter = (
@@ -624,7 +736,7 @@ class ReportGenerator:
                     continue
 
                 value_length = len(
-                    str(value),
+                    str(value)
                 )
 
                 if value_length > max_length:

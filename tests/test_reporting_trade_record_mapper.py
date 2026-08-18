@@ -1,11 +1,3 @@
-"""
-=================================================
-Project Phoenix
-Trade Record Mapper Test
-M60.3.1
-=================================================
-"""
-
 from datetime import UTC, datetime
 
 from execution_engine.execution_context import (
@@ -31,41 +23,14 @@ from strategy.strategy_models import (
 from risk_engine.risk_models import (
     RiskMetrics,
     RiskResult,
+    RiskDecision,
 )
 
-
-class DummyTradeResponse:
-
-    ticket = 2372901969
-
-    executed_price = 4381.838
-
-    executed_volume = 0.01
-
-    broker_message = "ok"
-
-    execution_time = datetime(
-        2026,
-        8,
-        11,
-        16,
-        51,
-        4,
-        tzinfo=UTC,
-    )
-
-    retcode = 10009
-
-
-def test_trade_record_mapper():
-
-    # --------------------------------------------------
-    # Execution Context
-    # --------------------------------------------------
+def test_trade_record_mapper_m63_7_observation_fields():
 
     context = ExecutionContext(
-        execution_id="EXEC-001",
-        symbol="XAUUSDm",
+        execution_id="EXEC-M63-7",
+        symbol="EURUSDm",
         timeframe="M15",
     )
 
@@ -82,10 +47,10 @@ def test_trade_record_mapper():
             TradeDirection.BUY
         ),
         confidence=90,
-        entry_price=4380.000,
-        stop_loss=4370.000,
-        take_profit=4400.000,
-        risk_percent=1,
+        entry_price=1.1000,
+        stop_loss=1.0950,
+        take_profit=1.1100,
+        risk_percent=1.0,
         reason="BUY",
     )
 
@@ -105,16 +70,20 @@ def test_trade_record_mapper():
 
     risk = RiskResult()
 
+    risk.decision = RiskDecision.APPROVED
+
     risk.metrics = RiskMetrics(
-        position_size=0.01,
-        stop_loss=4370.000,
-        take_profit=4400.000,
+        risk_percent=1.25,
+        position_size=0.10,
+        stop_loss=1.0950,
+        take_profit=1.1100,
+        drawdown=0.75,
     )
 
     context.risk_result = risk
 
     # --------------------------------------------------
-    # Execution Result
+    # Execution
     # --------------------------------------------------
 
     context.execution_result = (
@@ -123,75 +92,184 @@ def test_trade_record_mapper():
             status=(
                 ExecutionStatus.ACCEPTED
             ),
-            order_id="2372901969",
-            executed_price=4381.838,
+            order_id="100001",
+            executed_price=1.1002,
         )
     )
 
     # --------------------------------------------------
-    # Actual MT5 Trade Response
+    # Requested order
     # --------------------------------------------------
+
+    context.order = type(
+        "DummyOrder",
+        (),
+        {
+            "entry_price": 1.1000,
+            "quantity": 0.10,
+        },
+    )()
+
+    # --------------------------------------------------
+    # MT5 Response
+    # --------------------------------------------------
+
+    response = type(
+        "DummyTradeResponse",
+        (),
+        {
+            "ticket": 100001,
+            "executed_price": 1.1002,
+            "executed_volume": 0.10,
+            "broker_message": "Executed",
+            "execution_time": datetime(
+                2026,
+                8,
+                18,
+                10,
+                0,
+                0,
+                tzinfo=UTC,
+            ),
+            "retcode": 10009,
+        },
+    )()
 
     context.metadata[
         "trade_response"
-    ] = DummyTradeResponse()
+    ] = response
+
+    context.metadata[
+        "mt5_order_check_retcode"
+    ] = 0
+
+    context.metadata[
+        "mt5_order_check_comment"
+    ] = "Done"
+
+    context.metadata[
+        "trading_protection_state"
+    ] = "ACTIVE"
 
     # --------------------------------------------------
-    # Mark Execution Complete
+    # Optional DEMO analytics supplied upstream
+    # --------------------------------------------------
+
+    context.metadata[
+        "spread"
+    ] = 0.0002
+
+    context.metadata[
+        "slippage"
+    ] = 0.0002
+
+    context.metadata[
+        "mfe"
+    ] = 0.0010
+
+    context.metadata[
+        "mae"
+    ] = 0.0003
+
+    # --------------------------------------------------
+    # Mark complete
     # --------------------------------------------------
 
     context.complete()
 
     # --------------------------------------------------
-    # Mapper
+    # Map
     # --------------------------------------------------
 
-    mapper = TradeRecordMapper()
-
-    trade = mapper.map(
-        context,
+    trade = TradeRecordMapper().map(
+        context
     )
 
     # --------------------------------------------------
     # Assertions
     # --------------------------------------------------
 
-    assert trade.trade_id == (
-        "2372901969"
-    )
-
-    assert trade.symbol == (
-        "XAUUSDm"
-    )
-
-    assert trade.direction == "BUY"
-
     assert trade.strategy == (
         "S01_EMA_TREND"
     )
 
-    assert trade.entry_price == (
-        4381.838
+    assert trade.direction == "BUY"
+
+    assert trade.strategy_decision == (
+        strategy.status.value
+        if hasattr(
+            strategy.status,
+            "value",
+        )
+        else str(strategy.status)
     )
 
-    assert trade.stop_loss == (
-        4370.000
+    assert trade.risk_decision == (
+        "APPROVED"
     )
 
-    assert trade.take_profit == (
-        4400.000
+    assert trade.execution_status == (
+        "ACCEPTED"
     )
 
-    assert trade.volume == 0.01
-
-    assert trade.profit_loss == 0.0
-
-    assert trade.status == "OPEN"
-
-    assert trade.opened_at == (
-        DummyTradeResponse.execution_time
+    assert trade.execution_message == (
+        "Executed"
     )
 
-    assert trade.closed_at == (
-        DummyTradeResponse.execution_time
+    assert trade.execution_retcode == (
+        10009
+    )
+
+    assert trade.requested_price == (
+        1.1000
+    )
+
+    assert trade.executed_price == (
+        1.1002
+    )
+
+    assert trade.requested_volume == (
+        0.10
+    )
+
+    assert trade.executed_volume == (
+        0.10
+    )
+
+    assert trade.order_check_retcode == 0
+
+    assert trade.order_check_message == (
+        "Done"
+    )
+
+    assert trade.runtime_state == (
+        "COMPLETED"
+    )
+
+    assert trade.trading_protection_state == (
+        "ACTIVE"
+    )
+
+    assert trade.risk_percent == (
+        1.25
+    )
+
+    assert trade.drawdown == (
+        0.75
+    )
+
+    assert trade.spread == (
+        0.0002
+    )
+
+    assert trade.slippage == (
+        0.0002
+    )
+
+    assert trade.mfe == (
+        0.0010
+    )
+
+    assert trade.mae == (
+        0.0003
     )

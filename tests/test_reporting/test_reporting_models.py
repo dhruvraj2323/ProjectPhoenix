@@ -1,52 +1,79 @@
-"""
-=================================================
-Project Phoenix
-Reporting Models Test
-M57
-=================================================
-"""
-
 from reporting.reporting_models import (
     DailyReport,
     PerformanceSummary,
     TradeRecord,
 )
 
-
-def test_reporting_models():
+def test_trade_record_m63_7_demo_fields():
 
     trade = TradeRecord(
-        trade_id="TRD-001",
-        symbol="EURUSD",
-        direction="BUY",
-        strategy="Breakout",
-        pattern="Bull Flag",
-        entry_price=1.1050,
-        exit_price=1.1080,
-        volume=0.10,
-        profit_loss=30.0,
-        status="CLOSED",
+        trade_id="M63-001",
+        symbol="BTCUSDm",
+        strategy="S01_EMA_TREND",
+
+        strategy_decision="APPROVED",
+        risk_decision="APPROVED",
+        execution_status="EXECUTED",
+
+        execution_retcode=10009,
+
+        requested_price=60000.0,
+        executed_price=60001.0,
+
+        requested_volume=0.05,
+        executed_volume=0.05,
+
+        runtime_state="COMPLETED",
+        trading_protection_state="ACTIVE",
+
+        risk_percent=1.0,
+        drawdown=0.5,
     )
 
-    summary = PerformanceSummary(
-        total_trades=1,
-        winning_trades=1,
-        gross_profit=30.0,
-        net_profit=30.0,
+    assert trade.symbol == (
+        "BTCUSDm"
     )
 
-    report = DailyReport()
+    assert trade.strategy == (
+        "S01_EMA_TREND"
+    )
 
-    report.trades.append(trade)
+    assert trade.strategy_decision == (
+        "APPROVED"
+    )
 
-    report.summary = summary
+    assert trade.risk_decision == (
+        "APPROVED"
+    )
 
-    report.report_name = "Trading Report"
+    assert trade.execution_status == (
+        "EXECUTED"
+    )
 
-    assert report.trades[0].trade_id == "TRD-001"
+    assert trade.execution_retcode == (
+        10009
+    )
 
-    assert report.summary.total_trades == 1
+    assert trade.requested_price == (
+        60000.0
+    )
 
-    assert report.summary.net_profit == 30.0
+    assert trade.executed_price == (
+        60001.0
+    )
 
-    assert report.report_name == "Trading Report"
+    assert trade.runtime_state == (
+        "COMPLETED"
+    )
+
+    assert trade.trading_protection_state == (
+        "ACTIVE"
+    )
+
+    assert trade.risk_percent == (
+        1.0
+    )
+
+    assert trade.drawdown == (
+        0.5
+    )

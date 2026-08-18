@@ -2,7 +2,7 @@
 =================================================
 Project Phoenix
 Reporting Models
-M61.4 - Consolidated Cycle Reporting
+M63.7 - Demo Reporting & Analytics
 =================================================
 """
 
@@ -22,7 +22,21 @@ from typing import Any
 class TradeRecord:
     """
     Individual trade information.
+
+    M63.7 extends the existing M57/M61.4 trade
+    record with optional DEMO observation fields.
+
+    IMPORTANT:
+    These fields observe information already available
+    from upstream Phoenix execution/context contracts.
+
+    They do not execute trades, calculate risk, or
+    perform reconciliation.
     """
+
+    # --------------------------------------------------
+    # Existing M57 trade fields
+    # --------------------------------------------------
 
     trade_id: str = ""
 
@@ -55,6 +69,95 @@ class TradeRecord:
     closed_at: datetime = field(
         default_factory=lambda: datetime.now(UTC),
     )
+
+    # --------------------------------------------------
+    # M63.7 Demo Observation
+    # --------------------------------------------------
+
+    strategy_decision: str = ""
+
+    risk_decision: str = ""
+
+    execution_status: str = ""
+
+    execution_message: str = ""
+
+    execution_retcode: int | None = None
+
+    requested_price: float | None = None
+
+    executed_price: float | None = None
+
+    requested_volume: float | None = None
+
+    executed_volume: float | None = None
+
+    order_check_retcode: int | None = None
+
+    order_check_message: str = ""
+
+    # --------------------------------------------------
+    # Runtime Observation
+    # --------------------------------------------------
+
+    runtime_state: str = ""
+
+    trading_protection_state: str = ""
+
+    # --------------------------------------------------
+    # M63.6 Governance Observation
+    #
+    # These remain optional because the current
+    # repository does not yet have a production caller
+    # propagating RiskExposureGovernanceResult into
+    # the reporting context.
+    # --------------------------------------------------
+
+    governance_state: str = ""
+
+    governance_reason: str = ""
+
+    balance: float | None = None
+
+    equity: float | None = None
+
+    free_margin: float | None = None
+
+    open_positions: int | None = None
+
+    symbol_exposure: float | None = None
+
+    gross_exposure: float | None = None
+
+    net_exposure: float | None = None
+
+    portfolio_heat: float | None = None
+
+    risk_percent: float | None = None
+
+    drawdown: float | None = None
+
+    # --------------------------------------------------
+    # Optional Market / Execution Analytics
+    #
+    # M63.7 does not invent these values.
+    # They are populated only when an upstream context
+    # explicitly provides them.
+    # --------------------------------------------------
+
+    spread: float | None = None
+
+    slippage: float | None = None
+
+    mfe: float | None = None
+
+    mae: float | None = None
+
+    # --------------------------------------------------
+    # Observation Error
+    # --------------------------------------------------
+
+    observation_error: str = ""
 
 
 # --------------------------------------------------
@@ -100,13 +203,12 @@ class DailyReport:
     Complete daily trading report.
 
     M61.4:
-    The report now optionally carries the complete
-    cycle-level execution summary.
+    Carries the existing cycle-level execution summary.
 
-    The execution summary remains an external
-    deployment-layer object and is intentionally
-    typed as Any here to keep the reporting layer
-    independent from the deployment package.
+    M63.7:
+    TradeRecord now contains optional DEMO observation
+    fields while the existing report structure remains
+    unchanged.
     """
 
     report_date: datetime = field(
