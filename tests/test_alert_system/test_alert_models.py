@@ -1,7 +1,7 @@
 """
 =================================================
 Project Phoenix
-Alert Models Test
+Alert Models Tests
 =================================================
 """
 
@@ -13,7 +13,7 @@ from alert_system.alert_models import (
 )
 
 
-def run_test():
+def test_alert_models():
 
     message = AlertMessage(
         title="BUY Signal",
@@ -36,24 +36,51 @@ def run_test():
 
     result = AlertResult(
         approved=True,
-        reason="Alert system initialized successfully.",
+        reason=(
+            "Alert system initialized successfully."
+        ),
         status=status,
+        delivered_channels=[
+            "Telegram",
+            "Email",
+        ],
     )
 
-    print("===== Alert Models =====")
+    assert (
+        message.title
+        == "BUY Signal"
+    )
 
-    print(f"Title              : {message.title}")
-    print(f"Alert Type         : {message.alert_type}")
-    print(f"Channel            : {channel.name}")
-    print(f"Alerts Sent        : {status.alerts_sent}")
-    print(f"Connected Channels : {status.connected_channels}")
+    assert (
+        message.alert_type
+        == "TRADE"
+    )
 
-    assert result.approved
+    assert (
+        channel.name
+        == "Telegram"
+    )
 
-    print()
-    print("Alert Models Test Passed")
+    assert channel.enabled is True
 
+    assert channel.connected is True
 
-if __name__ == "__main__":
+    assert (
+        status.alerts_sent
+        == 5
+    )
 
-    run_test()
+    assert (
+        status.connected_channels
+        == 2
+    )
+
+    assert result.approved is True
+
+    assert (
+        result.delivered_channels
+        == [
+            "Telegram",
+            "Email",
+        ]
+    )

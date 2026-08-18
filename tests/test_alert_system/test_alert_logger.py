@@ -1,18 +1,23 @@
 """
 =================================================
 Project Phoenix
-Alert Logger Test
+Alert Logger Tests
 =================================================
 """
 
-from alert_system.alert_logger import AlertLogger
+from alert_system.alert_logger import (
+    AlertLogger,
+)
+
 from alert_system.alert_models import (
     AlertStatus,
     AlertResult,
 )
 
 
-def run_test():
+def test_alert_logger(
+    capsys,
+):
 
     status = AlertStatus(
         running=True,
@@ -22,18 +27,38 @@ def run_test():
 
     result = AlertResult(
         approved=True,
-        reason="Alert system initialized successfully.",
+        reason=(
+            "Alert system initialized successfully."
+        ),
         status=status,
+        delivered_channels=[
+            "Telegram",
+            "Email",
+        ],
     )
 
-    AlertLogger.log(result)
+    AlertLogger.log(
+        result
+    )
 
-    assert result.approved
+    captured = capsys.readouterr()
 
-    print()
-    print("Alert Logger Test Passed")
+    assert (
+        "Alert System"
+        in captured.out
+    )
 
+    assert (
+        "Approved          : True"
+        in captured.out
+    )
 
-if __name__ == "__main__":
+    assert (
+        "Alerts Sent       : 5"
+        in captured.out
+    )
 
-    run_test()
+    assert (
+        "Connected Channels: 2"
+        in captured.out
+    )

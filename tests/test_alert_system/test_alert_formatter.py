@@ -1,14 +1,16 @@
 """
 =================================================
 Project Phoenix
-Alert Formatter Test
+Alert Formatter Tests
 =================================================
 """
 
-from alert_system.alert_formatter import AlertFormatter
+from alert_system.alert_formatter import (
+    AlertFormatter,
+)
 
 
-def run_test():
+def test_alert_formatter():
 
     trade = AlertFormatter.trade_alert(
         symbol="EURUSD",
@@ -24,20 +26,34 @@ def run_test():
         "Dashboard initialized."
     )
 
-    print("===== Alert Formatter =====")
+    assert trade.title == "BUY Signal"
 
-    print(f"Trade Alert   : {trade.message}")
-    print(f"Risk Alert    : {risk.message}")
-    print(f"System Alert  : {system.message}")
+    assert (
+        trade.message
+        == "EURUSD BUY @ 1.1065"
+    )
 
-    assert trade.alert_type == "TRADE"
-    assert risk.alert_type == "RISK"
-    assert system.alert_type == "SYSTEM"
+    assert (
+        trade.alert_type
+        == "TRADE"
+    )
 
-    print()
-    print("Alert Formatter Test Passed")
+    assert (
+        risk.title
+        == "Risk Alert"
+    )
 
+    assert (
+        risk.alert_type
+        == "RISK"
+    )
 
-if __name__ == "__main__":
+    assert (
+        system.title
+        == "System Alert"
+    )
 
-    run_test()
+    assert (
+        system.alert_type
+        == "SYSTEM"
+    )
